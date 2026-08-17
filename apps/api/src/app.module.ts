@@ -26,15 +26,23 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { ComparisonModule } from './comparison/comparison.module';
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
+import { ExchangesModule } from './exchanges/exchanges.module';
 import { HealthModule } from './health/health.module';
+import { HelpCenterModule } from './help-center/help-center.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
 import { ProfilesModule } from './profiles/profiles.module';
+import { RefundsModule } from './refunds/refunds.module';
+import { ReplacementsModule } from './replacements/replacements.module';
+import { ReturnsModule } from './returns/returns.module';
 import { SearchModule } from './search/search.module';
 import { ShippingModule } from './shipping/shipping.module';
+import { SupportModule } from './support/support.module';
 import { UsersModule } from './users/users.module';
 import { WarehousesModule } from './warehouses/warehouses.module';
 import { WishlistModule } from './wishlist/wishlist.module';
@@ -54,6 +62,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     CatalogEventsModule,
     OrderEventsModule,
     IdempotencyModule,
+    NotificationsModule,
     AuditModule,
     HealthModule,
     AuthModule,
@@ -73,6 +82,13 @@ import { WishlistModule } from './wishlist/wishlist.module';
     ShippingModule,
     OrdersModule,
     PaymentsModule,
+    RefundsModule,
+    ReplacementsModule,
+    ExchangesModule,
+    ReturnsModule,
+    InvoicesModule,
+    SupportModule,
+    HelpCenterModule,
   ],
   providers: [
     {

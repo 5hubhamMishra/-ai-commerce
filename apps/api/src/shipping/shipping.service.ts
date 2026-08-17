@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ShippingMethodQuote } from './providers/shipping-provider.interface';
 import { SHIPPING_PROVIDER } from './providers/shipping-provider.interface';

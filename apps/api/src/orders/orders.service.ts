@@ -4,7 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma, Role } from '@prisma/client';
+import {
+  OrderStatus,
+  Prisma,
+  Role,
+  ShipmentEventStatus,
+  ShipmentStatus,
+} from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { OrderEventsService } from '../common/events/order-events.service';
@@ -33,7 +39,9 @@ const ORDER_VIEW_ROLES: Role[] = [
 
 const orderDetailInclude = {
   items: true,
-  shipment: true,
+  shipment: {
+    include: { events: { orderBy: { occurredAt: 'asc' as const } } },
+  },
   payments: { orderBy: { createdAt: 'desc' as const } },
   stateHistory: { orderBy: { createdAt: 'asc' as const } },
   address: true,
@@ -369,6 +377,16 @@ export class OrdersService {
         message: `${dto.status} cannot be set directly through this endpoint.`,
       });
     }
+    if (
+      dto.status === OrderStatus.SHIPPED &&
+      (!dto.carrier || !dto.trackingNumber)
+    ) {
+      throw new BadRequestException({
+        code: 'DISPATCH_INFO_REQUIRED',
+        message:
+          'carrier and trackingNumber are required to mark an order SHIPPED.',
+      });
+    }
 
     const { order, fromStatus, inventoryUpdates } =
       await this.prisma.$transaction(async (tx) => {
@@ -393,6 +411,34 @@ export class OrdersService {
         }));
         if (dto.status === OrderStatus.SHIPPED) {
           await this.inventory.shipCommitted(tx, lines);
+          await tx.shipment.update({
+            where: { orderId },
+            data: {
+              carrier: dto.carrier,
+              trackingNumber: dto.trackingNumber,
+              status: ShipmentStatus.DISPATCHED,
+              events: {
+                create: {
+                  status: ShipmentEventStatus.PICKED_UP,
+                  description: `Dispatched via ${dto.carrier}.`,
+                },
+              },
+            },
+          });
+        }
+        if (dto.status === OrderStatus.DELIVERED) {
+          await tx.shipment.update({
+            where: { orderId },
+            data: {
+              status: ShipmentStatus.DELIVERED,
+              events: {
+                create: {
+                  status: ShipmentEventStatus.DELIVERED,
+                  description: 'Delivered.',
+                },
+              },
+            },
+          });
         }
 
         const updated = await tx.order.update({
@@ -502,6 +548,136 @@ export class OrdersService {
     return { userId: order.userId, fromStatus: order.status };
   }
 
+  // ---- Order tracking ---------------------------------------------------
+
+  /** Admin appends a tracking-timeline event without touching Order.status —
+   *  the two state machines (order fulfillment vs. carrier tracking detail)
+   *  stay independent; DELIVERED is still only ever set via updateStatusAdmin. */
+  async addTrackingEvent(
+    actorId: string,
+    orderId: string,
+    status: ShipmentEventStatus,
+    location: string | undefined,
+    description: string | undefined,
+  ) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { shipment: true },
+    });
+    if (!order || !order.shipment) {
+      throw new NotFoundException({
+        code: 'SHIPMENT_NOT_FOUND',
+        message: 'This order has not been dispatched yet.',
+      });
+    }
+
+    await this.prisma.shipmentEvent.create({
+      data: { shipmentId: order.shipment.id, status, location, description },
+    });
+    await this.audit.record({
+      actorId,
+      action: 'SHIPMENT_TRACKING_EVENT_ADDED',
+      entityType: 'shipment',
+      entityId: order.shipment.id,
+      metadata: { orderId, status, location },
+    });
+
+    return toOrderDetail(await this.getDetailRow(orderId));
+  }
+
+  /** Owner sees their own order's tracking; SUPPORT_AGENT/ADMIN/SUPER_ADMIN can view any. */
+  async getTracking(user: AuthenticatedUser, orderId: string) {
+    const detail = await this.getForUser(user, orderId);
+    return {
+      orderId: detail.id,
+      orderStatus: detail.status,
+      shipment: detail.shipment,
+    };
+  }
+
+  // ---- Called by ReturnsService/RefundsService/ReplacementsService/
+  // ExchangesService within their own transactions, mirroring
+  // confirmPaymentTransition's pattern. Each loads the order fresh (so the
+  // caller doesn't need to pass a stale row), asserts the transition, writes
+  // the new status + history entry, and returns just what the caller needs.
+
+  async markReturnRequested(tx: Tx, orderId: string, actorId: string) {
+    return this.transitionWithinTx(
+      tx,
+      orderId,
+      OrderStatus.RETURN_REQUESTED,
+      actorId,
+    );
+  }
+
+  /** Return rejected (at review or after failed inspection) or withdrawn by the customer. */
+  async markReturnClosed(
+    tx: Tx,
+    orderId: string,
+    actorId: string,
+    note?: string,
+  ) {
+    return this.transitionWithinTx(
+      tx,
+      orderId,
+      OrderStatus.DELIVERED,
+      actorId,
+      note,
+    );
+  }
+
+  async markReturned(tx: Tx, orderId: string, actorId: string) {
+    return this.transitionWithinTx(tx, orderId, OrderStatus.RETURNED, actorId);
+  }
+
+  async markRefunded(tx: Tx, orderId: string, actorId: string | null) {
+    return this.transitionWithinTx(tx, orderId, OrderStatus.REFUNDED, actorId);
+  }
+
+  async markReplacement(tx: Tx, orderId: string, actorId: string) {
+    return this.transitionWithinTx(
+      tx,
+      orderId,
+      OrderStatus.REPLACEMENT,
+      actorId,
+    );
+  }
+
+  async markExchanged(tx: Tx, orderId: string, actorId: string) {
+    return this.transitionWithinTx(tx, orderId, OrderStatus.EXCHANGED, actorId);
+  }
+
+  private async transitionWithinTx(
+    tx: Tx,
+    orderId: string,
+    toStatus: OrderStatus,
+    actorId: string | null,
+    note?: string,
+  ) {
+    const order = await tx.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+      throw new NotFoundException({
+        code: 'ORDER_NOT_FOUND',
+        message: 'Order not found.',
+      });
+    }
+    assertTransition(order.status, toStatus);
+    await tx.order.update({
+      where: { id: orderId },
+      data: { status: toStatus },
+    });
+    await tx.orderStateHistory.create({
+      data: {
+        orderId,
+        fromStatus: order.status,
+        toStatus,
+        changedBy: actorId,
+        note,
+      },
+    });
+    return { userId: order.userId, fromStatus: order.status };
+  }
+
   async assertOwnership(userId: string, orderId: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -570,6 +746,12 @@ function toOrderDetail(order: OrderDetailRow) {
           status: order.shipment.status,
           carrier: order.shipment.carrier,
           trackingNumber: order.shipment.trackingNumber,
+          events: order.shipment.events.map((e) => ({
+            status: e.status,
+            location: e.location,
+            description: e.description,
+            occurredAt: e.occurredAt,
+          })),
         }
       : null,
     payments: order.payments.map((payment) => ({

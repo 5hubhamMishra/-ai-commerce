@@ -14,4 +14,8 @@ export default () => ({
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     refreshTtlDays: parseInt(process.env.JWT_REFRESH_TTL_DAYS ?? '30', 10),
   },
+  returns: {
+    // Category.returnWindowDays overrides this per-category when set.
+    defaultWindowDays: parseInt(process.env.RETURN_WINDOW_DAYS ?? '10', 10),
+  },
 });

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+import { NotificationType } from '@prisma/client';
+import { NotificationsService } from '../../notifications/notifications.service';
 import { ORDER_EVENTS } from './order-events.types';
 import type {
   OrderCreatedEvent,
@@ -8,38 +10,68 @@ import type {
 } from './order-events.types';
 
 /**
- * Hook point for customer notifications (Phase 4/6+ territory — no email/SMS/push
- * infrastructure exists yet). Every order/payment event that should eventually
- * trigger a notification lands here; for now it just logs a structured line, same
- * precedent as CatalogSearchHookListener/CatalogEmbeddingHookListener in Phase 2.
+ * Real in-app notifications for order/payment events (Phase 4 — upgraded from
+ * Phase 3's log-only stub now that NotificationsService exists). External
+ * channels (email/SMS/push) remain a documented gap — see DATABASE.md.
  */
 @Injectable()
 export class OrderNotificationHookListener {
   private readonly logger = new Logger('OrderNotificationHook');
 
+  constructor(private readonly notifications: NotificationsService) {}
+
   @OnEvent(ORDER_EVENTS.ORDER_CREATED)
-  onOrderCreated(event: OrderCreatedEvent) {
-    this.logger.log(`notification pending: order ${event.orderId} created`);
+  async onOrderCreated(event: OrderCreatedEvent) {
+    await this.notifications.create(
+      event.userId,
+      NotificationType.ORDER_STATUS,
+      'Order placed',
+      `Your order has been placed and is awaiting payment.`,
+      'order',
+      event.orderId,
+    );
   }
 
   @OnEvent(ORDER_EVENTS.ORDER_STATUS_CHANGED)
-  onOrderStatusChanged(event: OrderStatusChangedEvent) {
-    this.logger.log(
-      `notification pending: order ${event.orderId} ${event.fromStatus ?? '(new)'} -> ${event.toStatus}`,
+  async onOrderStatusChanged(event: OrderStatusChangedEvent) {
+    await this.notifications.create(
+      event.userId,
+      NotificationType.ORDER_STATUS,
+      'Order status updated',
+      `Your order is now ${humanize(event.toStatus)}.`,
+      'order',
+      event.orderId,
     );
   }
 
   @OnEvent(ORDER_EVENTS.PAYMENT_SUCCEEDED)
-  onPaymentSucceeded(event: PaymentEvent) {
-    this.logger.log(
-      `notification pending: payment ${event.paymentId} succeeded for order ${event.orderId}`,
+  async onPaymentSucceeded(event: PaymentEvent) {
+    await this.notifications.create(
+      event.userId,
+      NotificationType.PAYMENT,
+      'Payment successful',
+      'Your payment was successful and your order is confirmed.',
+      'order',
+      event.orderId,
     );
   }
 
   @OnEvent(ORDER_EVENTS.PAYMENT_FAILED)
-  onPaymentFailed(event: PaymentEvent) {
+  async onPaymentFailed(event: PaymentEvent) {
+    await this.notifications.create(
+      event.userId,
+      NotificationType.PAYMENT,
+      'Payment failed',
+      'Your payment could not be completed. Please try again.',
+      'order',
+      event.orderId,
+    );
     this.logger.log(
-      `notification pending: payment ${event.paymentId} failed for order ${event.orderId}`,
+      `payment ${event.paymentId} failed for order ${event.orderId}`,
     );
   }
+}
+
+function humanize(status: string): string {
+  return status.replace(/_/g, ' ').toLowerCase();
 }

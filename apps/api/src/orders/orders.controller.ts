@@ -12,6 +12,7 @@ import { Role } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
+import { AddTrackingEventDto } from './dto/add-tracking-event.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ListOrdersQueryDto } from './dto/list-orders-query.dto';
@@ -54,6 +55,22 @@ export class OrdersController {
     return this.ordersService.updateStatusAdmin(user.id, id, dto);
   }
 
+  @Roles(...ORDER_FULFILLMENT_ROLES)
+  @Post('admin/:id/tracking-events')
+  addTrackingEvent(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: AddTrackingEventDto,
+  ) {
+    return this.ordersService.addTrackingEvent(
+      user.id,
+      id,
+      dto.status,
+      dto.location,
+      dto.description,
+    );
+  }
+
   // ---- Customer -------------------------------------------------------------
 
   @Post()
@@ -76,6 +93,11 @@ export class OrdersController {
   @Get(':id')
   detail(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.ordersService.getForUser(user, id);
+  }
+
+  @Get(':id/tracking')
+  tracking(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.ordersService.getTracking(user, id);
   }
 
   @Post(':id/cancel')

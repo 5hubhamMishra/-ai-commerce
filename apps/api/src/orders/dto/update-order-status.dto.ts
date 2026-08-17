@@ -10,4 +10,16 @@ export class UpdateOrderStatusDto {
   @IsString()
   @MaxLength(500)
   note?: string;
+
+  // Required (validated in OrdersService, not here — depends on `status`) when
+  // status === SHIPPED: the dispatch event that starts the tracking timeline.
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  carrier?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  trackingNumber?: string;
 }
