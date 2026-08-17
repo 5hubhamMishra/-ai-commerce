@@ -25,10 +25,18 @@ describe('order-state-machine', () => {
   });
 
   it('allows cancellation only from PENDING_PAYMENT and CONFIRMED', () => {
-    expect(canTransition(OrderStatus.PENDING_PAYMENT, OrderStatus.CANCELLED)).toBe(true);
-    expect(canTransition(OrderStatus.CONFIRMED, OrderStatus.CANCELLED)).toBe(true);
-    expect(canTransition(OrderStatus.PROCESSING, OrderStatus.CANCELLED)).toBe(false);
-    expect(canTransition(OrderStatus.SHIPPED, OrderStatus.CANCELLED)).toBe(false);
+    expect(
+      canTransition(OrderStatus.PENDING_PAYMENT, OrderStatus.CANCELLED),
+    ).toBe(true);
+    expect(canTransition(OrderStatus.CONFIRMED, OrderStatus.CANCELLED)).toBe(
+      true,
+    );
+    expect(canTransition(OrderStatus.PROCESSING, OrderStatus.CANCELLED)).toBe(
+      false,
+    );
+    expect(canTransition(OrderStatus.SHIPPED, OrderStatus.CANCELLED)).toBe(
+      false,
+    );
     expect(CANCELLABLE_STATUSES).toEqual([
       OrderStatus.PENDING_PAYMENT,
       OrderStatus.CONFIRMED,
@@ -36,16 +44,24 @@ describe('order-state-machine', () => {
   });
 
   it('rejects arbitrary/skipped transitions', () => {
-    expect(canTransition(OrderStatus.PENDING_PAYMENT, OrderStatus.DELIVERED)).toBe(false);
-    expect(canTransition(OrderStatus.PENDING_PAYMENT, OrderStatus.SHIPPED)).toBe(false);
-    expect(canTransition(OrderStatus.DELIVERED, OrderStatus.PENDING_PAYMENT)).toBe(false);
-    expect(canTransition(OrderStatus.CANCELLED, OrderStatus.CONFIRMED)).toBe(false);
+    expect(
+      canTransition(OrderStatus.PENDING_PAYMENT, OrderStatus.DELIVERED),
+    ).toBe(false);
+    expect(
+      canTransition(OrderStatus.PENDING_PAYMENT, OrderStatus.SHIPPED),
+    ).toBe(false);
+    expect(
+      canTransition(OrderStatus.DELIVERED, OrderStatus.PENDING_PAYMENT),
+    ).toBe(false);
+    expect(canTransition(OrderStatus.CANCELLED, OrderStatus.CONFIRMED)).toBe(
+      false,
+    );
   });
 
   it('throws a ConflictException with a stable error code for an illegal transition', () => {
-    expect(() => assertTransition(OrderStatus.CANCELLED, OrderStatus.PAID)).toThrow(
-      ConflictException,
-    );
+    expect(() =>
+      assertTransition(OrderStatus.CANCELLED, OrderStatus.PAID),
+    ).toThrow(ConflictException);
     try {
       assertTransition(OrderStatus.CANCELLED, OrderStatus.PAID);
       fail('expected assertTransition to throw');
@@ -57,13 +73,21 @@ describe('order-state-machine', () => {
   });
 
   it('does not throw for a legal transition', () => {
-    expect(() => assertTransition(OrderStatus.PAID, OrderStatus.CONFIRMED)).not.toThrow();
+    expect(() =>
+      assertTransition(OrderStatus.PAID, OrderStatus.CONFIRMED),
+    ).not.toThrow();
   });
 
   it('keeps return/refund states reachable in the map even though Phase 3 exposes no endpoint for them', () => {
-    expect(canTransition(OrderStatus.DELIVERED, OrderStatus.RETURN_REQUESTED)).toBe(true);
-    expect(canTransition(OrderStatus.RETURN_REQUESTED, OrderStatus.REFUND_PENDING)).toBe(true);
-    expect(canTransition(OrderStatus.REFUND_PENDING, OrderStatus.REFUNDED)).toBe(true);
+    expect(
+      canTransition(OrderStatus.DELIVERED, OrderStatus.RETURN_REQUESTED),
+    ).toBe(true);
+    expect(
+      canTransition(OrderStatus.RETURN_REQUESTED, OrderStatus.REFUND_PENDING),
+    ).toBe(true);
+    expect(
+      canTransition(OrderStatus.REFUND_PENDING, OrderStatus.REFUNDED),
+    ).toBe(true);
   });
 
   it('restricts admin-settable statuses to the fulfillment happy path', () => {

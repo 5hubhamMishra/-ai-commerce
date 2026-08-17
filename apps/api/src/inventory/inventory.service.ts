@@ -24,6 +24,11 @@ export type CommittedLine = {
   quantity: number;
 };
 
+export type RestockLine = CommittedLine & {
+  /** Damaged returns go to quantityDamaged, not back into sellable onHand stock. */
+  isDamaged: boolean;
+};
+
 @Injectable()
 export class InventoryService {
   constructor(
@@ -220,6 +225,34 @@ export class InventoryService {
           quantityOnHand: { decrement: line.quantity },
           quantityCommitted: { decrement: line.quantity },
         },
+      });
+    }
+  }
+
+  /** Return completed and inspected: sellable stock goes back to onHand;
+   *  damaged stock goes to the quantityDamaged bucket instead (spec: "restocking,
+   *  inventory adjustment"). Uses upsert since a return can restock a warehouse
+   *  that has no existing inventory row yet only in pathological cases — in
+   *  practice the row always exists (it's the same warehouse the item shipped
+   *  from), but upsert keeps this correct even if that invariant is ever violated. */
+  async restockReturnedItems(tx: Tx, lines: RestockLine[]): Promise<void> {
+    for (const line of lines) {
+      await tx.inventory.upsert({
+        where: {
+          variantId_warehouseId: {
+            variantId: line.variantId,
+            warehouseId: line.warehouseId,
+          },
+        },
+        create: {
+          variantId: line.variantId,
+          warehouseId: line.warehouseId,
+          quantityOnHand: line.isDamaged ? 0 : line.quantity,
+          quantityDamaged: line.isDamaged ? line.quantity : 0,
+        },
+        update: line.isDamaged
+          ? { quantityDamaged: { increment: line.quantity } }
+          : { quantityOnHand: { increment: line.quantity } },
       });
     }
   }

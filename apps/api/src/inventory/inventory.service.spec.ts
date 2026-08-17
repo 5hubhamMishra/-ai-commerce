@@ -125,7 +125,12 @@ describe('InventoryService', () => {
       ]);
 
       expect(result).toEqual([
-        { variantId: 'v1', warehouseId: 'w-high', inventoryId: 'inv-high', quantity: 10 },
+        {
+          variantId: 'v1',
+          warehouseId: 'w-high',
+          inventoryId: 'inv-high',
+          quantity: 10,
+        },
       ]);
       expect(tx.inventory.update).toHaveBeenCalledWith({
         where: { id: 'inv-high' },
@@ -145,7 +150,9 @@ describe('InventoryService', () => {
       ]);
 
       await expect(
-        service.reserveForOrder(tx as never, [{ variantId: 'v1', quantity: 10 }]),
+        service.reserveForOrder(tx as never, [
+          { variantId: 'v1', quantity: 10 },
+        ]),
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'INSUFFICIENT_INVENTORY' }),
       });
@@ -158,7 +165,9 @@ describe('InventoryService', () => {
         { variantId: 'v1', warehouseId: 'w1', quantity: 3 },
       ]);
       expect(tx.inventory.update).toHaveBeenCalledWith({
-        where: { variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' } },
+        where: {
+          variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' },
+        },
         data: {
           quantityReserved: { decrement: 3 },
           quantityCommitted: { increment: 3 },
@@ -172,7 +181,9 @@ describe('InventoryService', () => {
         { variantId: 'v1', warehouseId: 'w1', quantity: 2 },
       ]);
       expect(tx.inventory.update).toHaveBeenCalledWith({
-        where: { variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' } },
+        where: {
+          variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' },
+        },
         data: {
           quantityOnHand: { decrement: 2 },
           quantityCommitted: { decrement: 2 },

@@ -7,10 +7,13 @@ import { OrderStatus } from '@prisma/client';
  * go through `assertTransition`; nothing writes `orders.status` directly.
  *
  * RETURN_REQUESTED / REFUND_PENDING / REFUNDED / RETURNED / REPLACEMENT / EXCHANGED
- * are reachable in this map (so the schema/state-machine is complete per the spec's
- * target diagram) but Phase 3 exposes no endpoint that triggers them — the actual
- * return/refund/replacement business logic (eligibility, approval, pickup, inspection)
- * is PROMPT 05 / Phase 4 (Post-Purchase) territory. See docs/PROJECT_PROGRESS.md.
+ * are driven by Phase 4's ReturnsService/RefundsService/ReplacementsService/
+ * ExchangesService (see `orders.service.ts`'s `markReturn*`/`markRefunded`/etc.
+ * transaction-scoped helpers, called from within each of those services' own
+ * transactions — the same cross-service-transaction pattern PaymentsService uses
+ * for `confirmPaymentTransition`). `RETURN_REQUESTED -> DELIVERED` covers both a
+ * rejected return and a customer-withdrawn one — either way the order reverts to
+ * its normal delivered state, not a new terminal one.
  */
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING_PAYMENT: [OrderStatus.PAID, OrderStatus.CANCELLED],
@@ -22,7 +25,11 @@ const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   OUT_FOR_DELIVERY: [OrderStatus.DELIVERED],
   DELIVERED: [OrderStatus.RETURN_REQUESTED],
   CANCELLED: [],
-  RETURN_REQUESTED: [OrderStatus.REFUND_PENDING, OrderStatus.RETURNED],
+  RETURN_REQUESTED: [
+    OrderStatus.REFUND_PENDING,
+    OrderStatus.RETURNED,
+    OrderStatus.DELIVERED,
+  ],
   REFUND_PENDING: [OrderStatus.REFUNDED],
   REFUNDED: [],
   RETURNED: [

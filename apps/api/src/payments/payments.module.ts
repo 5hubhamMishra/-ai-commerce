@@ -13,6 +13,8 @@ import { PaymentsService } from './payments.service';
     { provide: PAYMENT_PROVIDER, useExisting: DevelopmentPaymentAdapter },
     PaymentsService,
   ],
-  exports: [PaymentsService],
+  // PAYMENT_PROVIDER is exported too, so RefundsModule can inject the same
+  // provider instance for refund() without duplicating the adapter wiring.
+  exports: [PaymentsService, PAYMENT_PROVIDER],
 })
 export class PaymentsModule {}

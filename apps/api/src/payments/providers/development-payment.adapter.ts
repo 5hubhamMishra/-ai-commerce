@@ -7,6 +7,8 @@ import type {
   CreateIntentInput,
   CreateIntentResult,
   PaymentProvider,
+  RefundInput,
+  RefundResult,
 } from './payment-provider.interface';
 
 /**
@@ -38,6 +40,18 @@ export class DevelopmentPaymentAdapter implements PaymentProvider {
     return Promise.resolve({
       success: true,
       raw: { simulated: true, providerRef: input.providerRef },
+    });
+  }
+
+  refund(input: RefundInput): Promise<RefundResult> {
+    return Promise.resolve({
+      success: true,
+      providerRefundRef: `dev_refund_${randomUUID()}`,
+      raw: {
+        simulated: true,
+        providerRef: input.providerRef,
+        amount: input.amount,
+      },
     });
   }
 
