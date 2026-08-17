@@ -1,0 +1,281 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import type { Payment } from '@prisma/client';
+import { PaymentStatus } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
+import { OrderEventsService } from '../common/events/order-events.service';
+import { IdempotencyService } from '../common/idempotency/idempotency.service';
+import { OrdersService } from '../orders/orders.service';
+import { PrismaService } from '../prisma/prisma.service';
+import type { ConfirmPaymentDto } from './dto/confirm-payment.dto';
+import type { CreatePaymentDto } from './dto/create-payment.dto';
+import type { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import { PAYMENT_PROVIDER } from './providers/payment-provider.interface';
+import type {
+  ConfirmPaymentResult,
+  PaymentProvider,
+} from './providers/payment-provider.interface';
+
+@Injectable()
+export class PaymentsService {
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    private readonly ordersService: OrdersService,
+    private readonly idempotency: IdempotencyService,
+    private readonly audit: AuditService,
+    private readonly orderEvents: OrderEventsService,
+  ) {}
+
+  // ---- Client-driven flow: create intent, then confirm -----------------------
+
+  async createPayment(
+    userId: string,
+    dto: CreatePaymentDto,
+    idempotencyKey?: string,
+  ) {
+    if (!idempotencyKey) {
+      throw new BadRequestException({
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+        message: 'An Idempotency-Key header is required to create a payment.',
+      });
+    }
+    const result = await this.idempotency.run(
+      userId,
+      'payment_create',
+      idempotencyKey,
+      async () => ({
+        statusCode: 201,
+        body: await this.createPaymentInternal(
+          userId,
+          dto.orderId,
+          idempotencyKey,
+        ),
+      }),
+    );
+    return result.body;
+  }
+
+  private async createPaymentInternal(
+    userId: string,
+    orderId: string,
+    idempotencyKey: string,
+  ) {
+    const order = await this.ordersService.assertOwnership(userId, orderId);
+    if (order.status !== 'PENDING_PAYMENT') {
+      throw new ConflictException({
+        code: 'ORDER_NOT_PAYABLE',
+        message: `Order is in status ${order.status} and cannot accept a new payment.`,
+      });
+    }
+
+    // The amount comes entirely from the order the backend already computed —
+    // there is no client-supplied amount anywhere in this path (spec: never
+    // trust the frontend for payment amount/state).
+    const amount = Number(order.total);
+    const intent = await this.provider.createIntent({
+      orderId,
+      amount,
+      currency: order.currency,
+      idempotencyKey,
+    });
+
+    const payment = await this.prisma.payment.create({
+      data: {
+        orderId,
+        provider: this.provider.type,
+        providerRef: intent.providerRef,
+        status: PaymentStatus.PENDING,
+        amount,
+        currency: order.currency,
+        idempotencyKey,
+      },
+    });
+
+    return {
+      paymentId: payment.id,
+      orderId,
+      providerRef: intent.providerRef,
+      clientSecret: intent.clientSecret,
+      amount,
+      currency: order.currency,
+      status: payment.status,
+    };
+  }
+
+  async confirmPayment(
+    userId: string,
+    paymentId: string,
+    dto: ConfirmPaymentDto,
+    idempotencyKey?: string,
+  ) {
+    if (!idempotencyKey) {
+      throw new BadRequestException({
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+        message: 'An Idempotency-Key header is required to confirm a payment.',
+      });
+    }
+    const result = await this.idempotency.run(
+      userId,
+      'payment_confirm',
+      idempotencyKey,
+      async () => ({
+        statusCode: 201,
+        body: await this.confirmPaymentInternal(userId, paymentId, dto),
+      }),
+    );
+    return result.body;
+  }
+
+  private async confirmPaymentInternal(
+    userId: string,
+    paymentId: string,
+    dto: ConfirmPaymentDto,
+  ) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { order: true },
+    });
+    if (!payment || payment.order.userId !== userId) {
+      throw new NotFoundException({
+        code: 'PAYMENT_NOT_FOUND',
+        message: 'Payment not found.',
+      });
+    }
+    if (payment.status !== PaymentStatus.PENDING) {
+      // Already resolved (e.g. a race with the webhook) — replay the outcome
+      // rather than erroring, consistent with idempotent confirmation handling.
+      return buildOutcome(payment);
+    }
+
+    const confirmResult = await this.provider.confirmPayment({
+      providerRef: payment.providerRef!,
+      payload: { simulateFailure: dto.simulateFailure },
+    });
+
+    const updated = await this.applyConfirmationResult(
+      payment,
+      userId,
+      confirmResult,
+    );
+    return buildOutcome(updated);
+  }
+
+  // ---- Provider webhook (public — the provider can't hold our JWT) -----------
+
+  async handleWebhook(signature: string | undefined, dto: PaymentWebhookDto) {
+    if (!this.provider.verifyWebhookSignature(JSON.stringify(dto), signature)) {
+      throw new BadRequestException({
+        code: 'INVALID_WEBHOOK_SIGNATURE',
+        message: 'Webhook signature verification failed.',
+      });
+    }
+
+    const payment = await this.prisma.payment.findFirst({
+      where: { providerRef: dto.providerRef },
+    });
+    if (!payment) {
+      // Unknown reference — acknowledge without erroring so the provider doesn't
+      // endlessly retry a payment we don't (or no longer) recognize.
+      return { received: true };
+    }
+    if (payment.status !== PaymentStatus.PENDING) {
+      // Already processed — replay protection for duplicate webhook delivery.
+      return { received: true, alreadyProcessed: true };
+    }
+
+    await this.applyConfirmationResult(payment, null, {
+      success: dto.success,
+      raw: { source: 'webhook' },
+    });
+    return { received: true };
+  }
+
+  /** Shared by the client-confirm path and the webhook path: applies a provider's
+   *  success/failure outcome to a still-PENDING payment and (on success) drives
+   *  the order's PAID -> CONFIRMED transition atomically with the payment write. */
+  private async applyConfirmationResult(
+    payment: Payment,
+    actorId: string | null,
+    confirmResult: ConfirmPaymentResult,
+  ): Promise<Payment> {
+    if (confirmResult.success) {
+      const [updatedPayment, transition] = await this.prisma.$transaction(
+        async (tx) => {
+          const updatedPayment = await tx.payment.update({
+            where: { id: payment.id },
+            data: { status: PaymentStatus.SUCCEEDED },
+          });
+          const transition = await this.ordersService.confirmPaymentTransition(
+            tx,
+            payment.orderId,
+            actorId,
+          );
+          return [updatedPayment, transition] as const;
+        },
+      );
+      await this.audit.record({
+        actorId,
+        action: 'PAYMENT_SUCCEEDED',
+        entityType: 'payment',
+        entityId: payment.id,
+        metadata: { orderId: payment.orderId },
+      });
+      this.orderEvents.paymentSucceeded(
+        payment.orderId,
+        payment.id,
+        transition.userId,
+      );
+      return updatedPayment;
+    }
+
+    const updatedPayment = await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: PaymentStatus.FAILED,
+        failureReason: confirmResult.failureReason,
+      },
+    });
+    await this.audit.record({
+      actorId,
+      action: 'PAYMENT_FAILED',
+      entityType: 'payment',
+      entityId: payment.id,
+      metadata: {
+        orderId: payment.orderId,
+        reason: confirmResult.failureReason,
+      },
+    });
+    const order = await this.prisma.order.findUniqueOrThrow({
+      where: { id: payment.orderId },
+      select: { userId: true },
+    });
+    this.orderEvents.paymentFailed(payment.orderId, payment.id, order.userId);
+    return updatedPayment;
+  }
+
+  // ---- Admin reconciliation --------------------------------------------------
+
+  async listForOrder(orderId: string) {
+    return this.prisma.payment.findMany({
+      where: { orderId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+}
+
+function buildOutcome(payment: Payment) {
+  return {
+    paymentId: payment.id,
+    orderId: payment.orderId,
+    status: payment.status,
+    amount: Number(payment.amount),
+    currency: payment.currency,
+    failureReason: payment.failureReason,
+  };
+}
