@@ -41,6 +41,7 @@ import { RefundsModule } from './refunds/refunds.module';
 import { ReplacementsModule } from './replacements/replacements.module';
 import { ReturnsModule } from './returns/returns.module';
 import { SearchModule } from './search/search.module';
+import { SellersModule } from './sellers/sellers.module';
 import { ShippingModule } from './shipping/shipping.module';
 import { SupportModule } from './support/support.module';
 import { UsersModule } from './users/users.module';
@@ -89,6 +90,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     InvoicesModule,
     SupportModule,
     HelpCenterModule,
+    SellersModule,
   ],
   providers: [
     {
