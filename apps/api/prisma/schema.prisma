@@ -37,21 +37,24 @@ model User {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
-  roles          UserRole[]
-  profile        Profile?
-  addresses      Address[]
-  refreshTokens  RefreshToken[]
-  auditLogs      AuditLog[]       @relation("ActorAuditLogs")
-  cart           Cart?
-  wishlistItems  WishlistItem[]
-  orders         Order[]
-  returnRequests ReturnRequest[]
-  notifications  Notification[]
-  supportTickets SupportTicket[]
-  sentMessages   SupportMessage[]
-  sellerAccount  Seller?          @relation("SellerOwner")
-  sellerStaffOf  SellerStaff[]    @relation("SellerStaffUser")
-  sellerRatings  SellerRating[]   @relation("SellerRatingUser")
+  roles           UserRole[]
+  profile         Profile?
+  addresses       Address[]
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]        @relation("ActorAuditLogs")
+  cart            Cart?
+  wishlistItems   WishlistItem[]
+  orders          Order[]
+  returnRequests  ReturnRequest[]
+  notifications   Notification[]
+  supportTickets  SupportTicket[]
+  sentMessages    SupportMessage[]
+  sellerAccount   Seller?           @relation("SellerOwner")
+  sellerStaffOf   SellerStaff[]     @relation("SellerStaffUser")
+  sellerRatings   SellerRating[]    @relation("SellerRatingUser")
+  sessions        Session[]
+  events          BehavioralEvent[]
+  customerProfile CustomerProfile?
 
   @@map("users")
 }
@@ -1119,4 +1122,142 @@ model SellerRating {
   @@unique([sellerId, orderId])
   @@index([sellerId])
   @@map("seller_ratings")
+}
+
+// Phase 6 — Behavioral Data Foundation
+
+enum EventSource {
+  WEB
+  MOBILE
+  BACKEND
+}
+
+// Union of apps/web's original 14 event types (already firing from real UI
+// actions pre-Phase-1) and the spec's target list — additive, not a
+// replacement, matching EVENTS.md's existing "current 14 -> adds 12 more"
+// framing from the Phase 0 analysis.
+enum BehavioralEventType {
+  PRODUCT_VIEWED
+  PRODUCT_CLICKED
+  PRODUCT_SEARCHED
+  PRODUCT_COMPARED
+  PRODUCT_WISHLISTED
+  PRODUCT_REMOVED_FROM_WISHLIST
+  PRODUCT_ADDED_TO_CART
+  PRODUCT_REMOVED_FROM_CART
+  CHECKOUT_STARTED
+  ORDER_COMPLETED
+  CATEGORY_VIEWED
+  FILTER_USED
+  AI_ASSISTANT_QUERY
+  RECOMMENDATION_CLICKED
+  USER_REGISTERED
+  USER_LOGIN
+  SEARCH_FILTER_USED
+  SEARCH_SORT_USED
+  PAYMENT_STARTED
+  PAYMENT_COMPLETED
+  PRODUCT_REVIEWED
+  RECOMMENDATION_VIEWED
+  RECOMMENDATION_PURCHASED
+  AI_ASSISTANT_PRODUCT_CLICKED
+  RETURN_REQUESTED
+  REFUND_COMPLETED
+}
+
+// A visit, not a person — `anonymousId` is the longer-lived, client-generated
+// identifier (one per browser/device, persisted client-side) that survives
+// across many sessions; `id` (the sessionId) rotates. `userId` is null until
+// the visitor logs in, then set — the moment behavioral history starts being
+// attributable to an identity rather than just a device. Upserted by the
+// event collector on first contact, not created via a separate "start
+// session" call the client would have to remember to make first.
+model Session {
+  id          String      @id @default(uuid())
+  anonymousId String      @map("anonymous_id")
+  userId      String?     @map("user_id")
+  source      EventSource @default(WEB)
+  startedAt   DateTime    @default(now()) @map("started_at")
+  lastSeenAt  DateTime    @default(now()) @map("last_seen_at")
+
+  user   User?             @relation(fields: [userId], references: [id])
+  events BehavioralEvent[]
+
+  @@index([anonymousId])
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Append-only. `id` is the eventId and is CLIENT-supplied (not
+// @default(uuid())) — duplicate prevention relies on a retry reusing the
+// same id and hitting this table's primary-key uniqueness, the exact same
+// "let the database's own constraint be the source of truth" pattern
+// IdempotencyService already established (ADR-013), not a separate
+// dedup-check read. `occurredAt` is client-supplied (when it actually
+// happened, e.g. offline-then-synced mobile events); `receivedAt` is
+// server-side, for reliability auditing (how far behind is ingestion
+// running). No raw IP/user-agent columns — "do not unnecessarily store
+// sensitive information" (spec) is a schema decision here, not just a
+// policy note. `processedAt` is set once the aggregation queue worker has
+// applied this event to a CustomerProfile — the guard that makes queue
+// redelivery (BullMQ is at-least-once, not exactly-once) idempotent, so a
+// retried/redelivered job can never double-count the same event.
+model BehavioralEvent {
+  id            String              @id
+  eventType     BehavioralEventType @map("event_type")
+  userId        String?             @map("user_id")
+  anonymousId   String              @map("anonymous_id")
+  sessionId     String              @map("session_id")
+  source        EventSource
+  entityId      String?             @map("entity_id")
+  metadata      Json                @default("{}")
+  schemaVersion Int                 @default(1) @map("schema_version")
+  occurredAt    DateTime            @map("occurred_at")
+  receivedAt    DateTime            @default(now()) @map("received_at")
+  processedAt   DateTime?           @map("processed_at")
+
+  user    User?   @relation(fields: [userId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+
+  @@index([userId])
+  @@index([anonymousId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@map("behavioral_events")
+}
+
+// A deliberately simple v1: raw counters/aggregates only (view/cart/purchase
+// counts per category and brand, observed price range, event/order counts).
+// `segment`/`lifecycleStage` are plain strings computed from those counters
+// by a small, documented heuristic function at read time — genuinely
+// derived, never a hardcoded enum assignment (spec: "Do not permanently
+// hard-code customer segments"). Real behavioral scoring, time decay, and
+// cold-start handling are explicitly Phase 7's job (PROMPT 08) — this phase
+// only has to lay a real, working foundation under it, not build the
+// sophisticated version itself (same "don't half-build the next phase's
+// job" precedent as every prior phase). One profile per identity: keyed by
+// `userId` once known, falling back to `anonymousId` pre-login — never both
+// null (enforced in `CustomerProfileService`, not a DB constraint, since
+// Prisma has no portable partial-unique/check-constraint primitive for
+// exactly-one-of-two-columns without dropping to raw SQL for a rule this
+// easy to enforce in application code).
+model CustomerProfile {
+  id                     String    @id @default(uuid())
+  userId                 String?   @unique @map("user_id")
+  anonymousId            String?   @unique @map("anonymous_id")
+  categoryViewCounts     Json      @default("{}") @map("category_view_counts")
+  categoryCartCounts     Json      @default("{}") @map("category_cart_counts")
+  categoryPurchaseCounts Json      @default("{}") @map("category_purchase_counts")
+  brandViewCounts        Json      @default("{}") @map("brand_view_counts")
+  priceObservedMin       Decimal?  @map("price_observed_min") @db.Decimal(12, 2)
+  priceObservedMax       Decimal?  @map("price_observed_max") @db.Decimal(12, 2)
+  eventCount             Int       @default(0) @map("event_count")
+  orderCount             Int       @default(0) @map("order_count")
+  firstSeenAt            DateTime  @default(now()) @map("first_seen_at")
+  lastEventAt            DateTime? @map("last_event_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("customer_profiles")
 }
