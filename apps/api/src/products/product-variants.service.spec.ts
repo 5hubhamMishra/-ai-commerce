@@ -1,0 +1,123 @@
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { AuditService } from '../audit/audit.service';
+import { CatalogEventsService } from '../common/events/catalog-events.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { ProductVariantsService } from './product-variants.service';
+import { ProductsService } from './products.service';
+
+describe('ProductVariantsService', () => {
+  let service: ProductVariantsService;
+  let prisma: {
+    productVariant: {
+      findUnique: jest.Mock;
+      count: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+      updateMany: jest.Mock;
+    };
+    variantAttributeValue: { deleteMany: jest.Mock };
+    attributeValue: { count: jest.Mock };
+    $transaction: jest.Mock;
+  };
+  let products: { getRowById: jest.Mock; findByIdAdmin: jest.Mock };
+
+  beforeEach(async () => {
+    prisma = {
+      productVariant: {
+        findUnique: jest.fn(),
+        count: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn(),
+      },
+      variantAttributeValue: { deleteMany: jest.fn() },
+      attributeValue: { count: jest.fn() },
+      $transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(prisma)),
+    };
+    products = {
+      getRowById: jest.fn().mockResolvedValue({ id: 'p1' }),
+      findByIdAdmin: jest.fn().mockResolvedValue({ id: 'p1', variants: [] }),
+    };
+
+    const module = await Test.createTestingModule({
+      providers: [
+        ProductVariantsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: ProductsService, useValue: products },
+        {
+          provide: CatalogEventsService,
+          useValue: { productChanged: jest.fn() },
+        },
+        { provide: AuditService, useValue: { record: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get(ProductVariantsService);
+  });
+
+  it('makes the first variant of a product the default automatically', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue(null); // sku available
+    prisma.productVariant.count.mockResolvedValue(0);
+    prisma.productVariant.create.mockResolvedValue({ id: 'v1' });
+
+    await service.create('p1', { sku: 'SKU-1', price: 100 }, 'actor1');
+
+    expect(prisma.productVariant.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isDefault: true }),
+      }),
+    );
+  });
+
+  it('does not default a second variant unless explicitly requested', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue(null);
+    prisma.productVariant.count.mockResolvedValue(1);
+    prisma.productVariant.create.mockResolvedValue({ id: 'v2' });
+
+    await service.create('p1', { sku: 'SKU-2', price: 100 }, 'actor1');
+
+    expect(prisma.productVariant.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isDefault: false }),
+      }),
+    );
+    expect(prisma.productVariant.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('rejects a SKU that already exists on another variant', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue({ id: 'other-variant' });
+
+    await expect(
+      service.create('p1', { sku: 'DUPLICATE', price: 100 }, 'actor1'),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.productVariant.create).not.toHaveBeenCalled();
+  });
+
+  it('throws not-found when updating a variant that belongs to a different product', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v1',
+      productId: 'other-product',
+    });
+
+    await expect(
+      service.update('p1', 'v1', { price: 200 }, 'actor1'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('unsets the previous default when a variant is updated to become the default', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v2',
+      productId: 'p1',
+      sku: 'SKU-2',
+    });
+    prisma.productVariant.update.mockResolvedValue({ id: 'v2' });
+
+    await service.update('p1', 'v2', { isDefault: true }, 'actor1');
+
+    expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
+      where: { productId: 'p1', isDefault: true, NOT: { id: 'v2' } },
+      data: { isDefault: false },
+    });
+  });
+});
