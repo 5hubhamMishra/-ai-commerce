@@ -5,6 +5,7 @@
  */
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { seedCatalog } from './seed-catalog';
 
 const prisma = new PrismaClient();
 
@@ -14,24 +15,24 @@ async function main() {
   }
 
   const email = 'admin@veloura.dev';
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  const existingAdmin = await prisma.user.findUnique({ where: { email } });
+  if (existingAdmin) {
     console.log(`Seed admin already exists: ${email}`);
-    return;
+  } else {
+    const passwordHash = await bcrypt.hash('ChangeMe123!', 12);
+    await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        name: 'Veloura Admin',
+        roles: { create: [{ role: Role.SUPER_ADMIN }] },
+        profile: { create: {} },
+      },
+    });
+    console.log(`Seed admin created: ${email} / ChangeMe123! — change this password before deploying anywhere shared.`);
   }
 
-  const passwordHash = await bcrypt.hash('ChangeMe123!', 12);
-  await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      name: 'Veloura Admin',
-      roles: { create: [{ role: Role.SUPER_ADMIN }] },
-      profile: { create: {} },
-    },
-  });
-
-  console.log(`Seed admin created: ${email} / ChangeMe123! — change this password before deploying anywhere shared.`);
+  await seedCatalog(prisma);
 }
 
 main()

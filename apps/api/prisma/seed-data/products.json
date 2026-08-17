@@ -1,0 +1,3631 @@
+[
+  {
+    "id": "p1",
+    "name": "Acer Zenbook Studio 6",
+    "brand": "Acer",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 145100,
+    "compareAtPrice": 158200,
+    "rating": 4.5,
+    "reviewCount": 376,
+    "description": "The Acer Zenbook Studio 6 pairs a fast processor with a crisp display, built for coding and video editing and student. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "acer",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 22,
+    "featured": false,
+    "useCases": [
+      "coding",
+      "video editing",
+      "student"
+    ]
+  },
+  {
+    "id": "p2",
+    "name": "Apple Zenbook 4",
+    "brand": "Apple",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 86700,
+    "rating": 4.4,
+    "reviewCount": 25,
+    "description": "The Apple Zenbook 4 pairs a fast processor with a crisp display, built for business and coding and gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "apple"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 57,
+    "featured": false,
+    "useCases": [
+      "business",
+      "coding",
+      "gaming"
+    ]
+  },
+  {
+    "id": "p3",
+    "name": "Acer Notebook 7",
+    "brand": "Acer",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 82600,
+    "rating": 4.9,
+    "reviewCount": 93,
+    "description": "The Acer Notebook 7 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "acer",
+      "top-rated"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 50,
+    "featured": false,
+    "useCases": [
+      "gaming"
+    ]
+  },
+  {
+    "id": "p4",
+    "name": "Acer Vivobook Air 9",
+    "brand": "Acer",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 129400,
+    "rating": 4.2,
+    "reviewCount": 273,
+    "description": "The Acer Vivobook Air 9 pairs a fast processor with a crisp display, built for machine learning and coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "acer"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 37,
+    "featured": false,
+    "useCases": [
+      "machine learning",
+      "coding"
+    ]
+  },
+  {
+    "id": "p5",
+    "name": "Apple Notebook Pro 1",
+    "brand": "Apple",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 108100,
+    "rating": 3.8,
+    "reviewCount": 460,
+    "description": "The Apple Notebook Pro 1 pairs a fast processor with a crisp display, built for video editing. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "apple"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 12,
+    "featured": false,
+    "useCases": [
+      "video editing"
+    ]
+  },
+  {
+    "id": "p6",
+    "name": "HP Pavilion Plus 5",
+    "brand": "HP",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 162200,
+    "compareAtPrice": 176800,
+    "rating": 3.6,
+    "reviewCount": 146,
+    "description": "The HP Pavilion Plus 5 pairs a fast processor with a crisp display, built for machine learning and video editing and business. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "hp",
+      "deal"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 59,
+    "featured": false,
+    "useCases": [
+      "machine learning",
+      "video editing",
+      "business"
+    ]
+  },
+  {
+    "id": "p7",
+    "name": "HP Spectre Ultra 8",
+    "brand": "HP",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 121900,
+    "rating": 4.4,
+    "reviewCount": 449,
+    "description": "The HP Spectre Ultra 8 pairs a fast processor with a crisp display, built for video editing and machine learning. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "hp"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 47,
+    "featured": false,
+    "useCases": [
+      "video editing",
+      "machine learning"
+    ]
+  },
+  {
+    "id": "p8",
+    "name": "Apple Zenbook SE 4",
+    "brand": "Apple",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 56700,
+    "rating": 4.2,
+    "reviewCount": 86,
+    "description": "The Apple Zenbook SE 4 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
+    },
+    "tags": [
+      "laptops",
+      "apple"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 103,
+    "featured": true,
+    "useCases": [
+      "gaming"
+    ]
+  },
+  {
+    "id": "p9",
+    "name": "ASUS Vivobook GT 6",
+    "brand": "ASUS",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 59800,
+    "rating": 4.5,
+    "reviewCount": 340,
+    "description": "The ASUS Vivobook GT 6 pairs a fast processor with a crisp display, built for gaming and business and coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
+    },
+    "tags": [
+      "laptops",
+      "asus",
+      "top-rated"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 74,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "business",
+      "coding"
+    ]
+  },
+  {
+    "id": "p10",
+    "name": "Dell Notebook 5",
+    "brand": "Dell",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 82800,
+    "rating": 4.6,
+    "reviewCount": 200,
+    "description": "The Dell Notebook 5 pairs a fast processor with a crisp display, built for coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "dell",
+      "top-rated"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 82,
+    "featured": false,
+    "useCases": [
+      "coding"
+    ]
+  },
+  {
+    "id": "p11",
+    "name": "Acer Pavilion Max 1",
+    "brand": "Acer",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 65300,
+    "compareAtPrice": 75100,
+    "rating": 4.1,
+    "reviewCount": 213,
+    "description": "The Acer Pavilion Max 1 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
+    },
+    "tags": [
+      "laptops",
+      "acer",
+      "deal"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 85,
+    "featured": false,
+    "useCases": [
+      "gaming"
+    ]
+  },
+  {
+    "id": "p12",
+    "name": "Dell Vivobook Air 7",
+    "brand": "Dell",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 155400,
+    "compareAtPrice": 169400,
+    "rating": 4.9,
+    "reviewCount": 187,
+    "description": "The Dell Vivobook Air 7 pairs a fast processor with a crisp display, built for coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "dell",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 78,
+    "featured": true,
+    "useCases": [
+      "coding"
+    ]
+  },
+  {
+    "id": "p13",
+    "name": "Dell Vivobook Pro 3",
+    "brand": "Dell",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 90600,
+    "compareAtPrice": 112300,
+    "rating": 4,
+    "reviewCount": 121,
+    "description": "The Dell Vivobook Pro 3 pairs a fast processor with a crisp display, built for business. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "dell",
+      "deal"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 61,
+    "featured": true,
+    "useCases": [
+      "business"
+    ]
+  },
+  {
+    "id": "p14",
+    "name": "Lenovo Pavilion 8",
+    "brand": "Lenovo",
+    "category": "Laptops",
+    "subcategory": "laptops",
+    "price": 152500,
+    "compareAtPrice": 196700,
+    "rating": 3.8,
+    "reviewCount": 380,
+    "description": "The Lenovo Pavilion 8 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
+    "specs": {
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Graphics": "RTX 4070 8GB",
+      "Battery Life": "Up to 20 hours"
+    },
+    "tags": [
+      "laptops",
+      "lenovo",
+      "deal"
+    ],
+    "images": [
+      "/products/laptops.svg"
+    ],
+    "stock": 99,
+    "featured": false,
+    "useCases": [
+      "gaming"
+    ]
+  },
+  {
+    "id": "p15",
+    "name": "Sony Tune 9",
+    "brand": "Sony",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 19900,
+    "rating": 3.7,
+    "reviewCount": 439,
+    "description": "Sony Tune 9 delivers balanced sound with reliable connectivity, tuned for commute and gaming. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "sony"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 28,
+    "featured": false,
+    "useCases": [
+      "commute",
+      "gaming"
+    ]
+  },
+  {
+    "id": "p16",
+    "name": "JBL AirPods 3",
+    "brand": "JBL",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 29600,
+    "compareAtPrice": 33400,
+    "rating": 4.2,
+    "reviewCount": 234,
+    "description": "JBL AirPods 3 delivers balanced sound with reliable connectivity, tuned for gaming and travel and studio. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
+    },
+    "tags": [
+      "headphones",
+      "jbl",
+      "deal"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 34,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "travel",
+      "studio"
+    ]
+  },
+  {
+    "id": "p17",
+    "name": "Sony WH GT 1",
+    "brand": "Sony",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 19700,
+    "compareAtPrice": 24800,
+    "rating": 4.5,
+    "reviewCount": 335,
+    "description": "Sony WH GT 1 delivers balanced sound with reliable connectivity, tuned for studio. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "sony",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 5,
+    "featured": false,
+    "useCases": [
+      "studio"
+    ]
+  },
+  {
+    "id": "p18",
+    "name": "Sennheiser Momentum 8",
+    "brand": "Sennheiser",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 27100,
+    "rating": 4,
+    "reviewCount": 136,
+    "description": "Sennheiser Momentum 8 delivers balanced sound with reliable connectivity, tuned for gaming. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
+    },
+    "tags": [
+      "headphones",
+      "sennheiser"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 115,
+    "featured": false,
+    "useCases": [
+      "gaming"
+    ]
+  },
+  {
+    "id": "p19",
+    "name": "boAt WH GT 5",
+    "brand": "boAt",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 17600,
+    "rating": 4.5,
+    "reviewCount": 36,
+    "description": "boAt WH GT 5 delivers balanced sound with reliable connectivity, tuned for work calls and commute. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "boat",
+      "top-rated"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 80,
+    "featured": false,
+    "useCases": [
+      "work calls",
+      "commute"
+    ]
+  },
+  {
+    "id": "p20",
+    "name": "Apple QuietComfort Air 3",
+    "brand": "Apple",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 28800,
+    "rating": 3.5,
+    "reviewCount": 67,
+    "description": "Apple QuietComfort Air 3 delivers balanced sound with reliable connectivity, tuned for commute and gym and travel. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
+    },
+    "tags": [
+      "headphones",
+      "apple"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 28,
+    "featured": true,
+    "useCases": [
+      "commute",
+      "gym",
+      "travel"
+    ]
+  },
+  {
+    "id": "p21",
+    "name": "Bose QuietComfort Plus 3",
+    "brand": "Bose",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 18800,
+    "rating": 4.5,
+    "reviewCount": 267,
+    "description": "Bose QuietComfort Plus 3 delivers balanced sound with reliable connectivity, tuned for gaming and commute and studio. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "bose",
+      "top-rated"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 109,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "commute",
+      "studio"
+    ]
+  },
+  {
+    "id": "p22",
+    "name": "Sony AirPods Max 2",
+    "brand": "Sony",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 12700,
+    "compareAtPrice": 14700,
+    "rating": 3.8,
+    "reviewCount": 458,
+    "description": "Sony AirPods Max 2 delivers balanced sound with reliable connectivity, tuned for gym. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "sony",
+      "deal"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 96,
+    "featured": false,
+    "useCases": [
+      "gym"
+    ]
+  },
+  {
+    "id": "p23",
+    "name": "Bose QuietComfort SE 7",
+    "brand": "Bose",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 12900,
+    "compareAtPrice": 15200,
+    "rating": 4.4,
+    "reviewCount": 135,
+    "description": "Bose QuietComfort SE 7 delivers balanced sound with reliable connectivity, tuned for travel and gym. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "bose",
+      "deal"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 74,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "gym"
+    ]
+  },
+  {
+    "id": "p24",
+    "name": "Bose Rockerz X 2",
+    "brand": "Bose",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 10400,
+    "compareAtPrice": 12400,
+    "rating": 4.9,
+    "reviewCount": 248,
+    "description": "Bose Rockerz X 2 delivers balanced sound with reliable connectivity, tuned for travel and gaming and work calls. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "bose",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 42,
+    "featured": true,
+    "useCases": [
+      "travel",
+      "gaming",
+      "work calls"
+    ]
+  },
+  {
+    "id": "p25",
+    "name": "Bose WH Pro 6",
+    "brand": "Bose",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 5500,
+    "compareAtPrice": 6400,
+    "rating": 3.7,
+    "reviewCount": 321,
+    "description": "Bose WH Pro 6 delivers balanced sound with reliable connectivity, tuned for gaming and work calls and travel. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "bose",
+      "deal"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 120,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "work calls",
+      "travel"
+    ]
+  },
+  {
+    "id": "p26",
+    "name": "Sony QuietComfort 2",
+    "brand": "Sony",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 27700,
+    "compareAtPrice": 33500,
+    "rating": 3.8,
+    "reviewCount": 189,
+    "description": "Sony QuietComfort 2 delivers balanced sound with reliable connectivity, tuned for commute and travel and gaming. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
+    },
+    "tags": [
+      "headphones",
+      "sony",
+      "deal"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 116,
+    "featured": false,
+    "useCases": [
+      "commute",
+      "travel",
+      "gaming"
+    ]
+  },
+  {
+    "id": "p27",
+    "name": "boAt AirPods 2",
+    "brand": "boAt",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 6700,
+    "rating": 4.2,
+    "reviewCount": 160,
+    "description": "boAt AirPods 2 delivers balanced sound with reliable connectivity, tuned for commute and studio and gaming. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "20mm",
+      "Battery Life": "Up to 8 hours",
+      "Connectivity": "Bluetooth 5.0",
+      "Noise Cancellation": "Passive Isolation",
+      "Weight": "180g"
+    },
+    "tags": [
+      "headphones",
+      "boat"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 76,
+    "featured": false,
+    "useCases": [
+      "commute",
+      "studio",
+      "gaming"
+    ]
+  },
+  {
+    "id": "p28",
+    "name": "Apple WH Plus 4",
+    "brand": "Apple",
+    "category": "Headphones",
+    "subcategory": "headphones",
+    "price": 25800,
+    "rating": 3.7,
+    "reviewCount": 79,
+    "description": "Apple WH Plus 4 delivers balanced sound with reliable connectivity, tuned for gym. Lightweight design keeps it comfortable through long listening sessions.",
+    "specs": {
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
+    },
+    "tags": [
+      "headphones",
+      "apple"
+    ],
+    "images": [
+      "/products/headphones.svg"
+    ],
+    "stock": 50,
+    "featured": true,
+    "useCases": [
+      "gym"
+    ]
+  },
+  {
+    "id": "p29",
+    "name": "Xiaomi Pixel Air 2",
+    "brand": "Xiaomi",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 63800,
+    "rating": 4.8,
+    "reviewCount": 112,
+    "description": "Xiaomi Pixel Air 2 combines a smooth display with a capable camera system, well suited for business and photography. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "xiaomi",
+      "top-rated"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 53,
+    "featured": false,
+    "useCases": [
+      "business",
+      "photography"
+    ]
+  },
+  {
+    "id": "p30",
+    "name": "Vivo V-series 7",
+    "brand": "Vivo",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 90100,
+    "compareAtPrice": 102700,
+    "rating": 4.4,
+    "reviewCount": 136,
+    "description": "Vivo V-series 7 combines a smooth display with a capable camera system, well suited for gaming. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Camera": "108MP Triple Camera, OIS",
+      "Battery": "5000mAh, 65W Fast Charging"
+    },
+    "tags": [
+      "smartphones",
+      "vivo",
+      "deal"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 9,
+    "featured": true,
+    "useCases": [
+      "gaming"
+    ]
+  },
+  {
+    "id": "p31",
+    "name": "Apple iPhone SE 5",
+    "brand": "Apple",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 61700,
+    "compareAtPrice": 70300,
+    "rating": 4.9,
+    "reviewCount": 156,
+    "description": "Apple iPhone SE 5 combines a smooth display with a capable camera system, well suited for gaming and everyday use. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "apple",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 5,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p32",
+    "name": "OnePlus iPhone X 3",
+    "brand": "OnePlus",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 50800,
+    "compareAtPrice": 59900,
+    "rating": 4.8,
+    "reviewCount": 443,
+    "description": "OnePlus iPhone X 3 combines a smooth display with a capable camera system, well suited for everyday use and gaming and business. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "oneplus",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 85,
+    "featured": false,
+    "useCases": [
+      "everyday use",
+      "gaming",
+      "business"
+    ]
+  },
+  {
+    "id": "p33",
+    "name": "Vivo Pixel SE 6",
+    "brand": "Vivo",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 65700,
+    "compareAtPrice": 83400,
+    "rating": 3.6,
+    "reviewCount": 219,
+    "description": "Vivo Pixel SE 6 combines a smooth display with a capable camera system, well suited for everyday use. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "vivo",
+      "deal"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 94,
+    "featured": false,
+    "useCases": [
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p34",
+    "name": "Vivo Redmi X 1",
+    "brand": "Vivo",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 139100,
+    "rating": 4.7,
+    "reviewCount": 48,
+    "description": "Vivo Redmi X 1 combines a smooth display with a capable camera system, well suited for everyday use and photography and business. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Camera": "108MP Triple Camera, OIS",
+      "Battery": "5000mAh, 65W Fast Charging"
+    },
+    "tags": [
+      "smartphones",
+      "vivo",
+      "top-rated"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 111,
+    "featured": false,
+    "useCases": [
+      "everyday use",
+      "photography",
+      "business"
+    ]
+  },
+  {
+    "id": "p35",
+    "name": "Vivo V-series Air 9",
+    "brand": "Vivo",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 33500,
+    "compareAtPrice": 37900,
+    "rating": 3.6,
+    "reviewCount": 314,
+    "description": "Vivo V-series Air 9 combines a smooth display with a capable camera system, well suited for photography and everyday use. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "vivo",
+      "deal"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 23,
+    "featured": false,
+    "useCases": [
+      "photography",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p36",
+    "name": "Apple Galaxy Pro 5",
+    "brand": "Apple",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 47200,
+    "rating": 4.4,
+    "reviewCount": 452,
+    "description": "Apple Galaxy Pro 5 combines a smooth display with a capable camera system, well suited for business and everyday use. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "apple"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 63,
+    "featured": false,
+    "useCases": [
+      "business",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p37",
+    "name": "Xiaomi V-series 6",
+    "brand": "Xiaomi",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 131700,
+    "rating": 3.6,
+    "reviewCount": 401,
+    "description": "Xiaomi V-series 6 combines a smooth display with a capable camera system, well suited for everyday use and photography and business. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Camera": "108MP Triple Camera, OIS",
+      "Battery": "5000mAh, 65W Fast Charging"
+    },
+    "tags": [
+      "smartphones",
+      "xiaomi"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 39,
+    "featured": false,
+    "useCases": [
+      "everyday use",
+      "photography",
+      "business"
+    ]
+  },
+  {
+    "id": "p38",
+    "name": "OnePlus V-series Max 5",
+    "brand": "OnePlus",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 91700,
+    "compareAtPrice": 115500,
+    "rating": 4.3,
+    "reviewCount": 368,
+    "description": "OnePlus V-series Max 5 combines a smooth display with a capable camera system, well suited for gaming and everyday use and business. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Camera": "108MP Triple Camera, OIS",
+      "Battery": "5000mAh, 65W Fast Charging"
+    },
+    "tags": [
+      "smartphones",
+      "oneplus",
+      "deal"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 63,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "everyday use",
+      "business"
+    ]
+  },
+  {
+    "id": "p39",
+    "name": "Apple iPhone Pro 6",
+    "brand": "Apple",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 66000,
+    "rating": 3.7,
+    "reviewCount": 226,
+    "description": "Apple iPhone Pro 6 combines a smooth display with a capable camera system, well suited for gaming and everyday use and photography. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "apple"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 42,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "everyday use",
+      "photography"
+    ]
+  },
+  {
+    "id": "p40",
+    "name": "Vivo Pixel Pro 1",
+    "brand": "Vivo",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 116000,
+    "rating": 4.2,
+    "reviewCount": 227,
+    "description": "Vivo Pixel Pro 1 combines a smooth display with a capable camera system, well suited for business and gaming and everyday use. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Camera": "108MP Triple Camera, OIS",
+      "Battery": "5000mAh, 65W Fast Charging"
+    },
+    "tags": [
+      "smartphones",
+      "vivo"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 102,
+    "featured": false,
+    "useCases": [
+      "business",
+      "gaming",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p41",
+    "name": "Google Nord X 1",
+    "brand": "Google",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 29000,
+    "compareAtPrice": 36800,
+    "rating": 4.7,
+    "reviewCount": 34,
+    "description": "Google Nord X 1 combines a smooth display with a capable camera system, well suited for photography. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
+    },
+    "tags": [
+      "smartphones",
+      "google",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 37,
+    "featured": true,
+    "useCases": [
+      "photography"
+    ]
+  },
+  {
+    "id": "p42",
+    "name": "Apple V-series 5",
+    "brand": "Apple",
+    "category": "Smartphones",
+    "subcategory": "smartphones",
+    "price": 82100,
+    "compareAtPrice": 91100,
+    "rating": 4.5,
+    "reviewCount": 243,
+    "description": "Apple V-series 5 combines a smooth display with a capable camera system, well suited for photography. All-day battery keeps up with a busy schedule.",
+    "specs": {
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Processor": "Intel Core i9 / Apple M3 Pro",
+      "RAM": "32GB",
+      "Storage": "1TB SSD",
+      "Camera": "108MP Triple Camera, OIS",
+      "Battery": "5000mAh, 65W Fast Charging"
+    },
+    "tags": [
+      "smartphones",
+      "apple",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/smartphones.svg"
+    ],
+    "stock": 40,
+    "featured": false,
+    "useCases": [
+      "photography"
+    ]
+  },
+  {
+    "id": "p43",
+    "name": "SteelSeries ROG Strix Studio 1",
+    "brand": "SteelSeries",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 1300,
+    "rating": 3.6,
+    "reviewCount": 305,
+    "description": "Built for streaming, the SteelSeries ROG Strix Studio 1 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "steelseries"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 17,
+    "featured": false,
+    "useCases": [
+      "streaming"
+    ]
+  },
+  {
+    "id": "p44",
+    "name": "Corsair Cloud 2",
+    "brand": "Corsair",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 30100,
+    "compareAtPrice": 36400,
+    "rating": 3.5,
+    "reviewCount": 90,
+    "description": "Built for casual gaming and competitive gaming, the Corsair Cloud 2 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "gaming",
+      "corsair",
+      "deal"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 47,
+    "featured": false,
+    "useCases": [
+      "casual gaming",
+      "competitive gaming"
+    ]
+  },
+  {
+    "id": "p45",
+    "name": "ASUS ROG ROG Strix Plus 5",
+    "brand": "ASUS ROG",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 19800,
+    "compareAtPrice": 24200,
+    "rating": 4.6,
+    "reviewCount": 456,
+    "description": "Built for streaming, the ASUS ROG ROG Strix Plus 5 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "asus-rog",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 118,
+    "featured": false,
+    "useCases": [
+      "streaming"
+    ]
+  },
+  {
+    "id": "p46",
+    "name": "Logitech Viper GT 1",
+    "brand": "Logitech",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 5700,
+    "rating": 3.7,
+    "reviewCount": 451,
+    "description": "Built for casual gaming and competitive gaming and streaming, the Logitech Viper GT 1 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "logitech"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 120,
+    "featured": true,
+    "useCases": [
+      "casual gaming",
+      "competitive gaming",
+      "streaming"
+    ]
+  },
+  {
+    "id": "p47",
+    "name": "SteelSeries Viper 9",
+    "brand": "SteelSeries",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 20100,
+    "compareAtPrice": 25300,
+    "rating": 3.8,
+    "reviewCount": 164,
+    "description": "Built for competitive gaming and casual gaming and streaming, the SteelSeries Viper 9 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "steelseries",
+      "deal"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 44,
+    "featured": false,
+    "useCases": [
+      "competitive gaming",
+      "casual gaming",
+      "streaming"
+    ]
+  },
+  {
+    "id": "p48",
+    "name": "Razer Cloud Ultra 5",
+    "brand": "Razer",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 2100,
+    "compareAtPrice": 2500,
+    "rating": 4.5,
+    "reviewCount": 95,
+    "description": "Built for casual gaming and competitive gaming, the Razer Cloud Ultra 5 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "razer",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 89,
+    "featured": false,
+    "useCases": [
+      "casual gaming",
+      "competitive gaming"
+    ]
+  },
+  {
+    "id": "p49",
+    "name": "Razer K70 Plus 8",
+    "brand": "Razer",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 37900,
+    "compareAtPrice": 44700,
+    "rating": 4.6,
+    "reviewCount": 394,
+    "description": "Built for casual gaming and streaming, the Razer K70 Plus 8 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "gaming",
+      "razer",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 13,
+    "featured": false,
+    "useCases": [
+      "casual gaming",
+      "streaming"
+    ]
+  },
+  {
+    "id": "p50",
+    "name": "Corsair Cloud 6",
+    "brand": "Corsair",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 43600,
+    "compareAtPrice": 53600,
+    "rating": 4.4,
+    "reviewCount": 307,
+    "description": "Built for streaming and casual gaming, the Corsair Cloud 6 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "gaming",
+      "corsair",
+      "deal"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 112,
+    "featured": false,
+    "useCases": [
+      "streaming",
+      "casual gaming"
+    ]
+  },
+  {
+    "id": "p51",
+    "name": "HyperX Cloud Plus 8",
+    "brand": "HyperX",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 2500,
+    "rating": 4.8,
+    "reviewCount": 74,
+    "description": "Built for casual gaming and streaming, the HyperX Cloud Plus 8 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "hyperx",
+      "top-rated"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 42,
+    "featured": false,
+    "useCases": [
+      "casual gaming",
+      "streaming"
+    ]
+  },
+  {
+    "id": "p52",
+    "name": "Razer Viper GT 1",
+    "brand": "Razer",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 11100,
+    "rating": 4,
+    "reviewCount": 403,
+    "description": "Built for casual gaming, the Razer Viper GT 1 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "razer"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 28,
+    "featured": false,
+    "useCases": [
+      "casual gaming"
+    ]
+  },
+  {
+    "id": "p53",
+    "name": "Corsair Viper X 9",
+    "brand": "Corsair",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 30000,
+    "compareAtPrice": 33900,
+    "rating": 4.8,
+    "reviewCount": 201,
+    "description": "Built for casual gaming and competitive gaming and streaming, the Corsair Viper X 9 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "gaming",
+      "corsair",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 0,
+    "featured": false,
+    "useCases": [
+      "casual gaming",
+      "competitive gaming",
+      "streaming"
+    ]
+  },
+  {
+    "id": "p54",
+    "name": "SteelSeries DeathAdder Plus 6",
+    "brand": "SteelSeries",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 24100,
+    "compareAtPrice": 28900,
+    "rating": 3.6,
+    "reviewCount": 368,
+    "description": "Built for competitive gaming and casual gaming, the SteelSeries DeathAdder Plus 6 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "steelseries",
+      "deal"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 92,
+    "featured": false,
+    "useCases": [
+      "competitive gaming",
+      "casual gaming"
+    ]
+  },
+  {
+    "id": "p55",
+    "name": "ASUS ROG Cloud 4",
+    "brand": "ASUS ROG",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 8500,
+    "compareAtPrice": 9900,
+    "rating": 3.6,
+    "reviewCount": 475,
+    "description": "Built for streaming and competitive gaming, the ASUS ROG Cloud 4 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired",
+      "Connectivity": "Bluetooth 5.0",
+      "Switch Type": "Membrane",
+      "DPI": "6400 DPI",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "gaming",
+      "asus-rog",
+      "deal"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 65,
+    "featured": false,
+    "useCases": [
+      "streaming",
+      "competitive gaming"
+    ]
+  },
+  {
+    "id": "p56",
+    "name": "ASUS ROG ROG Strix SE 4",
+    "brand": "ASUS ROG",
+    "category": "Gaming",
+    "subcategory": "gaming",
+    "price": 28800,
+    "rating": 4,
+    "reviewCount": 13,
+    "description": "Built for streaming and competitive gaming, the ASUS ROG ROG Strix SE 4 offers precise response and durable switches that hold up to daily use.",
+    "specs": {
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "gaming",
+      "asus-rog"
+    ],
+    "images": [
+      "/products/gaming.svg"
+    ],
+    "stock": 44,
+    "featured": true,
+    "useCases": [
+      "streaming",
+      "competitive gaming"
+    ]
+  },
+  {
+    "id": "p57",
+    "name": "Noise Versa 6",
+    "brand": "Noise",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 14600,
+    "rating": 3.5,
+    "reviewCount": 138,
+    "description": "Track running with the Noise Versa 6. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "14-inch HD",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54",
+      "Sensors": "Heart Rate",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "wearables",
+      "noise"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 93,
+    "featured": false,
+    "useCases": [
+      "running"
+    ]
+  },
+  {
+    "id": "p58",
+    "name": "Fitbit Band X 1",
+    "brand": "Fitbit",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 49900,
+    "compareAtPrice": 60900,
+    "rating": 4.7,
+    "reviewCount": 150,
+    "description": "Track swimming and running and everyday use with the Fitbit Band X 1. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "fitbit",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 18,
+    "featured": false,
+    "useCases": [
+      "swimming",
+      "running",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p59",
+    "name": "Garmin Fenix 2",
+    "brand": "Garmin",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 46000,
+    "compareAtPrice": 52900,
+    "rating": 3.5,
+    "reviewCount": 185,
+    "description": "Track swimming with the Garmin Fenix 2. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "garmin",
+      "deal"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 24,
+    "featured": false,
+    "useCases": [
+      "swimming"
+    ]
+  },
+  {
+    "id": "p60",
+    "name": "Garmin Band Pro 1",
+    "brand": "Garmin",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 41700,
+    "rating": 3.4,
+    "reviewCount": 152,
+    "description": "Track swimming with the Garmin Band Pro 1. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "garmin"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 98,
+    "featured": false,
+    "useCases": [
+      "swimming"
+    ]
+  },
+  {
+    "id": "p61",
+    "name": "boAt ColorFit X 7",
+    "brand": "boAt",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 27600,
+    "compareAtPrice": 34500,
+    "rating": 3.7,
+    "reviewCount": 174,
+    "description": "Track swimming with the boAt ColorFit X 7. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "boat",
+      "deal"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 22,
+    "featured": false,
+    "useCases": [
+      "swimming"
+    ]
+  },
+  {
+    "id": "p62",
+    "name": "Apple Fenix Studio 8",
+    "brand": "Apple",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 14400,
+    "rating": 3.5,
+    "reviewCount": 472,
+    "description": "Track everyday use with the Apple Fenix Studio 8. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "14-inch HD",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54",
+      "Sensors": "Heart Rate",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "wearables",
+      "apple"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 57,
+    "featured": false,
+    "useCases": [
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p63",
+    "name": "boAt ColorFit Ultra 8",
+    "brand": "boAt",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 24000,
+    "compareAtPrice": 26400,
+    "rating": 4.2,
+    "reviewCount": 457,
+    "description": "Track swimming and running and fitness tracking with the boAt ColorFit Ultra 8. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "14-inch HD",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54",
+      "Sensors": "Heart Rate",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "wearables",
+      "boat",
+      "deal"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 31,
+    "featured": true,
+    "useCases": [
+      "swimming",
+      "running",
+      "fitness tracking"
+    ]
+  },
+  {
+    "id": "p64",
+    "name": "boAt Versa SE 2",
+    "brand": "boAt",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 32900,
+    "rating": 3.5,
+    "reviewCount": 34,
+    "description": "Track swimming and fitness tracking and everyday use with the boAt Versa SE 2. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "boat"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 70,
+    "featured": false,
+    "useCases": [
+      "swimming",
+      "fitness tracking",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p65",
+    "name": "boAt Watch Lite 6",
+    "brand": "boAt",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 22200,
+    "compareAtPrice": 27300,
+    "rating": 4.5,
+    "reviewCount": 310,
+    "description": "Track running and swimming and fitness tracking with the boAt Watch Lite 6. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "14-inch HD",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54",
+      "Sensors": "Heart Rate",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "wearables",
+      "boat",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 102,
+    "featured": false,
+    "useCases": [
+      "running",
+      "swimming",
+      "fitness tracking"
+    ]
+  },
+  {
+    "id": "p66",
+    "name": "Fitbit ColorFit X 4",
+    "brand": "Fitbit",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 32100,
+    "rating": 3.4,
+    "reviewCount": 384,
+    "description": "Track swimming with the Fitbit ColorFit X 4. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "fitbit"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 119,
+    "featured": false,
+    "useCases": [
+      "swimming"
+    ]
+  },
+  {
+    "id": "p67",
+    "name": "boAt Watch X 7",
+    "brand": "boAt",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 46000,
+    "rating": 3.5,
+    "reviewCount": 391,
+    "description": "Track swimming and everyday use with the boAt Watch X 7. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "boat"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 81,
+    "featured": false,
+    "useCases": [
+      "swimming",
+      "everyday use"
+    ]
+  },
+  {
+    "id": "p68",
+    "name": "Garmin Band 8",
+    "brand": "Garmin",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 22600,
+    "compareAtPrice": 28700,
+    "rating": 4.7,
+    "reviewCount": 371,
+    "description": "Track swimming and everyday use and running with the Garmin Band 8. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "14-inch HD",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54",
+      "Sensors": "Heart Rate",
+      "Compatibility": "Windows"
+    },
+    "tags": [
+      "wearables",
+      "garmin",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 0,
+    "featured": false,
+    "useCases": [
+      "swimming",
+      "everyday use",
+      "running"
+    ]
+  },
+  {
+    "id": "p69",
+    "name": "Noise ColorFit 7",
+    "brand": "Noise",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 30900,
+    "rating": 4.4,
+    "reviewCount": 278,
+    "description": "Track fitness tracking and running with the Noise ColorFit 7. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "noise"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 69,
+    "featured": false,
+    "useCases": [
+      "fitness tracking",
+      "running"
+    ]
+  },
+  {
+    "id": "p70",
+    "name": "boAt ColorFit 4",
+    "brand": "boAt",
+    "category": "Wearables",
+    "subcategory": "wearables",
+    "price": 38100,
+    "rating": 3.7,
+    "reviewCount": 441,
+    "description": "Track swimming and fitness tracking with the boAt ColorFit 4. Accurate sensors and multi-day battery life keep you moving without constant charging.",
+    "specs": {
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
+    },
+    "tags": [
+      "wearables",
+      "boat"
+    ],
+    "images": [
+      "/products/wearables.svg"
+    ],
+    "stock": 89,
+    "featured": false,
+    "useCases": [
+      "swimming",
+      "fitness tracking"
+    ]
+  },
+  {
+    "id": "p71",
+    "name": "DJI Alpha Ultra 9",
+    "brand": "DJI",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 198100,
+    "compareAtPrice": 215900,
+    "rating": 4.6,
+    "reviewCount": 473,
+    "description": "The DJI Alpha Ultra 9 is built for professional photography and vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "dji",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 12,
+    "featured": false,
+    "useCases": [
+      "professional photography",
+      "vlogging"
+    ]
+  },
+  {
+    "id": "p72",
+    "name": "Fujifilm Z-series GT 3",
+    "brand": "Fujifilm",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 162600,
+    "compareAtPrice": 185400,
+    "rating": 4.7,
+    "reviewCount": 332,
+    "description": "The Fujifilm Z-series GT 3 is built for travel, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "fujifilm",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 41,
+    "featured": false,
+    "useCases": [
+      "travel"
+    ]
+  },
+  {
+    "id": "p73",
+    "name": "GoPro X-T Pro 6",
+    "brand": "GoPro",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 113000,
+    "compareAtPrice": 145800,
+    "rating": 4.3,
+    "reviewCount": 296,
+    "description": "The GoPro X-T Pro 6 is built for professional photography, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "gopro",
+      "deal"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 89,
+    "featured": false,
+    "useCases": [
+      "professional photography"
+    ]
+  },
+  {
+    "id": "p74",
+    "name": "GoPro X-T 4",
+    "brand": "GoPro",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 50700,
+    "compareAtPrice": 58300,
+    "rating": 4.9,
+    "reviewCount": 351,
+    "description": "The GoPro X-T 4 is built for professional photography, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "APS-C 26MP",
+      "Resolution": "4K Video / 26MP Photo",
+      "ISO Range": "100-51200",
+      "Video": "4K60",
+      "Stabilization": "Optical"
+    },
+    "tags": [
+      "cameras",
+      "gopro",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 80,
+    "featured": false,
+    "useCases": [
+      "professional photography"
+    ]
+  },
+  {
+    "id": "p75",
+    "name": "Fujifilm Z-series Air 1",
+    "brand": "Fujifilm",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 151800,
+    "rating": 4.7,
+    "reviewCount": 88,
+    "description": "The Fujifilm Z-series Air 1 is built for travel, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "fujifilm",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 113,
+    "featured": true,
+    "useCases": [
+      "travel"
+    ]
+  },
+  {
+    "id": "p76",
+    "name": "DJI EOS 9",
+    "brand": "DJI",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 12700,
+    "compareAtPrice": 14700,
+    "rating": 3.9,
+    "reviewCount": 22,
+    "description": "The DJI EOS 9 is built for travel and professional photography, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "1-inch 20MP",
+      "Resolution": "1080p / 20MP",
+      "ISO Range": "100-12800",
+      "Video": "1080p60",
+      "Stabilization": "Electronic"
+    },
+    "tags": [
+      "cameras",
+      "dji",
+      "deal"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 80,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "professional photography"
+    ]
+  },
+  {
+    "id": "p77",
+    "name": "Canon Z-series 8",
+    "brand": "Canon",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 72300,
+    "compareAtPrice": 80300,
+    "rating": 4.2,
+    "reviewCount": 192,
+    "description": "The Canon Z-series 8 is built for wildlife and travel, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "APS-C 26MP",
+      "Resolution": "4K Video / 26MP Photo",
+      "ISO Range": "100-51200",
+      "Video": "4K60",
+      "Stabilization": "Optical"
+    },
+    "tags": [
+      "cameras",
+      "canon",
+      "deal"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 110,
+    "featured": true,
+    "useCases": [
+      "wildlife",
+      "travel"
+    ]
+  },
+  {
+    "id": "p78",
+    "name": "Canon Osmo GT 9",
+    "brand": "Canon",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 16700,
+    "compareAtPrice": 19900,
+    "rating": 3.9,
+    "reviewCount": 171,
+    "description": "The Canon Osmo GT 9 is built for professional photography and vlogging and travel, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "1-inch 20MP",
+      "Resolution": "1080p / 20MP",
+      "ISO Range": "100-12800",
+      "Video": "1080p60",
+      "Stabilization": "Electronic"
+    },
+    "tags": [
+      "cameras",
+      "canon",
+      "deal"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 60,
+    "featured": true,
+    "useCases": [
+      "professional photography",
+      "vlogging",
+      "travel"
+    ]
+  },
+  {
+    "id": "p79",
+    "name": "Sony Alpha Pro 5",
+    "brand": "Sony",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 169100,
+    "rating": 4.8,
+    "reviewCount": 148,
+    "description": "The Sony Alpha Pro 5 is built for vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "sony",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 66,
+    "featured": false,
+    "useCases": [
+      "vlogging"
+    ]
+  },
+  {
+    "id": "p80",
+    "name": "DJI X-T 6",
+    "brand": "DJI",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 88700,
+    "compareAtPrice": 96700,
+    "rating": 3.8,
+    "reviewCount": 230,
+    "description": "The DJI X-T 6 is built for travel and vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "dji",
+      "deal"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 22,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "vlogging"
+    ]
+  },
+  {
+    "id": "p81",
+    "name": "Fujifilm EOS X 6",
+    "brand": "Fujifilm",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 128800,
+    "compareAtPrice": 152000,
+    "rating": 4.8,
+    "reviewCount": 31,
+    "description": "The Fujifilm EOS X 6 is built for professional photography and vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "fujifilm",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 54,
+    "featured": false,
+    "useCases": [
+      "professional photography",
+      "vlogging"
+    ]
+  },
+  {
+    "id": "p82",
+    "name": "Nikon Z-series Lite 4",
+    "brand": "Nikon",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 170700,
+    "compareAtPrice": 215100,
+    "rating": 3.4,
+    "reviewCount": 234,
+    "description": "The Nikon Z-series Lite 4 is built for wildlife and vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "nikon",
+      "deal"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 114,
+    "featured": false,
+    "useCases": [
+      "wildlife",
+      "vlogging"
+    ]
+  },
+  {
+    "id": "p83",
+    "name": "DJI Z-series Max 8",
+    "brand": "DJI",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 149100,
+    "rating": 4.3,
+    "reviewCount": 208,
+    "description": "The DJI Z-series Max 8 is built for vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "dji"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 90,
+    "featured": false,
+    "useCases": [
+      "vlogging"
+    ]
+  },
+  {
+    "id": "p84",
+    "name": "Canon Osmo Max 2",
+    "brand": "Canon",
+    "category": "Cameras",
+    "subcategory": "cameras",
+    "price": 186300,
+    "rating": 4.7,
+    "reviewCount": 418,
+    "description": "The Canon Osmo Max 2 is built for professional photography, offering strong low-light performance and reliable autofocus in a compact body.",
+    "specs": {
+      "Sensor": "Full-Frame 45MP",
+      "Resolution": "8K Video / 45MP Photo",
+      "ISO Range": "100-102400",
+      "Video": "8K30 / 4K120",
+      "Stabilization": "5-Axis IBIS"
+    },
+    "tags": [
+      "cameras",
+      "canon",
+      "top-rated"
+    ],
+    "images": [
+      "/products/cameras.svg"
+    ],
+    "stock": 9,
+    "featured": false,
+    "useCases": [
+      "professional photography"
+    ]
+  },
+  {
+    "id": "p85",
+    "name": "Sonos SoundLink Ultra 9",
+    "brand": "Sonos",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 13800,
+    "rating": 4.8,
+    "reviewCount": 429,
+    "description": "Fill the room with sound suited for home theater and party. The Sonos SoundLink Ultra 9 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "30W RMS",
+      "Connectivity": "Bluetooth 5.0",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54"
+    },
+    "tags": [
+      "home audio",
+      "sonos",
+      "top-rated"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 2,
+    "featured": true,
+    "useCases": [
+      "home theater",
+      "party"
+    ]
+  },
+  {
+    "id": "p86",
+    "name": "Sonos Stone 1",
+    "brand": "Sonos",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 9500,
+    "compareAtPrice": 12000,
+    "rating": 4.6,
+    "reviewCount": 281,
+    "description": "Fill the room with sound suited for home theater. The Sonos Stone 1 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "30W RMS",
+      "Connectivity": "Bluetooth 5.0",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54"
+    },
+    "tags": [
+      "home audio",
+      "sonos",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 78,
+    "featured": false,
+    "useCases": [
+      "home theater"
+    ]
+  },
+  {
+    "id": "p87",
+    "name": "Amazon Emberton GT 8",
+    "brand": "Amazon",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 45500,
+    "compareAtPrice": 56000,
+    "rating": 3.4,
+    "reviewCount": 7,
+    "description": "Fill the room with sound suited for home theater. The Amazon Emberton GT 8 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "amazon",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 90,
+    "featured": true,
+    "useCases": [
+      "home theater"
+    ]
+  },
+  {
+    "id": "p88",
+    "name": "Bose Stone 1",
+    "brand": "Bose",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 3800,
+    "compareAtPrice": 4600,
+    "rating": 3.8,
+    "reviewCount": 273,
+    "description": "Fill the room with sound suited for party. The Bose Stone 1 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "30W RMS",
+      "Connectivity": "Bluetooth 5.0",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54"
+    },
+    "tags": [
+      "home audio",
+      "bose",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 15,
+    "featured": true,
+    "useCases": [
+      "party"
+    ]
+  },
+  {
+    "id": "p89",
+    "name": "Marshall SoundLink 1",
+    "brand": "Marshall",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 55800,
+    "compareAtPrice": 66400,
+    "rating": 4.1,
+    "reviewCount": 247,
+    "description": "Fill the room with sound suited for party and smart home. The Marshall SoundLink 1 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "marshall",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 31,
+    "featured": false,
+    "useCases": [
+      "party",
+      "smart home"
+    ]
+  },
+  {
+    "id": "p90",
+    "name": "Amazon Flip X 3",
+    "brand": "Amazon",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 41400,
+    "compareAtPrice": 50500,
+    "rating": 4.8,
+    "reviewCount": 411,
+    "description": "Fill the room with sound suited for background music. The Amazon Flip X 3 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "amazon",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 92,
+    "featured": true,
+    "useCases": [
+      "background music"
+    ]
+  },
+  {
+    "id": "p91",
+    "name": "JBL Beam Lite 7",
+    "brand": "JBL",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 11300,
+    "compareAtPrice": 14500,
+    "rating": 3.7,
+    "reviewCount": 169,
+    "description": "Fill the room with sound suited for party and background music and smart home. The JBL Beam Lite 7 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "30W RMS",
+      "Connectivity": "Bluetooth 5.0",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54"
+    },
+    "tags": [
+      "home audio",
+      "jbl",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 30,
+    "featured": false,
+    "useCases": [
+      "party",
+      "background music",
+      "smart home"
+    ]
+  },
+  {
+    "id": "p92",
+    "name": "JBL Beam 1",
+    "brand": "JBL",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 61800,
+    "rating": 4.1,
+    "reviewCount": 165,
+    "description": "Fill the room with sound suited for background music and smart home and home theater. The JBL Beam 1 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "jbl"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 22,
+    "featured": false,
+    "useCases": [
+      "background music",
+      "smart home",
+      "home theater"
+    ]
+  },
+  {
+    "id": "p93",
+    "name": "JBL Flip X 6",
+    "brand": "JBL",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 14900,
+    "compareAtPrice": 18800,
+    "rating": 3.9,
+    "reviewCount": 111,
+    "description": "Fill the room with sound suited for smart home. The JBL Flip X 6 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "30W RMS",
+      "Connectivity": "Bluetooth 5.0",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54"
+    },
+    "tags": [
+      "home audio",
+      "jbl",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 119,
+    "featured": false,
+    "useCases": [
+      "smart home"
+    ]
+  },
+  {
+    "id": "p94",
+    "name": "JBL Flip 6",
+    "brand": "JBL",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 63300,
+    "compareAtPrice": 81700,
+    "rating": 3.8,
+    "reviewCount": 357,
+    "description": "Fill the room with sound suited for smart home and home theater and party. The JBL Flip 6 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "jbl",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 57,
+    "featured": false,
+    "useCases": [
+      "smart home",
+      "home theater",
+      "party"
+    ]
+  },
+  {
+    "id": "p95",
+    "name": "JBL Flip Air 4",
+    "brand": "JBL",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 28300,
+    "compareAtPrice": 31700,
+    "rating": 3.5,
+    "reviewCount": 90,
+    "description": "Fill the room with sound suited for background music and smart home and party. The JBL Flip Air 4 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "jbl",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 93,
+    "featured": false,
+    "useCases": [
+      "background music",
+      "smart home",
+      "party"
+    ]
+  },
+  {
+    "id": "p96",
+    "name": "Bose Emberton 4",
+    "brand": "Bose",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 23000,
+    "compareAtPrice": 26200,
+    "rating": 3.9,
+    "reviewCount": 103,
+    "description": "Fill the room with sound suited for smart home. The Bose Emberton 4 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "30W RMS",
+      "Connectivity": "Bluetooth 5.0",
+      "Battery Life": "Up to 8 hours",
+      "Water Resistance": "IP54"
+    },
+    "tags": [
+      "home audio",
+      "bose",
+      "deal"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 118,
+    "featured": false,
+    "useCases": [
+      "smart home"
+    ]
+  },
+  {
+    "id": "p97",
+    "name": "Amazon SoundLink Max 8",
+    "brand": "Amazon",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 64200,
+    "rating": 4.3,
+    "reviewCount": 340,
+    "description": "Fill the room with sound suited for party and background music. The Amazon SoundLink Max 8 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "amazon"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 3,
+    "featured": false,
+    "useCases": [
+      "party",
+      "background music"
+    ]
+  },
+  {
+    "id": "p98",
+    "name": "Amazon SoundLink 9",
+    "brand": "Amazon",
+    "category": "Home Audio",
+    "subcategory": "home-audio",
+    "price": 63900,
+    "rating": 3.5,
+    "reviewCount": 461,
+    "description": "Fill the room with sound suited for home theater and background music. The Amazon SoundLink 9 pairs easily and holds a stable connection across rooms.",
+    "specs": {
+      "Output Power": "120W RMS",
+      "Connectivity": "Bluetooth 5.2",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68"
+    },
+    "tags": [
+      "home audio",
+      "amazon"
+    ],
+    "images": [
+      "/products/home-audio.svg"
+    ],
+    "stock": 103,
+    "featured": true,
+    "useCases": [
+      "home theater",
+      "background music"
+    ]
+  },
+  {
+    "id": "p99",
+    "name": "Logitech MX Keys Lite 6",
+    "brand": "Logitech",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 10700,
+    "compareAtPrice": 13800,
+    "rating": 4.1,
+    "reviewCount": 216,
+    "description": "A dependable everyday companion for office and gaming, the Logitech MX Keys Lite 6 is built by Logitech to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "logitech",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 113,
+    "featured": true,
+    "useCases": [
+      "office",
+      "gaming"
+    ]
+  },
+  {
+    "id": "p100",
+    "name": "SanDisk Extreme Pro Lite 6",
+    "brand": "SanDisk",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 3300,
+    "rating": 3.7,
+    "reviewCount": 410,
+    "description": "A dependable everyday companion for travel and office, the SanDisk Extreme Pro Lite 6 is built by SanDisk to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "sandisk"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 118,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "office"
+    ]
+  },
+  {
+    "id": "p101",
+    "name": "Belkin ArcSeries Air 3",
+    "brand": "Belkin",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 4300,
+    "rating": 3.9,
+    "reviewCount": 36,
+    "description": "A dependable everyday companion for gaming and travel, the Belkin ArcSeries Air 3 is built by Belkin to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "belkin"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 21,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "travel"
+    ]
+  },
+  {
+    "id": "p102",
+    "name": "boAt ArcSeries Pro 9",
+    "brand": "boAt",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 10700,
+    "compareAtPrice": 13500,
+    "rating": 3.6,
+    "reviewCount": 423,
+    "description": "A dependable everyday companion for office and travel, the boAt ArcSeries Pro 9 is built by boAt to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "boat",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 23,
+    "featured": false,
+    "useCases": [
+      "office",
+      "travel"
+    ]
+  },
+  {
+    "id": "p103",
+    "name": "Logitech Extreme Pro 6",
+    "brand": "Logitech",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 12000,
+    "compareAtPrice": 15100,
+    "rating": 3.7,
+    "reviewCount": 18,
+    "description": "A dependable everyday companion for everyday carry and office, the Logitech Extreme Pro 6 is built by Logitech to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "logitech",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 52,
+    "featured": false,
+    "useCases": [
+      "everyday carry",
+      "office"
+    ]
+  },
+  {
+    "id": "p104",
+    "name": "Spigen BoostCharge Plus 7",
+    "brand": "Spigen",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 8600,
+    "rating": 3.9,
+    "reviewCount": 179,
+    "description": "A dependable everyday companion for everyday carry and travel, the Spigen BoostCharge Plus 7 is built by Spigen to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "spigen"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 67,
+    "featured": false,
+    "useCases": [
+      "everyday carry",
+      "travel"
+    ]
+  },
+  {
+    "id": "p105",
+    "name": "boAt ArcSeries 7",
+    "brand": "boAt",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 2800,
+    "rating": 4.3,
+    "reviewCount": 295,
+    "description": "A dependable everyday companion for gaming and office and travel, the boAt ArcSeries 7 is built by boAt to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "boat"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 35,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "office",
+      "travel"
+    ]
+  },
+  {
+    "id": "p106",
+    "name": "SanDisk ArcSeries 6",
+    "brand": "SanDisk",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 2500,
+    "rating": 3.7,
+    "reviewCount": 298,
+    "description": "A dependable everyday companion for everyday carry and office, the SanDisk ArcSeries 6 is built by SanDisk to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "sandisk"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 21,
+    "featured": false,
+    "useCases": [
+      "everyday carry",
+      "office"
+    ]
+  },
+  {
+    "id": "p107",
+    "name": "Spigen BoostCharge Studio 8",
+    "brand": "Spigen",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 1200,
+    "compareAtPrice": 1600,
+    "rating": 4.1,
+    "reviewCount": 418,
+    "description": "A dependable everyday companion for travel, the Spigen BoostCharge Studio 8 is built by Spigen to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "spigen",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 61,
+    "featured": false,
+    "useCases": [
+      "travel"
+    ]
+  },
+  {
+    "id": "p108",
+    "name": "Belkin PowerCore SE 5",
+    "brand": "Belkin",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 9100,
+    "compareAtPrice": 10200,
+    "rating": 3.5,
+    "reviewCount": 154,
+    "description": "A dependable everyday companion for office, the Belkin PowerCore SE 5 is built by Belkin to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "belkin",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 72,
+    "featured": false,
+    "useCases": [
+      "office"
+    ]
+  },
+  {
+    "id": "p109",
+    "name": "Belkin Extreme Pro 4",
+    "brand": "Belkin",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 11200,
+    "compareAtPrice": 14300,
+    "rating": 4.4,
+    "reviewCount": 415,
+    "description": "A dependable everyday companion for everyday carry and gaming and office, the Belkin Extreme Pro 4 is built by Belkin to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "belkin",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 49,
+    "featured": false,
+    "useCases": [
+      "everyday carry",
+      "gaming",
+      "office"
+    ]
+  },
+  {
+    "id": "p110",
+    "name": "boAt BoostCharge Pro 3",
+    "brand": "boAt",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 3400,
+    "compareAtPrice": 4300,
+    "rating": 3.6,
+    "reviewCount": 138,
+    "description": "A dependable everyday companion for office and travel, the boAt BoostCharge Pro 3 is built by boAt to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "boat",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 84,
+    "featured": false,
+    "useCases": [
+      "office",
+      "travel"
+    ]
+  },
+  {
+    "id": "p111",
+    "name": "SanDisk BoostCharge Studio 9",
+    "brand": "SanDisk",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 8500,
+    "compareAtPrice": 9400,
+    "rating": 4.8,
+    "reviewCount": 345,
+    "description": "A dependable everyday companion for gaming and everyday carry, the SanDisk BoostCharge Studio 9 is built by SanDisk to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "sandisk",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 120,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "everyday carry"
+    ]
+  },
+  {
+    "id": "p112",
+    "name": "Spigen Extreme Pro Pro 9",
+    "brand": "Spigen",
+    "category": "Accessories",
+    "subcategory": "accessories",
+    "price": 3200,
+    "compareAtPrice": 3600,
+    "rating": 3.5,
+    "reviewCount": 434,
+    "description": "A dependable everyday companion for gaming and everyday carry and office, the Spigen Extreme Pro Pro 9 is built by Spigen to handle daily wear without fuss.",
+    "specs": {
+      "Material": "Silicone",
+      "Compatibility": "Windows",
+      "Capacity": "5000mAh",
+      "Ports": "1x USB-C"
+    },
+    "tags": [
+      "accessories",
+      "spigen",
+      "deal"
+    ],
+    "images": [
+      "/products/accessories.svg"
+    ],
+    "stock": 113,
+    "featured": false,
+    "useCases": [
+      "gaming",
+      "everyday carry",
+      "office"
+    ]
+  }
+]
