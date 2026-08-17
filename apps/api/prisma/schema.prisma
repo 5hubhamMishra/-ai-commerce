@@ -1,0 +1,123 @@
+// AI-Commerce — Prisma schema
+// Phase 1 (Foundation) scope only: identity, RBAC, profiles, addresses, audit, sessions.
+// Catalog/commerce/marketplace/behavioral models are added in their own phases (see
+// docs/DATABASE.md for the full target schema and phase mapping).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  SELLER
+  SELLER_STAFF
+  SUPPORT_AGENT
+  CONTENT_MANAGER
+  INVENTORY_MANAGER
+  ANALYST
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  name            String
+  isActive        Boolean   @default(true) @map("is_active")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  roles         UserRole[]
+  profile       Profile?
+  addresses     Address[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]     @relation("ActorAuditLogs")
+
+  @@map("users")
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  role   Role
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model Profile {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique @map("user_id")
+  phone                   String?
+  dateOfBirth             DateTime? @map("date_of_birth")
+  personalizationEnabled  Boolean  @default(true) @map("personalization_enabled")
+  notificationPreferences Json     @default("{}") @map("notification_preferences")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  label      String?
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String   @map("postal_code")
+  country    String
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// Refresh tokens are stored hashed, never in plaintext, so a database leak alone
+// doesn't grant session hijacking. Enables real logout/revocation (spec: AUTHENTICATION).
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("audit_logs")
+}
