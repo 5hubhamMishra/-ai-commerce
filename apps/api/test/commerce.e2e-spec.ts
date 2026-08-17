@@ -31,7 +31,6 @@ describe('Commerce (e2e)', () => {
   let brandId: string;
   let warehouseId: string;
   let productId: string;
-  let productSlug: string;
   let variantId: string;
   let lowStockProductId: string;
   let lowStockVariantId: string;
@@ -40,11 +39,17 @@ describe('Commerce (e2e)', () => {
   const orderIds: string[] = [];
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     app.setGlobalPrefix('api/v1', { exclude: ['health', 'ready'] });
     await app.init();
@@ -73,13 +78,21 @@ describe('Commerce (e2e)', () => {
 
     const customerRegister = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: customerEmail, password: 'password123', name: 'E2E Customer' })
+      .send({
+        email: customerEmail,
+        password: 'password123',
+        name: 'E2E Customer',
+      })
       .expect(201);
     customerToken = customerRegister.body.accessToken;
 
     const otherRegister = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: otherCustomerEmail, password: 'password123', name: 'E2E Other Customer' })
+      .send({
+        email: otherCustomerEmail,
+        password: 'password123',
+        name: 'E2E Other Customer',
+      })
       .expect(201);
     otherCustomerToken = otherRegister.body.accessToken;
 
@@ -127,7 +140,6 @@ describe('Commerce (e2e)', () => {
       })
       .expect(201);
     productId = productRes.body.id;
-    productSlug = productRes.body.slug;
 
     const variantRes = await request(app.getHttpServer())
       .post(`/api/v1/products/${productId}/variants`)
@@ -177,7 +189,9 @@ describe('Commerce (e2e)', () => {
       .expect(201);
 
     await request(app.getHttpServer())
-      .put(`/api/v1/inventory/variants/${lowStockVariantId}/warehouses/${warehouseId}`)
+      .put(
+        `/api/v1/inventory/variants/${lowStockVariantId}/warehouses/${warehouseId}`,
+      )
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ quantityOnHand: 3 })
       .expect(200);
@@ -200,13 +214,26 @@ describe('Commerce (e2e)', () => {
     for (const id of orderIds) {
       await prisma.order.delete({ where: { id } }).catch(() => undefined);
     }
-    if (productId) await prisma.product.delete({ where: { id: productId } }).catch(() => undefined);
+    if (productId)
+      await prisma.product
+        .delete({ where: { id: productId } })
+        .catch(() => undefined);
     if (lowStockProductId)
-      await prisma.product.delete({ where: { id: lowStockProductId } }).catch(() => undefined);
-    if (categoryId) await prisma.category.delete({ where: { id: categoryId } }).catch(() => undefined);
-    if (brandId) await prisma.brand.delete({ where: { id: brandId } }).catch(() => undefined);
+      await prisma.product
+        .delete({ where: { id: lowStockProductId } })
+        .catch(() => undefined);
+    if (categoryId)
+      await prisma.category
+        .delete({ where: { id: categoryId } })
+        .catch(() => undefined);
+    if (brandId)
+      await prisma.brand
+        .delete({ where: { id: brandId } })
+        .catch(() => undefined);
     if (warehouseId)
-      await prisma.warehouse.delete({ where: { id: warehouseId } }).catch(() => undefined);
+      await prisma.warehouse
+        .delete({ where: { id: warehouseId } })
+        .catch(() => undefined);
     await prisma.user.deleteMany({
       where: { email: { in: [adminEmail, customerEmail, otherCustomerEmail] } },
     });
@@ -261,7 +288,7 @@ describe('Commerce (e2e)', () => {
     expect(res.body.subtotal).toBe(1000);
   });
 
-  it('rejects operating on another customer\'s cart item (IDOR)', async () => {
+  it("rejects operating on another customer's cart item (IDOR)", async () => {
     const cart = await request(app.getHttpServer())
       .get('/api/v1/cart')
       .set('Authorization', `Bearer ${customerToken}`)
@@ -287,7 +314,8 @@ describe('Commerce (e2e)', () => {
       .get('/api/v1/wishlist')
       .set('Authorization', `Bearer ${customerToken}`)
       .expect(200);
-    expect(listRes.body.items.some((i: { productId: string }) => i.productId === productId)).toBe(
+    const wishlistBody = listRes.body as { items: { productId: string }[] };
+    expect(wishlistBody.items.some((i) => i.productId === productId)).toBe(
       true,
     );
 
@@ -317,11 +345,15 @@ describe('Commerce (e2e)', () => {
       .get('/api/v1/comparison')
       .query({ ids: `${productId},${lowStockProductId}` })
       .expect(200);
-    expect(res.body.items).toHaveLength(2);
-    const materialRow = res.body.attributeMatrix
-      .flatMap((g: { rows: { key: string }[] }) => g.rows)
-      .find((r: { key: string }) => r.key === 'Material');
-    expect(materialRow.values).toEqual(['Aluminum', 'Steel']);
+    const comparisonBody = res.body as {
+      items: unknown[];
+      attributeMatrix: { rows: { key: string; values: string[] }[] }[];
+    };
+    expect(comparisonBody.items).toHaveLength(2);
+    const materialRow = comparisonBody.attributeMatrix
+      .flatMap((g) => g.rows)
+      .find((r) => r.key === 'Material');
+    expect(materialRow?.values).toEqual(['Aluminum', 'Steel']);
   });
 
   // ---- Search (keyword/filter/sort, price sorting included) ---------------------
@@ -331,7 +363,8 @@ describe('Commerce (e2e)', () => {
       .get('/api/v1/search')
       .query({ q: `E2E Commerce Product ${run}` })
       .expect(200);
-    expect(res.body.items.some((i: { id: string }) => i.id === productId)).toBe(true);
+    const searchBody = res.body as { items: { id: string }[] };
+    expect(searchBody.items.some((i) => i.id === productId)).toBe(true);
   });
 
   it('sorts search results by price ascending', async () => {
@@ -341,7 +374,8 @@ describe('Commerce (e2e)', () => {
       .get('/api/v1/search')
       .query({ category: categorySlug, sort: 'price_asc' })
       .expect(200);
-    expect(res.body.items.map((i: { id: string }) => i.id)).toEqual([
+    const sortedBody = res.body as { items: { id: string }[] };
+    expect(sortedBody.items.map((i) => i.id)).toEqual([
       productId,
       lowStockProductId,
     ]);
@@ -356,8 +390,9 @@ describe('Commerce (e2e)', () => {
       .query({ addressId })
       .set('Authorization', `Bearer ${customerToken}`)
       .expect(200);
-    const standard = res.body.find((m: { method: string }) => m.method === 'STANDARD');
-    expect(standard.fee).toBe(149);
+    const quotes = res.body as { method: string; fee: number }[];
+    const standard = quotes.find((m) => m.method === 'STANDARD');
+    expect(standard?.fee).toBe(149);
   });
 
   // ---- Checkout / order creation, with idempotency -------------------------------
@@ -496,7 +531,8 @@ describe('Commerce (e2e)', () => {
       .set('Authorization', `Bearer ${customerToken}`)
       .expect(200);
     expect(order.body.status).toBe('CONFIRMED');
-    const toStatuses = order.body.stateHistory.map((h: { toStatus: string }) => h.toStatus);
+    const orderBody = order.body as { stateHistory: { toStatus: string }[] };
+    const toStatuses = orderBody.stateHistory.map((h) => h.toStatus);
     expect(toStatuses).toEqual(['PENDING_PAYMENT', 'PAID', 'CONFIRMED']);
 
     const inventory = await request(app.getHttpServer())
@@ -522,11 +558,21 @@ describe('Commerce (e2e)', () => {
   // ---- Admin fulfillment happy path -------------------------------------------------
 
   it('walks the order through the fulfillment state machine, decrementing on-hand stock on SHIPPED', async () => {
-    for (const status of ['PROCESSING', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED']) {
+    for (const status of [
+      'PROCESSING',
+      'PACKED',
+      'SHIPPED',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+    ]) {
       const res = await request(app.getHttpServer())
         .patch(`/api/v1/orders/admin/${mainOrderId}/status`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ status })
+        .send(
+          status === 'SHIPPED'
+            ? { status, carrier: 'BlueDart', trackingNumber: `TRK-${run}` }
+            : { status },
+        )
         .expect(200);
       expect(res.body.status).toBe(status);
     }
@@ -666,6 +712,8 @@ describe('Commerce (e2e)', () => {
         expect(res.body.error.code).toBe('INSUFFICIENT_INVENTORY');
       });
 
-    await request(app.getHttpServer()).delete('/api/v1/cart').set('Authorization', `Bearer ${customerToken}`);
+    await request(app.getHttpServer())
+      .delete('/api/v1/cart')
+      .set('Authorization', `Bearer ${customerToken}`);
   });
 });
