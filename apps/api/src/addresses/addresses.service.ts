@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateAddressDto } from './dto/create-address.dto';
 import type { UpdateAddressDto } from './dto/update-address.dto';
@@ -48,6 +52,19 @@ export class AddressesService {
 
   async remove(userId: string, id: string): Promise<void> {
     await this.assertOwnership(userId, id);
+    // Orders reference their shipping address permanently (ON DELETE RESTRICT —
+    // an order must always be able to show where it shipped to), so an address
+    // with order history can't be deleted, only left alone.
+    const orderCount = await this.prisma.order.count({
+      where: { addressId: id },
+    });
+    if (orderCount > 0) {
+      throw new ConflictException({
+        code: 'ADDRESS_HAS_ORDERS',
+        message:
+          'This address is referenced by past orders and cannot be deleted.',
+      });
+    }
     await this.prisma.address.delete({ where: { id } });
   }
 
