@@ -37,14 +37,18 @@ model User {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
-  roles         UserRole[]
-  profile       Profile?
-  addresses     Address[]
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]     @relation("ActorAuditLogs")
-  cart          Cart?
-  wishlistItems WishlistItem[]
-  orders        Order[]
+  roles          UserRole[]
+  profile        Profile?
+  addresses      Address[]
+  refreshTokens  RefreshToken[]
+  auditLogs      AuditLog[]       @relation("ActorAuditLogs")
+  cart           Cart?
+  wishlistItems  WishlistItem[]
+  orders         Order[]
+  returnRequests ReturnRequest[]
+  notifications  Notification[]
+  supportTickets SupportTicket[]
+  sentMessages   SupportMessage[]
 
   @@map("users")
 }
@@ -61,14 +65,14 @@ model UserRole {
 }
 
 model Profile {
-  id                      String   @id @default(uuid())
-  userId                  String   @unique @map("user_id")
+  id                      String    @id @default(uuid())
+  userId                  String    @unique @map("user_id")
   phone                   String?
   dateOfBirth             DateTime? @map("date_of_birth")
-  personalizationEnabled  Boolean  @default(true) @map("personalization_enabled")
-  notificationPreferences Json     @default("{}") @map("notification_preferences")
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+  personalizationEnabled  Boolean   @default(true) @map("personalization_enabled")
+  notificationPreferences Json      @default("{}") @map("notification_preferences")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -139,17 +143,20 @@ enum ProductStatus {
 }
 
 model Category {
-  id          String    @id @default(uuid())
-  name        String
-  slug        String    @unique
-  description String?
-  imageUrl    String?   @map("image_url")
-  parentId    String?   @map("parent_id")
-  sortOrder   Int       @default(0) @map("sort_order")
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id               String    @id @default(uuid())
+  name             String
+  slug             String    @unique
+  description      String?
+  imageUrl         String?   @map("image_url")
+  parentId         String?   @map("parent_id")
+  sortOrder        Int       @default(0) @map("sort_order")
+  isActive         Boolean   @default(true) @map("is_active")
+  // Category-level override of the global default return window (see
+  // config.returns.defaultWindowDays). Null means "use the global default."
+  returnWindowDays Int?      @map("return_window_days")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
 
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryHierarchy")
@@ -194,7 +201,7 @@ model AttributeValue {
   value       String
   slug        String
 
-  attribute Attribute                @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  attribute Attribute               @relation(fields: [attributeId], references: [id], onDelete: Cascade)
   variants  VariantAttributeValue[]
 
   @@unique([attributeId, slug])
@@ -224,8 +231,8 @@ model Product {
   updatedAt   DateTime      @updatedAt @map("updated_at")
   deletedAt   DateTime?     @map("deleted_at")
 
-  category       Category                @relation(fields: [categoryId], references: [id])
-  brand          Brand?                  @relation(fields: [brandId], references: [id])
+  category       Category               @relation(fields: [categoryId], references: [id])
+  brand          Brand?                 @relation(fields: [brandId], references: [id])
   variants       ProductVariant[]
   images         ProductImage[]
   specifications ProductSpecification[]
@@ -265,12 +272,16 @@ model ProductVariant {
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
 
-  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
-  attributeValues VariantAttributeValue[]
-  images          ProductImage[]
-  inventory       Inventory[]
-  cartItems       CartItem[]
-  orderItems      OrderItem[]
+  product             Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeValues     VariantAttributeValue[]
+  images              ProductImage[]
+  inventory           Inventory[]
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  replacementItems    ReplacementItem[]
+  exchangesAsOriginal Exchange[]              @relation("ExchangeOriginalVariant")
+  exchangesAsNew      Exchange[]              @relation("ExchangeNewVariant")
+  desiredForReturns   ReturnRequest[]         @relation("ReturnDesiredVariant")
 
   @@index([productId])
   @@map("product_variants")
@@ -474,12 +485,18 @@ model Order {
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  user         User                @relation(fields: [userId], references: [id])
-  address      Address             @relation(fields: [addressId], references: [id])
-  items        OrderItem[]
-  stateHistory OrderStateHistory[]
-  payments     Payment[]
-  shipment     Shipment?
+  user           User                @relation(fields: [userId], references: [id])
+  address        Address             @relation(fields: [addressId], references: [id])
+  items          OrderItem[]
+  stateHistory   OrderStateHistory[]
+  payments       Payment[]
+  shipment       Shipment?
+  returnRequests ReturnRequest[]
+  refunds        Refund[]
+  replacements   Replacement[]
+  exchanges      Exchange[]
+  invoice        Invoice?
+  supportTickets SupportTicket[]
 
   @@index([userId])
   @@index([status])
@@ -501,9 +518,10 @@ model OrderItem {
   lineTotal   Decimal @map("line_total") @db.Decimal(12, 2)
   currency    String  @default("INR")
 
-  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
-  warehouse Warehouse      @relation(fields: [warehouseId], references: [id])
+  order              Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant            ProductVariant      @relation(fields: [variantId], references: [id])
+  warehouse          Warehouse           @relation(fields: [warehouseId], references: [id])
+  returnRequestItems ReturnRequestItem[]
 
   @@index([orderId])
   @@map("order_items")
@@ -541,16 +559,17 @@ model Payment {
   createdAt      DateTime            @default(now()) @map("created_at")
   updatedAt      DateTime            @updatedAt @map("updated_at")
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds Refund[]
 
   @@unique([orderId, idempotencyKey])
   @@index([orderId])
   @@map("payments")
 }
 
-// Created at order-creation time with the selected method/fee. Detailed carrier
-// tracking-event ingestion is Phase 4 (Post-Purchase) territory — this row is
-// the hook point Phase 4 updates, not something Phase 3 leaves unbuilt.
+// Created at order-creation time with the selected method/fee. Carrier/tracking
+// fields plus the ShipmentEvent timeline are populated once the admin dispatches
+// the order (Phase 4 — order tracking).
 model Shipment {
   id             String         @id @default(uuid())
   orderId        String         @unique @map("order_id")
@@ -563,9 +582,26 @@ model Shipment {
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order  Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  events ShipmentEvent[]
 
   @@map("shipments")
+}
+
+// A timestamped tracking-event timeline for a shipment — the granular history
+// behind Shipment's current `status`/`trackingNumber` snapshot fields.
+model ShipmentEvent {
+  id          String              @id @default(uuid())
+  shipmentId  String              @map("shipment_id")
+  status      ShipmentEventStatus
+  location    String?
+  description String?
+  occurredAt  DateTime            @default(now()) @map("occurred_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId])
+  @@map("shipment_events")
 }
 
 // Generic idempotency-key store, keyed per (user, operation scope, client key).
@@ -583,4 +619,328 @@ model IdempotencyKey {
 
   @@unique([userId, scope, key])
   @@map("idempotency_keys")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 — Post-Purchase
+// ---------------------------------------------------------------------------
+
+enum ReturnReason {
+  DEFECTIVE
+  WRONG_ITEM
+  NOT_AS_DESCRIBED
+  NO_LONGER_NEEDED
+  BETTER_PRICE_FOUND
+  OTHER
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  INSPECTING
+  COMPLETED
+  CANCELLED
+}
+
+enum ReturnResolution {
+  REFUND
+  REPLACEMENT
+  EXCHANGE
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ReplacementStatus {
+  REQUESTED
+  APPROVED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ExchangeStatus {
+  REQUESTED
+  APPROVED
+  AWAITING_PAYMENT
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ShipmentEventStatus {
+  LABEL_CREATED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_DELIVERY
+  RETURNED_TO_SENDER
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  PAYMENT
+  RETURN
+  REFUND
+  REPLACEMENT
+  EXCHANGE
+  SUPPORT
+  SYSTEM
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  ORDER
+  PAYMENT
+  RETURN
+  PRODUCT
+  ACCOUNT
+  OTHER
+}
+
+// One order-level return per attempt; a rejected/cancelled request doesn't block
+// a fresh one, so this is 1:many against Order (enforced in service logic: at
+// most one non-terminal ReturnRequest per order at a time), not a 1:1 relation.
+// Line items reference specific OrderItems + quantities so restocking is accurate
+// even when only some items in a multi-item order are being returned — the
+// order's own top-level status still follows the single-track state diagram in
+// DATABASE.md (an order can only be REFUNDED *or* REPLACEMENT *or* EXCHANGED,
+// not a mix, matching the spec's own state machine shape).
+model ReturnRequest {
+  id               String           @id @default(uuid())
+  orderId          String           @map("order_id")
+  userId           String           @map("user_id")
+  reason           ReturnReason
+  reasonNote       String?          @map("reason_note")
+  // Chosen by the customer at request time (matches typical "return or replace"
+  // UX) — inspection can still reject the request outright, but doesn't re-pick
+  // the resolution type.
+  resolution       ReturnResolution
+  // Only set when resolution = EXCHANGE.
+  desiredVariantId String?          @map("desired_variant_id")
+  status           ReturnStatus     @default(REQUESTED)
+  rejectReason     String?          @map("reject_reason")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  order          Order               @relation(fields: [orderId], references: [id])
+  user           User                @relation(fields: [userId], references: [id])
+  desiredVariant ProductVariant?     @relation("ReturnDesiredVariant", fields: [desiredVariantId], references: [id])
+  items          ReturnRequestItem[]
+  refund         Refund?
+  replacement    Replacement?
+  exchange       Exchange?
+
+  @@index([orderId])
+  @@index([userId])
+  @@map("return_requests")
+}
+
+model ReturnRequestItem {
+  id              String  @id @default(uuid())
+  returnRequestId String  @map("return_request_id")
+  orderItemId     String  @map("order_item_id")
+  quantity        Int
+  // Set at inspection time (e.g. "sealed", "opened", "damaged") — informs the
+  // approve/reject-on-inspection decision and whether stock is restockable.
+  condition       String?
+
+  returnRequest ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItem     OrderItem     @relation(fields: [orderItemId], references: [id])
+
+  @@index([returnRequestId])
+  @@map("return_request_items")
+}
+
+// One row per refund attempt, linked to both the order and the specific payment
+// being refunded against (a refund can never exceed what was actually paid).
+// `returnRequestId` is null for a refund issued without a return (e.g. a
+// goodwill/cancellation refund) — most refunds do originate from a return, but
+// the relation isn't mandatory.
+model Refund {
+  id              String       @id @default(uuid())
+  orderId         String       @map("order_id")
+  paymentId       String       @map("payment_id")
+  returnRequestId String?      @unique @map("return_request_id")
+  amount          Decimal      @db.Decimal(12, 2)
+  currency        String       @default("INR")
+  reason          String
+  status          RefundStatus @default(PENDING)
+  providerRef     String?      @map("provider_ref")
+  failureReason   String?      @map("failure_reason")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  order         Order          @relation(fields: [orderId], references: [id])
+  payment       Payment        @relation(fields: [paymentId], references: [id])
+  returnRequest ReturnRequest? @relation(fields: [returnRequestId], references: [id])
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+// A replacement shipment for the same item(s), issued instead of a refund.
+// Tracks its own dispatch state independent of the original order's (terminal)
+// status.
+model Replacement {
+  id              String            @id @default(uuid())
+  returnRequestId String            @unique @map("return_request_id")
+  orderId         String            @map("order_id")
+  status          ReplacementStatus @default(REQUESTED)
+  trackingNumber  String?           @map("tracking_number")
+  carrier         String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  returnRequest ReturnRequest     @relation(fields: [returnRequestId], references: [id])
+  order         Order             @relation(fields: [orderId], references: [id])
+  items         ReplacementItem[]
+
+  @@map("replacements")
+}
+
+model ReplacementItem {
+  id            String @id @default(uuid())
+  replacementId String @map("replacement_id")
+  variantId     String @map("variant_id")
+  quantity      Int
+
+  replacement Replacement    @relation(fields: [replacementId], references: [id], onDelete: Cascade)
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([replacementId])
+  @@map("replacement_items")
+}
+
+// Swaps one variant for another. `priceDifference` is (new price - original
+// price) * quantity — positive means the customer owes more (settled via a new
+// Payment), negative means money is owed back (settled via a Refund). Reuses
+// the existing payment/refund abstractions rather than inventing new payment
+// mechanics for this one flow.
+model Exchange {
+  id                String         @id @default(uuid())
+  returnRequestId   String         @unique @map("return_request_id")
+  orderId           String         @map("order_id")
+  originalVariantId String         @map("original_variant_id")
+  newVariantId      String         @map("new_variant_id")
+  quantity          Int
+  priceDifference   Decimal        @default(0) @map("price_difference") @db.Decimal(12, 2)
+  status            ExchangeStatus @default(REQUESTED)
+  trackingNumber    String?        @map("tracking_number")
+  carrier           String?
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  returnRequest   ReturnRequest  @relation(fields: [returnRequestId], references: [id])
+  order           Order          @relation(fields: [orderId], references: [id])
+  originalVariant ProductVariant @relation("ExchangeOriginalVariant", fields: [originalVariantId], references: [id])
+  newVariant      ProductVariant @relation("ExchangeNewVariant", fields: [newVariantId], references: [id])
+
+  @@map("exchanges")
+}
+
+// `sequenceNumber` is a Postgres-native autoincrement column — the atomic,
+// race-free source of invoice-number uniqueness (its value isn't known until
+// the row is actually inserted, so it can't be precomputed into a second
+// column without a two-phase write). The display string (e.g. "INV-2026-000123")
+// is derived from it at read time instead — trivial to compute, so persisting a
+// separately-written copy would only add a race window for no real benefit.
+// Invoice content itself (line items, totals, addresses) is not duplicated
+// here either — it's rendered from Order/OrderItem/Address at request time, so
+// it can never drift from the order it describes.
+model Invoice {
+  id             String   @id @default(uuid())
+  orderId        String   @unique @map("order_id")
+  sequenceNumber Int      @default(autoincrement()) @map("sequence_number")
+  issuedAt       DateTime @default(now()) @map("issued_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("invoices")
+}
+
+// Real in-app notification center — written to by order/return/refund/support
+// domain-event listeners (see EVENTS.md). External channels (email/SMS/push)
+// are a documented gap: they need a provider integration this phase doesn't
+// add, same "adapter later, dev-mode now" precedent as payments/shipping.
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String           @map("user_id")
+  type        NotificationType
+  title       String
+  body        String
+  relatedType String?          @map("related_type")
+  relatedId   String?          @map("related_id")
+  readAt      DateTime?        @map("read_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model SupportTicket {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  orderId   String?        @map("order_id")
+  subject   String
+  category  TicketCategory
+  status    TicketStatus   @default(OPEN)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user     User             @relation(fields: [userId], references: [id])
+  order    Order?           @relation(fields: [orderId], references: [id])
+  messages SupportMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id           String   @id @default(uuid())
+  ticketId     String   @map("ticket_id")
+  senderId     String   @map("sender_id")
+  isStaffReply Boolean  @default(false) @map("is_staff_reply")
+  body         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User          @relation(fields: [senderId], references: [id])
+
+  @@index([ticketId])
+  @@map("support_messages")
+}
+
+// Admin-managed help-center content — same CMS-like shape as catalog content
+// (categories/brands): simple flat article model, no versioning/workflow.
+model HelpArticle {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  body        String
+  category    String
+  sortOrder   Int      @default(0) @map("sort_order")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("help_articles")
 }
