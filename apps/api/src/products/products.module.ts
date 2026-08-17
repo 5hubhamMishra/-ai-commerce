@@ -15,6 +15,14 @@ import { ProductsService } from './products.service';
     ProductSpecificationsService,
     ProductTagsService,
   ],
-  exports: [ProductsService],
+  // All exported (Phase 5): SellerCatalogService reuses these directly for
+  // the seller-scoped catalog endpoints rather than duplicating their logic.
+  exports: [
+    ProductsService,
+    ProductVariantsService,
+    ProductImagesService,
+    ProductSpecificationsService,
+    ProductTagsService,
+  ],
 })
 export class ProductsModule {}

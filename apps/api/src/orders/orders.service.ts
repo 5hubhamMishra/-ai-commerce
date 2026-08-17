@@ -102,7 +102,13 @@ export class OrdersService {
         const cart = await tx.cart.findUnique({
           where: { userId },
           include: {
-            items: { include: { variant: { include: { product: true } } } },
+            items: {
+              include: {
+                variant: {
+                  include: { product: { include: { seller: true } } },
+                },
+              },
+            },
           },
         });
         const items = cart?.items ?? [];
@@ -164,6 +170,7 @@ export class OrdersService {
                 return {
                   variantId: i.variantId,
                   warehouseId: reservation.warehouseId,
+                  sellerId: i.variant.product.sellerId,
                   productName: i.variant.product.name,
                   sku: i.variant.sku,
                   unitPrice: i.variant.price,
@@ -192,6 +199,37 @@ export class OrdersService {
         });
 
         await tx.cartItem.deleteMany({ where: { cartId: cart!.id } });
+
+        // Phase 5: snapshot a commission-computed earning per marketplace
+        // order item, alongside the order item itself — same "snapshot at
+        // creation time" reasoning as OrderItem's own productName/sku/price
+        // fields (ADR-016), so a later change to the seller's commission
+        // rate never retroactively changes what a past sale earned. A
+        // no-op for an all-platform-owned cart (the common case today).
+        const earningsData = created.items.flatMap((orderItem) => {
+          const cartItem = items.find(
+            (i) => i.variantId === orderItem.variantId,
+          )!;
+          const seller = cartItem.variant.product.seller;
+          if (!seller) return [];
+          const gross = Number(orderItem.lineTotal);
+          const commissionAmount =
+            Math.round(gross * seller.commissionRateBps) / 10000;
+          return [
+            {
+              sellerId: seller.id,
+              orderItemId: orderItem.id,
+              grossAmount: gross,
+              commissionRateBps: seller.commissionRateBps,
+              commissionAmount,
+              netAmount: gross - commissionAmount,
+              currency: orderItem.currency,
+            },
+          ];
+        });
+        if (earningsData.length > 0) {
+          await tx.sellerEarning.createMany({ data: earningsData });
+        }
 
         return {
           order: created,

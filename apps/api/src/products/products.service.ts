@@ -33,6 +33,7 @@ const variantInclude = {
 const detailInclude = {
   category: true,
   brand: true,
+  seller: { select: { id: true, slug: true, businessName: true } },
   variants: { where: { deletedAt: null }, include: variantInclude },
   images: { orderBy: { sortOrder: 'asc' as const } },
   specifications: { orderBy: { sortOrder: 'asc' as const } },
@@ -54,17 +55,29 @@ export class ProductsService {
 
   // ---- Reads -------------------------------------------------------------
 
-  async listPublic(query: ListProductsQueryDto) {
-    return this.list(query, { status: ProductStatus.ACTIVE, activeOnly: true });
+  // `sellerId` (Phase 5): undefined scopes across the whole catalog (the
+  // existing behavior, unchanged); set scopes to one seller's storefront
+  // (public, e.g. GET /sellers/:slug/products) or their own admin catalog
+  // view (SellerCatalogController), reusing this same method either way.
+  async listPublic(query: ListProductsQueryDto, sellerId?: string) {
+    return this.list(query, {
+      status: ProductStatus.ACTIVE,
+      activeOnly: true,
+      sellerId,
+    });
   }
 
-  async listAdmin(query: ListProductsQueryDto) {
-    return this.list(query, { status: query.status, activeOnly: false });
+  async listAdmin(query: ListProductsQueryDto, sellerId?: string) {
+    return this.list(query, {
+      status: query.status,
+      activeOnly: false,
+      sellerId,
+    });
   }
 
   private async list(
     query: ListProductsQueryDto,
-    scope: { status?: ProductStatus; activeOnly: boolean },
+    scope: { status?: ProductStatus; activeOnly: boolean; sellerId?: string },
   ) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
@@ -78,6 +91,7 @@ export class ProductsService {
     const where: Prisma.ProductWhereInput = {
       deletedAt: null,
       ...(scope.status ? { status: scope.status } : {}),
+      ...(scope.sellerId ? { sellerId: scope.sellerId } : {}),
       ...(query.category ? { category: { slug: query.category } } : {}),
       ...(query.brand ? { brand: { slug: query.brand } } : {}),
       ...(query.tag ? { tags: { some: { tag: { slug: query.tag } } } } : {}),
@@ -173,7 +187,11 @@ export class ProductsService {
 
   // ---- Writes --------------------------------------------------------------
 
-  async create(dto: CreateProductDto, actorId: string) {
+  // `sellerId` (Phase 5) is undefined for the existing admin catalog path
+  // (ProductsController) — behavior there is byte-for-byte unchanged. Only
+  // the seller-catalog path (SellerCatalogController) ever passes one, and
+  // always its caller's own seller id, never a client-supplied value.
+  async create(dto: CreateProductDto, actorId: string, sellerId?: string) {
     await this.assertCategoryExists(dto.categoryId);
     if (dto.brandId) await this.assertBrandExists(dto.brandId);
 
@@ -187,6 +205,7 @@ export class ProductsService {
         description: dto.description,
         categoryId: dto.categoryId,
         brandId: dto.brandId,
+        sellerId,
         status: dto.status ?? ProductStatus.DRAFT,
         isFeatured: dto.isFeatured ?? false,
       },
@@ -362,6 +381,16 @@ function toListItem(product: ProductDetailRow) {
           id: product.brand.id,
           name: product.brand.name,
           slug: product.brand.slug,
+        }
+      : null,
+    // Phase 5: null for a platform-owned product — customers browsing today's
+    // catalog see no difference at all, per the spec's "purchase without
+    // being aware of unnecessary internal marketplace complexity" guidance.
+    seller: product.seller
+      ? {
+          id: product.seller.id,
+          slug: product.seller.slug,
+          businessName: product.seller.businessName,
         }
       : null,
     currency: activeVariants[0]?.currency ?? 'INR',

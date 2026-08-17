@@ -30,10 +30,13 @@ export class WarehousesService {
     return warehouse;
   }
 
-  async create(dto: CreateWarehouseDto, actorId: string) {
+  // `sellerId` (Phase 5): undefined for the existing admin path (unchanged
+  // behavior); set only by SellerCatalogService, for the one auto-provisioned
+  // warehouse a verified seller gets — see DECISIONS.md ADR-020.
+  async create(dto: CreateWarehouseDto, actorId: string, sellerId?: string) {
     await this.assertCodeAvailable(dto.code);
     const warehouse = await this.prisma.warehouse.create({
-      data: { ...dto, isActive: dto.isActive ?? true },
+      data: { ...dto, sellerId, isActive: dto.isActive ?? true },
     });
     await this.audit.record({
       actorId,
