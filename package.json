@@ -1,0 +1,19 @@
+{
+  "name": "ai-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate": "npm run prisma:migrate --workspace=apps/api",
+    "db:generate": "npm run prisma:generate --workspace=apps/api"
+  }
+}

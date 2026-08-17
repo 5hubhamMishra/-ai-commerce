@@ -1,0 +1,59 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+.next/
+out/
+dist/
+build/
+.expo/
+.expo-shared/
+web-build/
+
+# testing / coverage
+coverage/
+
+# env files — never commit real secrets.
+# Root-level .env.example / .env.development / .env.test / .env.production.example ARE
+# committed on purpose (dev/test values are safe local-only placeholders, per
+# docs/DEPLOYMENT.md and docs/SECURITY.md) — only per-app runtime files are ignored here.
+apps/*/.env
+apps/*/.env.local
+apps/*/.env.*.local
+.env.production
+.env.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# os / editor
+.DS_Store
+*.pem
+.vscode/*
+!.vscode/extensions.json
+
+# AI coding tool config — Next.js/Expo dev servers regenerate CLAUDE.md/AGENTS.md locally
+# on every run (they carry per-tool-version agent guidance), and Expo scaffolds a .claude/
+# plugin settings file. None of this is application code; it must never reach GitHub — kept
+# out here rather than relying on one-time deletion, since the dev servers recreate it.
+**/CLAUDE.md
+**/AGENTS.md
+**/.claude/
+
+# vercel
+.vercel
+
+# prisma
+apps/api/prisma/migrations/dev.db
+
+# docker volumes (if ever created locally)
+infrastructure/docker/.data/

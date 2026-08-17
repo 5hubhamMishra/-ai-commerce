@@ -1,0 +1,43 @@
+# Local development only. Starts the stateful services (Postgres, Redis) that apps/api
+# needs — the apps themselves (web/api/mobile) run natively via `npm run dev:*` for a fast
+# dev loop. Full containerization of the apps is a Phase 14 (Cloud Deployment) concern; see
+# docs/DEPLOYMENT.md.
+#
+# Usage (from the repo root): docker compose -f infrastructure/docker/docker-compose.yml up -d
+
+services:
+  postgres:
+    # pgvector-enabled image from day one, so Phase 8 (semantic search) doesn't require
+    # rebuilding this environment — the extension simply isn't enabled until it's needed.
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ai_commerce
+      POSTGRES_PASSWORD: ai_commerce_dev
+      POSTGRES_DB: ai_commerce
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ai_commerce']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
