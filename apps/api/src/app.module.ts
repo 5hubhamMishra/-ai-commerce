@@ -26,6 +26,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { ComparisonModule } from './comparison/comparison.module';
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
+import { EventsModule } from './events/events.module';
 import { ExchangesModule } from './exchanges/exchanges.module';
 import { HealthModule } from './health/health.module';
 import { HelpCenterModule } from './help-center/help-center.module';
@@ -91,6 +92,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     SupportModule,
     HelpCenterModule,
     SellersModule,
+    EventsModule,
   ],
   providers: [
     {
