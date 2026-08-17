@@ -93,4 +93,91 @@ describe('InventoryService', () => {
       'updated',
     );
   });
+
+  describe('reservation lifecycle', () => {
+    function fakeTx(rows: Record<string, unknown>[]) {
+      return {
+        $queryRaw: jest.fn().mockResolvedValue(rows),
+        inventory: { update: jest.fn().mockResolvedValue({}) },
+      };
+    }
+
+    it('reserves from the warehouse with the most availability', async () => {
+      const tx = fakeTx([
+        {
+          id: 'inv-low',
+          warehouseId: 'w-low',
+          quantityOnHand: 10,
+          quantityReserved: 8,
+          quantityCommitted: 0,
+        },
+        {
+          id: 'inv-high',
+          warehouseId: 'w-high',
+          quantityOnHand: 50,
+          quantityReserved: 5,
+          quantityCommitted: 0,
+        },
+      ]);
+
+      const result = await service.reserveForOrder(tx as never, [
+        { variantId: 'v1', quantity: 10 },
+      ]);
+
+      expect(result).toEqual([
+        { variantId: 'v1', warehouseId: 'w-high', inventoryId: 'inv-high', quantity: 10 },
+      ]);
+      expect(tx.inventory.update).toHaveBeenCalledWith({
+        where: { id: 'inv-high' },
+        data: { quantityReserved: { increment: 10 } },
+      });
+    });
+
+    it('throws INSUFFICIENT_INVENTORY when no single warehouse can cover the quantity', async () => {
+      const tx = fakeTx([
+        {
+          id: 'inv1',
+          warehouseId: 'w1',
+          quantityOnHand: 5,
+          quantityReserved: 0,
+          quantityCommitted: 0,
+        },
+      ]);
+
+      await expect(
+        service.reserveForOrder(tx as never, [{ variantId: 'v1', quantity: 10 }]),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'INSUFFICIENT_INVENTORY' }),
+      });
+      expect(tx.inventory.update).not.toHaveBeenCalled();
+    });
+
+    it('moves quantity from reserved to committed on commitReserved', async () => {
+      const tx = fakeTx([]);
+      await service.commitReserved(tx as never, [
+        { variantId: 'v1', warehouseId: 'w1', quantity: 3 },
+      ]);
+      expect(tx.inventory.update).toHaveBeenCalledWith({
+        where: { variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' } },
+        data: {
+          quantityReserved: { decrement: 3 },
+          quantityCommitted: { increment: 3 },
+        },
+      });
+    });
+
+    it('decrements onHand and committed together on shipCommitted', async () => {
+      const tx = fakeTx([]);
+      await service.shipCommitted(tx as never, [
+        { variantId: 'v1', warehouseId: 'w1', quantity: 2 },
+      ]);
+      expect(tx.inventory.update).toHaveBeenCalledWith({
+        where: { variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' } },
+        data: {
+          quantityOnHand: { decrement: 2 },
+          quantityCommitted: { decrement: 2 },
+        },
+      });
+    });
+  });
 });
