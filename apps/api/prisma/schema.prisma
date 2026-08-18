@@ -37,24 +37,25 @@ model User {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
-  roles           UserRole[]
-  profile         Profile?
-  addresses       Address[]
-  refreshTokens   RefreshToken[]
-  auditLogs       AuditLog[]        @relation("ActorAuditLogs")
-  cart            Cart?
-  wishlistItems   WishlistItem[]
-  orders          Order[]
-  returnRequests  ReturnRequest[]
-  notifications   Notification[]
-  supportTickets  SupportTicket[]
-  sentMessages    SupportMessage[]
-  sellerAccount   Seller?           @relation("SellerOwner")
-  sellerStaffOf   SellerStaff[]     @relation("SellerStaffUser")
-  sellerRatings   SellerRating[]    @relation("SellerRatingUser")
-  sessions        Session[]
-  events          BehavioralEvent[]
-  customerProfile CustomerProfile?
+  roles                     UserRole[]
+  profile                   Profile?
+  addresses                 Address[]
+  refreshTokens             RefreshToken[]
+  auditLogs                 AuditLog[]                 @relation("ActorAuditLogs")
+  cart                      Cart?
+  wishlistItems             WishlistItem[]
+  orders                    Order[]
+  returnRequests            ReturnRequest[]
+  notifications             Notification[]
+  supportTickets            SupportTicket[]
+  sentMessages              SupportMessage[]
+  sellerAccount             Seller?                    @relation("SellerOwner")
+  sellerStaffOf             SellerStaff[]              @relation("SellerStaffUser")
+  sellerRatings             SellerRating[]             @relation("SellerRatingUser")
+  sessions                  Session[]
+  events                    BehavioralEvent[]
+  customerProfile           CustomerProfile?
+  recommendationImpressions RecommendationImpression[]
 
   @@map("users")
 }
@@ -244,14 +245,16 @@ model Product {
   updatedAt   DateTime      @updatedAt @map("updated_at")
   deletedAt   DateTime?     @map("deleted_at")
 
-  category       Category               @relation(fields: [categoryId], references: [id])
-  brand          Brand?                 @relation(fields: [brandId], references: [id])
-  seller         Seller?                @relation(fields: [sellerId], references: [id])
-  variants       ProductVariant[]
-  images         ProductImage[]
-  specifications ProductSpecification[]
-  tags           ProductTagAssignment[]
-  wishlistItems  WishlistItem[]
+  category                  Category                   @relation(fields: [categoryId], references: [id])
+  brand                     Brand?                     @relation(fields: [brandId], references: [id])
+  seller                    Seller?                    @relation(fields: [sellerId], references: [id])
+  variants                  ProductVariant[]
+  images                    ProductImage[]
+  specifications            ProductSpecification[]
+  tags                      ProductTagAssignment[]
+  wishlistItems             WishlistItem[]
+  embedding                 ProductEmbedding?
+  recommendationImpressions RecommendationImpression[]
 
   @@index([categoryId])
   @@index([brandId])
@@ -1260,4 +1263,71 @@ model CustomerProfile {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("customer_profiles")
+}
+
+// Phase 7 — AI Recommendations
+
+// Only one model exists this phase: a deterministic feature-hashing embedding
+// (see EmbeddingProvider), not a hosted ML model — no external AI provider is
+// wired up anywhere in this codebase yet, and introducing one is a bigger,
+// separate decision than this phase needs to make just to satisfy "product
+// similarity." Phase 8 (semantic search) is free to add a second value here
+// (a real hosted embedding model) behind the same provider interface without
+// this table's shape changing — see DECISIONS.md ADR-023.
+enum EmbeddingModel {
+  HASHING_V1
+}
+
+// Plain Postgres `double precision[]`, not pgvector — pgvector buys indexed
+// approximate-nearest-neighbor search at scale; this catalog is 112 products,
+// where an O(n) in-process cosine-similarity scan against every row is
+// sub-millisecond and genuinely simpler to reason about. Phase 8 (which
+// explicitly asks for "pgvector" as its own scope item) is the natural place
+// to add a real vector column/index if/when catalog size makes it worth it —
+// see ADR-023.
+model ProductEmbedding {
+  id        String         @id @default(uuid())
+  productId String         @unique @map("product_id")
+  vector    Float[]
+  model     EmbeddingModel @default(HASHING_V1)
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_embeddings")
+}
+
+enum RecommendationContext {
+  HOMEPAGE
+  SIMILAR_PRODUCTS
+  FREQUENTLY_BOUGHT_WITH
+  TRENDING
+}
+
+// One row per product shown in a recommendation response — the "recommendation
+// caching" the spec asks for isn't just a Redis TTL on the response (though
+// there's that too, see RecommendationsService); it's this durable record of
+// what was actually shown to whom, which is what makes the evaluation
+// framework's CTR/conversion metrics real rather than invented. Correlated
+// after the fact against RECOMMENDATION_CLICKED/RECOMMENDATION_PURCHASED
+// BehavioralEvents (already real types since Phase 6) by matching
+// (identity, productId) — see EvaluationService and DATABASE.md.
+model RecommendationImpression {
+  id          String                @id @default(uuid())
+  userId      String?               @map("user_id")
+  anonymousId String?               @map("anonymous_id")
+  productId   String                @map("product_id")
+  context     RecommendationContext
+  position    Int
+  reason      String
+  createdAt   DateTime              @default(now()) @map("created_at")
+
+  user    User?   @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([anonymousId])
+  @@index([productId])
+  @@index([createdAt])
+  @@map("recommendation_impressions")
 }
