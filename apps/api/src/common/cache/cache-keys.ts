@@ -4,4 +4,5 @@ export const CACHE_PREFIX = {
   CATEGORIES: 'catalog:categories:',
   BRANDS: 'catalog:brands:',
   PRODUCTS: 'catalog:products:',
+  RECOMMENDATIONS: 'recommendations:',
 } as const;

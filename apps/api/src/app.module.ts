@@ -38,6 +38,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
 import { ProfilesModule } from './profiles/profiles.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 import { RefundsModule } from './refunds/refunds.module';
 import { ReplacementsModule } from './replacements/replacements.module';
 import { ReturnsModule } from './returns/returns.module';
@@ -93,6 +94,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     HelpCenterModule,
     SellersModule,
     EventsModule,
+    RecommendationsModule,
   ],
   providers: [
     {
