@@ -39,17 +39,27 @@ export default function ComparePage() {
 
       {ids.length < 4 && (
         <div className="relative mt-5 max-w-md">
+          <label htmlFor="compare-search" className="sr-only">
+            Search a product to add to comparison
+          </label>
           <input
+            id="compare-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search a product to add..."
+            role="combobox"
+            aria-expanded={matches.length > 0}
+            aria-controls="compare-search-results"
+            autoComplete="off"
             className="rounded-2xl border border-[var(--clr-border)] px-4 py-3 text-sm w-full outline-none focus:border-[var(--clr-accent)] focus:ring-1 focus:ring-[var(--clr-accent)] bg-[var(--clr-surface)]"
           />
           {matches.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] shadow-[var(--shadow-modal)] overflow-hidden">
+            <div id="compare-search-results" role="listbox" className="absolute z-20 mt-1 w-full rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] shadow-[var(--shadow-modal)] overflow-hidden">
               {matches.map((p) => (
                 <button
                   key={p.id}
+                  role="option"
+                  aria-selected={false}
                   onClick={() => addProduct(p.id)}
                   className="w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--clr-surface-2)] flex justify-between items-center"
                 >

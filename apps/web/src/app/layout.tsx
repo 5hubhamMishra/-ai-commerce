@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     "Veloura is a smarter place to shop electronics — personalized picks, honest search, and a shopping assistant that knows the catalog.",
   applicationName: "Veloura",
   manifest: "/manifest.webmanifest",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Veloura — Shopping that gets you",
     description:
@@ -41,8 +44,16 @@ export const metadata: Metadata = {
     description:
       "Personalized picks, honest search, and a shopping assistant that knows the catalog.",
   },
+  // Explicit `icons` here takes over from the src/app/favicon.ico file
+  // convention entirely, so both are declared in one place instead of Next
+  // silently merging two separate sources of truth: the SVG first (modern
+  // browsers), the .ico as an explicit fallback (older browsers/scrapers
+  // that only understand .ico).
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
   },
 };
 
@@ -54,8 +65,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`h-full scroll-smooth ${inter.variable} ${playfair.variable}`}>
       <body className="min-h-full flex flex-col" style={{ background: "var(--clr-bg)", color: "var(--clr-text-primary)" }}>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1">{children}</main>
         <Footer />
       </body>
     </html>

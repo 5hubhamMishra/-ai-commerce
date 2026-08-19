@@ -76,9 +76,9 @@ function SearchContent() {
           </svg>
           <h2 className="font-display text-xl font-semibold mt-4">Search in plain language</h2>
           <ul className="text-sm mt-3 text-[var(--clr-text-secondary)] space-y-1">
-            <li>"Wireless earbuds under 2000"</li>
-            <li>"Premium smartwatch for running"</li>
-            <li>"Sony noise cancelling headphones"</li>
+            <li>&quot;Wireless earbuds under 2000&quot;</li>
+            <li>&quot;Premium smartwatch for running&quot;</li>
+            <li>&quot;Sony noise cancelling headphones&quot;</li>
           </ul>
         </div>
       )}

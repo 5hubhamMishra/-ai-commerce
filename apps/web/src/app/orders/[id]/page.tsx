@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { getProduct } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import Image from "next/image";
+import { RowsPageSkeleton } from "@/components/Skeleton";
 
 const STAGES = ["confirmed", "processing", "shipped", "delivered"] as const;
 
@@ -21,7 +22,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const order = useStore((s) => s.orders.find((o) => o.id === id));
   const hydrated = useStore((s) => s.hydrated);
 
-  if (!hydrated) return null;
+  if (!hydrated) return <RowsPageSkeleton rows={1} />;
 
   if (!order) {
     return (

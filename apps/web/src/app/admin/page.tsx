@@ -1,11 +1,25 @@
 "use client";
 
 import { useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useStore } from "@/lib/store";
 import { forecastDemand, categoryPerformance, topProducts, lowPerformers, orderMetrics, generateInsights } from "@/lib/admin";
 import { formatPrice } from "@/lib/format";
 import { products } from "@/lib/data";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
+
+// recharts is a moderately large charting library needed only by this one
+// admin panel — dynamically imported so it never loads until this section
+// is actually rendered, not bundled into every visitor's route chunk.
+const CategoryPerformanceChart = dynamic(
+  () => import("@/components/admin/CategoryPerformanceChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[240px] rounded-xl skeleton" aria-hidden="true" />
+    ),
+  },
+);
 
 export default function AdminPage() {
   const orders = useStore((s) => s.orders);
@@ -18,7 +32,19 @@ export default function AdminPage() {
   const metrics = useMemo(() => orderMetrics(orders), [orders]);
   const insights = useMemo(() => generateInsights(orders), [orders]);
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <SkeletonText className="h-8 w-64 mb-8" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonBlock key={i} className="h-24 w-full" />
+          ))}
+        </div>
+        <SkeletonBlock className="h-64 w-full mt-6" />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-12">
@@ -26,6 +52,14 @@ export default function AdminPage() {
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <h1 className="font-display text-3xl font-semibold text-white">Business Dashboard</h1>
           <p className="mt-1 text-sm text-stone-400">Catalog metrics from seeded data; order metrics reflect this browser session.</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-400">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Demo build — this page has no real access control. It isn&apos;t linked from the storefront and is excluded from search indexing.
+          </p>
         </div>
       </div>
 
@@ -105,14 +139,7 @@ export default function AdminPage() {
       <div className="mt-6 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] p-6">
           <h2 className="font-display text-lg font-semibold mb-4">Category Performance</h2>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={catPerf} margin={{ top: 4, right: 4, left: -20, bottom: 4 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--clr-text-secondary)' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'var(--clr-text-disabled)' }} />
-              <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12, border: '1px solid var(--clr-border)' }} />
-              <Bar dataKey="productCount" radius={[6, 6, 0, 0]} fill="var(--clr-accent)" />
-            </BarChart>
-          </ResponsiveContainer>
+          <CategoryPerformanceChart data={catPerf} />
           <div className="grid grid-cols-2 gap-1.5 mt-4">
             {catPerf.map(c => (
               <div key={c.name} className="flex items-center justify-between text-xs">

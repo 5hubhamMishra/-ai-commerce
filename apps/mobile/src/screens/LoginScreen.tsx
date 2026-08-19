@@ -36,7 +36,14 @@ export default function LoginScreen({ onAuthenticated }: Props) {
       <Text style={styles.subtitle}>{mode === 'login' ? 'Welcome back' : 'Create your account'}</Text>
 
       {mode === 'register' && (
-        <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} autoCapitalize="words" />
+        <TextInput
+          style={styles.input}
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+          accessibilityLabel="Full name"
+        />
       )}
       <TextInput
         style={styles.input}
@@ -45,16 +52,39 @@ export default function LoginScreen({ onAuthenticated }: Props) {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        accessibilityLabel="Email address"
       />
-      <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        accessibilityLabel="Password"
+      />
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && (
+        <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
+          {error}
+        </Text>
+      )}
 
-      <Pressable style={styles.button} onPress={submit} disabled={loading}>
+      <Pressable
+        style={styles.button}
+        onPress={submit}
+        disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={mode === 'login' ? 'Log in' : 'Register'}
+        accessibilityState={{ busy: loading, disabled: loading }}
+      >
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Log in' : 'Register'}</Text>}
       </Pressable>
 
-      <Pressable onPress={() => setMode(mode === 'login' ? 'register' : 'login')}>
+      <Pressable
+        onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
+        accessibilityRole="button"
+        accessibilityLabel={mode === 'login' ? 'Switch to registration' : 'Switch to log in'}
+      >
         <Text style={styles.switchMode}>
           {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Log in'}
         </Text>

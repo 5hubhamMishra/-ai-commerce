@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { getProduct } from "@/lib/data";
 import ProductGrid from "@/components/ProductGrid";
+import { ListPageSkeleton } from "@/components/Skeleton";
 import type { Product } from "@/lib/types";
 
 export default function WishlistPage() {
@@ -15,7 +16,7 @@ export default function WishlistPage() {
     [wishlist]
   );
 
-  if (!hydrated) return null;
+  if (!hydrated) return <ListPageSkeleton />;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-8 pb-2 sm:px-6 lg:px-8">

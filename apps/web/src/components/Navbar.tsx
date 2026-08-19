@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 
 const SearchIcon = ({ className }: { className?: string }) => (
@@ -48,13 +48,26 @@ const XIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const Badge = ({ count }: { count: number }) => {
+  if (count === 0) return null;
+  return (
+    <span className="absolute -right-1.5 -top-1.5 h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1 bg-[var(--clr-accent)]">
+      {count > 9 ? '9+' : count}
+    </span>
+  );
+};
+
 export default function Navbar() {
   const [q, setQ] = useState("");
   const router = useRouter();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const searchInputId = useId();
+  const mobileSearchInputId = useId();
+
   const cartCount = useStore((s) => s.cart.reduce((sum, c) => sum + c.quantity, 0));
   const wishlistCount = useStore((s) => s.wishlist.length);
   const user = useStore((s) => s.user);
@@ -67,9 +80,38 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
+  // Close the mobile drawer when navigation actually changes — adjusted
+  // during render (React's own recommended pattern for "reset state when a
+  // value changes") rather than in an effect, which would need an extra
+  // render pass and synchronously trigger a cascading re-render for no
+  // benefit here.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileOpen(false);
-  }, [pathname]);
+  }
+
+  // Drawer a11y: lock background scroll, close on Escape, move focus into
+  // the panel on open and back to the trigger button on close — a mobile
+  // nav overlay is a modal dialog and should behave like one for keyboard
+  // and screen-reader users, not just visually.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const menuButton = menuButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawerRef.current?.focus();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMobileOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      menuButton?.focus();
+    };
+  }, [mobileOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,15 +119,6 @@ export default function Navbar() {
       router.push(`/search?q=${encodeURIComponent(q.trim())}`);
       setMobileOpen(false);
     }
-  };
-
-  const Badge = ({ count }: { count: number }) => {
-    if (count === 0) return null;
-    return (
-      <span className="absolute -right-1.5 -top-1.5 h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1 bg-[var(--clr-accent)]">
-        {count > 9 ? '9+' : count}
-      </span>
-    );
   };
 
   const navLinks = [
@@ -130,10 +163,14 @@ export default function Navbar() {
             </nav>
 
             <form onSubmit={handleSearch} className="ml-auto flex-1 max-w-sm hidden sm:block relative">
+              <label htmlFor={searchInputId} className="sr-only">
+                Search products
+              </label>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <SearchIcon className="h-4 w-4 text-[var(--clr-text-secondary)]" />
               </div>
               <input
+                id={searchInputId}
                 type="search"
                 placeholder="Search products..."
                 value={q}
@@ -168,9 +205,14 @@ export default function Navbar() {
                 {user ? user.name.split(' ')[0] : 'Sign in'}
               </Link>
               
-              <button 
+              <button
+                ref={menuButtonRef}
                 className="md:hidden rounded-lg p-2 hover:bg-stone-100 text-[var(--clr-text-secondary)] transition-colors"
                 onClick={() => setMobileOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={mobileOpen}
+                aria-controls="mobile-nav-drawer"
+                aria-label="Open menu"
               >
                 <MenuIcon className="h-5 w-5" />
               </button>
@@ -181,11 +223,20 @@ export default function Navbar() {
 
       {mobileOpen && (
         <>
-          <div 
+          <div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm animate-fadeIn"
             onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-72 flex flex-col bg-[var(--clr-surface)] shadow-[var(--shadow-modal)] animate-slideInRight">
+          <div
+            id="mobile-nav-drawer"
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            tabIndex={-1}
+            className="fixed inset-y-0 right-0 z-50 w-72 flex flex-col bg-[var(--clr-surface)] shadow-[var(--shadow-modal)] animate-slideInRight outline-none"
+          >
             <div className="flex justify-between items-center p-4 border-b border-[var(--clr-border)]">
               <span className="font-display text-lg font-semibold text-[var(--clr-text-primary)]">Menu</span>
               <button 
@@ -250,10 +301,14 @@ export default function Navbar() {
             
             <div className="mt-auto p-4 border-t border-[var(--clr-border)]">
               <form onSubmit={handleSearch} className="relative">
+                <label htmlFor={mobileSearchInputId} className="sr-only">
+                  Search products
+                </label>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <SearchIcon className="h-4 w-4 text-[var(--clr-text-secondary)]" />
                 </div>
                 <input
+                  id={mobileSearchInputId}
                   type="search"
                   placeholder="Search products..."
                   value={q}

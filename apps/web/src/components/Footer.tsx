@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useStore } from "@/lib/store";
+import { categories } from "@/lib/data";
 
 function FooterCol({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
@@ -18,6 +22,8 @@ function FooterCol({ title, links }: { title: string; links: { label: string; hr
 }
 
 export default function Footer() {
+  const user = useStore((s) => s.user);
+
   return (
     <footer className="bg-stone-950 text-stone-300 border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 pt-14 pb-10 grid grid-cols-2 md:grid-cols-4 gap-10">
@@ -35,21 +41,15 @@ export default function Footer() {
 
         <FooterCol
           title="Shop"
-          links={[
-            { label: "All Products", href: "/shop" },
-            { label: "Electronics", href: "/shop?category=Electronics" },
-            { label: "Fashion", href: "/shop?category=Fashion" },
-            { label: "Home & Living", href: "/shop?category=Home+%26+Living" },
-            { label: "Beauty", href: "/shop?category=Beauty" },
-          ]}
+          links={categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }))}
         />
         <FooterCol
           title="Account"
           links={[
-            { label: "Sign In", href: "/profile" },
-            { label: "My Profile", href: "/profile" },
+            user ? { label: "My Profile", href: "/profile" } : { label: "Sign In", href: "/login" },
             { label: "Wishlist", href: "/wishlist" },
             { label: "Shopping Cart", href: "/cart" },
+            { label: "Your Orders", href: "/orders" },
           ]}
         />
         <FooterCol
@@ -58,7 +58,6 @@ export default function Footer() {
             { label: "For You", href: "/recommendations" },
             { label: "AI Assistant", href: "/ai-shopping" },
             { label: "Compare Products", href: "/compare" },
-            { label: "About Us", href: "#" },
           ]}
         />
       </div>
@@ -72,9 +71,6 @@ export default function Footer() {
         <div className="flex items-center gap-4">
           <Link href="/profile" className="text-xs text-stone-600 hover:text-stone-400 transition-colors">
             Privacy Policy
-          </Link>
-          <Link href="/admin" className="text-xs text-stone-600 hover:text-stone-400 transition-colors">
-            Admin Dashboard
           </Link>
         </div>
       </div>

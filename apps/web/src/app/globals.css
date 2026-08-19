@@ -126,6 +126,25 @@ body {
   border-radius: var(--radius-sm);
 }
 
+/* Skip-to-content link — visually hidden until keyboard-focused, then
+   pinned to the top so keyboard users can bypass the sticky navbar. */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--clr-ink);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: top 150ms ease;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
 /* Text selection */
 ::selection {
   background: var(--clr-accent);

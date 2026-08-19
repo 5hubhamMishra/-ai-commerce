@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { buildProfile } from "@/lib/recommend";
+import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -19,7 +20,24 @@ export default function ProfilePage() {
   const topCategories = Object.entries(profile.categoryAffinity).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const topBrands = Object.entries(profile.brandAffinity).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+        <SkeletonText className="h-7 w-40 mb-5" />
+        <div className="rounded-2xl border border-[var(--clr-border)] p-6 flex items-center gap-4">
+          <SkeletonBlock className="w-12 h-12 rounded-full shrink-0" />
+          <div className="flex-1 flex flex-col gap-2">
+            <SkeletonText className="h-4 w-1/3" />
+            <SkeletonText className="h-3 w-1/2" />
+          </div>
+        </div>
+        <div className="mt-4 rounded-2xl border border-[var(--clr-border)] p-6">
+          <SkeletonText className="h-5 w-1/3 mb-4" />
+          <SkeletonText className="h-16 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   function exportData() {
     const data = { user, events, profile };
@@ -106,6 +124,9 @@ export default function ProfilePage() {
           </div>
           <button
             onClick={() => setPersonalization(!personalizationEnabled)}
+            role="switch"
+            aria-checked={personalizationEnabled}
+            aria-label="Personalization"
             className="w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-200 shrink-0"
             style={{ backgroundColor: personalizationEnabled ? 'var(--clr-accent)' : 'var(--clr-surface-3,#d6d3d1)' }}
           >

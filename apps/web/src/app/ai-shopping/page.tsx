@@ -6,6 +6,14 @@ import { buildProfile } from "@/lib/recommend";
 import { respond, type AssistantTurn } from "@/lib/shopai";
 import ProductCard from "@/components/ProductCard";
 
+// A plain module-level helper, not inline Math.random() inside the
+// component body — React's purity rule flags a component/hook calling a
+// known-impure global directly, even from within an event-triggered
+// callback like this one's setTimeout.
+function randomTypingDelayMs() {
+  return 600 + Math.random() * 500;
+}
+
 const STARTERS = [
   "A laptop for coding and machine learning under 80000",
   "Good headphones for the gym under 5000",
@@ -43,7 +51,7 @@ export default function AiShoppingPage() {
         return [...h, reply];
       });
       setIsTyping(false);
-    }, 600 + Math.random() * 500);
+    }, randomTypingDelayMs());
   }
 
   return (

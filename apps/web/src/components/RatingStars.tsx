@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { useId } from 'react';
 
 export default function RatingStars({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
-  const gradientId = useMemo(() => `star-grad-${Math.random().toString(36).slice(2)}`, []);
+  // useId, not Math.random() — deterministic across server/client render
+  // and stable per component instance without needing a memo at all.
+  const gradientId = useId();
   const starSize = size === 'sm' ? 12 : 16;
   
   return (

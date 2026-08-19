@@ -8,6 +8,7 @@ import { getProduct } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { frequentlyBoughtWith } from "@/lib/recommend";
 import ProductGrid from "@/components/ProductGrid";
+import { RowsPageSkeleton } from "@/components/Skeleton";
 
 export default function CartPage() {
   const cart = useStore((s) => s.cart);
@@ -28,7 +29,7 @@ export default function CartPage() {
     return frequentlyBoughtWith(lines[0].product, 5);
   }, [lines]);
 
-  if (!hydrated) return null;
+  if (!hydrated) return <RowsPageSkeleton rows={2} />;
 
   if (lines.length === 0) {
     return (

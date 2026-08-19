@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { authApi, usersApi, type PublicUser } from '../api/client';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ApiError, authApi, usersApi, type PublicUser } from '../api/client';
 import { session } from '../api/session';
 
 type Props = {
@@ -10,18 +10,28 @@ type Props = {
 export default function HomeScreen({ onLoggedOut }: Props) {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadProfile = useCallback(async () => {
+    const accessToken = await session.getAccessToken();
+    if (!accessToken) return onLoggedOut();
+    setLoading(true);
+    setError(null);
+    try {
+      setUser(await usersApi.me(accessToken));
+    } catch (err) {
+      // Same real-error-message-first pattern as LoginScreen — a generic
+      // "could not load" string hid the actual server response, leaving no
+      // way to tell a network failure apart from an auth/permission one.
+      setError(err instanceof ApiError ? err.message : 'Could not load your profile.');
+    } finally {
+      setLoading(false);
+    }
+  }, [onLoggedOut]);
 
   useEffect(() => {
-    (async () => {
-      const accessToken = await session.getAccessToken();
-      if (!accessToken) return onLoggedOut();
-      try {
-        setUser(await usersApi.me(accessToken));
-      } catch {
-        setError('Could not load your profile.');
-      }
-    })();
-  }, [onLoggedOut]);
+    loadProfile();
+  }, [loadProfile]);
 
   const logout = async () => {
     const refreshToken = await session.getRefreshToken();
@@ -38,10 +48,28 @@ export default function HomeScreen({ onLoggedOut }: Props) {
           <Text style={styles.welcome}>Welcome, {user.name}</Text>
           <Text style={styles.email}>{user.email}</Text>
         </>
+      ) : error ? (
+        <>
+          <Text style={styles.email} accessibilityRole="alert" accessibilityLiveRegion="polite">
+            {error}
+          </Text>
+          <Pressable
+            style={[styles.button, styles.retryButton]}
+            onPress={loadProfile}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Try again"
+            accessibilityState={{ busy: loading, disabled: loading }}
+          >
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Try again</Text>}
+          </Pressable>
+        </>
       ) : (
-        <Text style={styles.email}>{error ?? 'Loading your profile…'}</Text>
+        <Text style={styles.email} accessibilityLiveRegion="polite">
+          Loading your profile…
+        </Text>
       )}
-      <Pressable style={styles.button} onPress={logout}>
+      <Pressable style={styles.button} onPress={logout} accessibilityRole="button" accessibilityLabel="Log out">
         <Text style={styles.buttonText}>Log out</Text>
       </Pressable>
     </View>
@@ -54,5 +82,6 @@ const styles = StyleSheet.create({
   welcome: { fontSize: 20, fontWeight: '600' },
   email: { fontSize: 14, color: '#6b7280', marginTop: 4, marginBottom: 24 },
   button: { backgroundColor: '#b45309', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 24 },
+  retryButton: { marginBottom: 16 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

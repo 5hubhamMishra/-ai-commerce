@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { getProduct } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import Link from "next/link";
+import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -27,7 +28,17 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 lg:px-8 pb-16">
+        <SkeletonText className="h-7 w-32 mb-8" />
+        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <SkeletonBlock className="h-64 w-full" />
+          <SkeletonBlock className="h-48 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -71,8 +82,9 @@ export default function CheckoutPage() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <form onSubmit={onSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-primary)' }}>Shipping address</label>
+            <label htmlFor="checkout-address" className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-primary)' }}>Shipping address</label>
             <textarea
+              id="checkout-address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               required
@@ -81,9 +93,9 @@ export default function CheckoutPage() {
               className="rounded-2xl border border-[var(--clr-border)] px-4 py-3 text-sm outline-none w-full resize-none focus:border-[var(--clr-accent)] focus:ring-1 focus:ring-[var(--clr-accent)] transition-all shadow-sm bg-[var(--clr-surface)]"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-primary)' }}>Payment method</label>
+            <h2 className="block text-sm font-semibold mb-2" style={{ color: 'var(--clr-text-primary)' }}>Payment method</h2>
             <div className="rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface-2)] p-4 flex gap-3 items-start">
               <svg className="shrink-0 mt-0.5" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--clr-text-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>

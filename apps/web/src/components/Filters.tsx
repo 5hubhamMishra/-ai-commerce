@@ -89,16 +89,18 @@ export default function Filters({
 
       {/* Max price */}
       <div>
-        <h4 className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--clr-text-disabled)" }}>
+        <label htmlFor="max-price-filter" className="block text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--clr-text-disabled)" }}>
           Max price
-        </h4>
+        </label>
         <input
+          id="max-price-filter"
           type="range"
           min={500}
           max={200000}
           step={500}
           value={state.maxPrice ?? 200000}
           onChange={(e) => onChange({ ...state, maxPrice: Number(e.target.value) })}
+          aria-valuetext={`Up to ₹${(state.maxPrice ?? 200000).toLocaleString("en-IN")}`}
           className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
           style={{ accentColor: "var(--clr-accent)" }}
         />

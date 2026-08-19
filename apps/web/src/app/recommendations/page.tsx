@@ -5,6 +5,7 @@ import { useStore } from "@/lib/store";
 import { buildProfile, recommendForProfile } from "@/lib/recommend";
 import { popularProducts } from "@/lib/data";
 import ProductGrid from "@/components/ProductGrid";
+import { ListPageSkeleton } from "@/components/Skeleton";
 
 export default function RecommendationsPage() {
   const hydrated = useStore((s) => s.hydrated);
@@ -25,7 +26,7 @@ export default function RecommendationsPage() {
     return map;
   }, [scored]);
 
-  if (!hydrated) return null;
+  if (!hydrated) return <ListPageSkeleton cards={10} />;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
@@ -62,7 +63,7 @@ export default function RecommendationsPage() {
           </svg>
           <div>
             <p className="text-sm font-semibold text-red-900">Personalization is paused</p>
-            <p className="text-xs text-red-700 mt-0.5">Personalization is turned off in your profile settings, so we're showing popular picks instead.</p>
+            <p className="text-xs text-red-700 mt-0.5">Personalization is turned off in your profile settings, so we&apos;re showing popular picks instead.</p>
           </div>
         </div>
       )}

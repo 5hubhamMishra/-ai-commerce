@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { formatPrice } from "@/lib/format";
+import { RowsPageSkeleton } from "@/components/Skeleton";
 
 export default function OrdersPage() {
   const orders = useStore((s) => s.orders);
   const hydrated = useStore((s) => s.hydrated);
 
-  if (!hydrated) return null;
+  if (!hydrated) return <RowsPageSkeleton />;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -22,7 +23,7 @@ export default function OrdersPage() {
             <line x1="12" y1="22.08" x2="12" y2="12"></line>
           </svg>
           <h2 className="font-display text-xl font-semibold mt-4">No orders yet</h2>
-          <p className="text-sm mt-2 max-w-xs text-center" style={{ color: 'var(--clr-text-secondary)' }}>Looks like you haven't made any purchases yet.</p>
+          <p className="text-sm mt-2 max-w-xs text-center" style={{ color: 'var(--clr-text-secondary)' }}>Looks like you haven&apos;t made any purchases yet.</p>
           <Link href="/shop" className="mt-5 btn btn-accent">Start shopping</Link>
         </div>
       ) : (
