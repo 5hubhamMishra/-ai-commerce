@@ -1,5 +1,6 @@
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PaymentProviderType } from '@prisma/client';
 import type {
   ConfirmPaymentInput,
@@ -20,6 +21,8 @@ import type {
 @Injectable()
 export class DevelopmentPaymentAdapter implements PaymentProvider {
   readonly type = PaymentProviderType.DEVELOPMENT;
+
+  constructor(private readonly config: ConfigService) {}
 
   createIntent(input: CreateIntentInput): Promise<CreateIntentResult> {
     return Promise.resolve({
@@ -55,9 +58,25 @@ export class DevelopmentPaymentAdapter implements PaymentProvider {
     });
   }
 
-  verifyWebhookSignature(): boolean {
-    // Development-only: no signing secret exists to verify against. A real
-    // adapter (Razorpay/Stripe) must reject unsigned/invalid webhook bodies.
-    return true;
+  /**
+   * Simulates a real provider's HMAC-signed webhook (e.g. Razorpay's `X-Razorpay-Signature`,
+   * Stripe's `Stripe-Signature`) rather than trusting every request unconditionally — even
+   * though this is the development adapter, `POST /payments/webhook` is `@Public()` today
+   * (no provider is real yet to gate it), so an unconditional `true` here would let anyone
+   * forge a payment-succeeded event against a real `providerRef`. Unset `PAYMENT_SECRET`
+   * fails closed (rejects every webhook), never open.
+   */
+  verifyWebhookSignature(
+    payload: string,
+    signature: string | undefined,
+  ): boolean {
+    const secret = this.config.get<string>('payments.webhookSecret');
+    if (!secret || !signature) return false;
+
+    const expected = createHmac('sha256', secret).update(payload).digest('hex');
+    const expectedBuf = Buffer.from(expected, 'hex');
+    const signatureBuf = Buffer.from(signature, 'hex');
+    if (expectedBuf.length !== signatureBuf.length) return false;
+    return timingSafeEqual(expectedBuf, signatureBuf);
   }
 }

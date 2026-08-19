@@ -29,6 +29,13 @@ export default () => ({
       10,
     ),
   },
+  payments: {
+    // Verifies the (development-simulated, or eventually real Razorpay/Stripe) provider
+    // webhook's HMAC signature. Unset means "reject every webhook" (fail closed) — never
+    // "accept every webhook", so a misconfigured deployment can't silently accept forged
+    // payment-succeeded events.
+    webhookSecret: process.env.PAYMENT_SECRET,
+  },
   marketplace: {
     // Spec: "Marketplace functionality may be disabled initially through
     // feature flags." A single config switch, not a dynamic feature-flag

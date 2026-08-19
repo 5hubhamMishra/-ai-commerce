@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;
+  let audit: { record: jest.Mock };
   let prisma: {
     user: { findUnique: jest.Mock; create: jest.Mock };
     refreshToken: {
@@ -30,6 +31,7 @@ describe('AuthService', () => {
         updateMany: jest.fn(),
       },
     };
+    audit = { record: jest.fn() };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -48,7 +50,7 @@ describe('AuthService', () => {
               })[key],
           },
         },
-        { provide: AuditService, useValue: { record: jest.fn() } },
+        { provide: AuditService, useValue: audit },
       ],
     }).compile();
 
@@ -143,6 +145,20 @@ describe('AuthService', () => {
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
+    it('audits a failed login attempt (for credential-stuffing/brute-force visibility)', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      await expect(
+        service.login({ email: 'ghost@example.com', password: 'whatever' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(audit.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'USER_LOGIN_FAILED',
+          metadata: { email: 'ghost@example.com' },
+        }),
+      );
+    });
+
     it('rejects a deactivated account even with the correct password', async () => {
       const passwordHash = await bcrypt.hash('correct-password', 4);
       prisma.user.findUnique.mockResolvedValue({
@@ -198,6 +214,12 @@ describe('AuthService', () => {
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ userId: 'u1', revokedAt: null }),
+        }),
+      );
+      expect(audit.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorId: 'u1',
+          action: 'REFRESH_TOKEN_REUSE_DETECTED',
         }),
       );
     });

@@ -16,7 +16,9 @@ services:
       POSTGRES_PASSWORD: ai_commerce_dev
       POSTGRES_DB: ai_commerce
     ports:
-      - '5432:5432'
+      # Bound to loopback only — reachable from this host, not the network (matters if this
+      # ever runs on a shared box or an untrusted network, not just a personal laptop).
+      - '127.0.0.1:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -29,7 +31,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redisdata:/data
     healthcheck:

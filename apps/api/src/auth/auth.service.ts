@@ -62,17 +62,29 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<TokenPair & { user: PublicUser }> {
+    const email = dto.email.toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+      where: { email },
       include: { roles: true },
     });
 
     // Same error for "no such account" and "wrong password" — never reveal account existence.
-    const invalidCredentials = () =>
-      new UnauthorizedException({
+    const invalidCredentials = () => {
+      // Failed attempts are audited (no actorId — the caller isn't authenticated) so
+      // credential-stuffing/brute-force patterns are visible after the fact, not just
+      // throttled in the moment. The attempted email is logged deliberately: it's the
+      // one signal that lets an admin see which accounts are being targeted.
+      void this.audit.record({
+        action: 'USER_LOGIN_FAILED',
+        entityType: 'user',
+        entityId: user?.id ?? null,
+        metadata: { email },
+      });
+      return new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'Incorrect email or password.',
       });
+    };
 
     if (!user || !user.isActive || user.deletedAt) throw invalidCredentials();
 
@@ -109,9 +121,19 @@ export class AuthService {
     if (!record) throw invalid();
 
     if (record.revokedAt) {
+      // A revoked token being presented again is a theft signal, not a routine error —
+      // revoke the whole session chain and audit it so it's visible to security monitoring,
+      // not just silently absorbed as another 401.
       await this.prisma.refreshToken.updateMany({
         where: { userId: record.userId, revokedAt: null },
         data: { revokedAt: new Date() },
+      });
+      await this.audit.record({
+        actorId: record.userId,
+        action: 'REFRESH_TOKEN_REUSE_DETECTED',
+        entityType: 'user',
+        entityId: record.userId,
+        metadata: { refreshTokenId: record.id },
       });
       throw invalid();
     }
