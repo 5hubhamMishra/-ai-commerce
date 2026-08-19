@@ -8,8 +8,24 @@ type UserWithRoles = {
   name: string;
   isActive: boolean;
   createdAt: Date;
+  deletedAt: Date | null;
   roles: { role: Role }[];
 };
+
+// Explicit allowlist, not `include: { roles: true }` on a bare query — a bare query
+// returns every scalar column (passwordHash included) at runtime regardless of what a
+// TypeScript return type claims, which would make leaking it just one missing
+// `toPublic()` call away. `select` makes it structurally impossible to fetch, not just
+// procedurally filtered after the fact.
+const USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  isActive: true,
+  createdAt: true,
+  deletedAt: true,
+  roles: true,
+} as const;
 
 @Injectable()
 export class UsersService {
@@ -18,7 +34,7 @@ export class UsersService {
   async findById(id: string): Promise<UserWithRoles> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { roles: true },
+      select: USER_SELECT,
     });
     if (!user || user.deletedAt) {
       throw new NotFoundException({
@@ -33,7 +49,7 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data: { name },
-      include: { roles: true },
+      select: USER_SELECT,
     });
   }
 
@@ -42,7 +58,7 @@ export class UsersService {
     const [items, total] = await Promise.all([
       this.prisma.user.findMany({
         where: { deletedAt: null },
-        include: { roles: true },
+        select: USER_SELECT,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
