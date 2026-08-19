@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   EMBEDDING_PROVIDER,
@@ -7,12 +8,15 @@ import {
 
 export type SimilarProduct = { productId: string; similarity: number };
 
+function vectorToLiteral(vector: number[]): string {
+  return `[${vector.join(',')}]`;
+}
+
 /**
  * Computes, stores, and compares product embeddings. Similarity search is a
- * plain in-process cosine-similarity scan over every stored embedding, not
- * an indexed nearest-neighbor query — genuinely fine at this catalog's scale
- * (112 products; see schema.prisma's `ProductEmbedding` doc comment and
- * DECISIONS.md ADR-023 for why this isn't pgvector yet).
+ * real pgvector nearest-neighbor query (HNSW cosine-ops index — see the
+ * Phase 8 migration) since Phase 8; it was a plain in-process cosine scan
+ * over a `Float[]` column through Phase 7 (see DECISIONS.md ADR-023/ADR-024).
  */
 @Injectable()
 export class EmbeddingsService {
@@ -50,12 +54,24 @@ export class EmbeddingsService {
       tags: product.tags.map((t) => t.tag.name),
       specificationValues: product.specifications.map((s) => s.value),
     });
+    const literal = vectorToLiteral(vector);
 
-    await this.prisma.productEmbedding.upsert({
-      where: { productId },
-      create: { productId, vector },
-      update: { vector },
-    });
+    // `embedding` is an `Unsupported("vector(64)")` column — Prisma Client
+    // can't write it directly, so the row's other fields go through the
+    // normal upsert and the vector itself through raw SQL, both in one
+    // transaction so a crash between the two can never leave a
+    // metadata-only row with no vector.
+    await this.prisma.$transaction([
+      this.prisma.productEmbedding.upsert({
+        where: { productId },
+        create: { productId },
+        update: {},
+      }),
+      this.prisma.$executeRaw`
+        UPDATE product_embeddings SET embedding = ${literal}::vector
+        WHERE product_id = ${productId}
+      `,
+    ]);
   }
 
   /** Batch reindex — the initial backfill for products seeded before this
@@ -80,33 +96,72 @@ export class EmbeddingsService {
     limit: number,
     excludeIds: Set<string> = new Set(),
   ): Promise<SimilarProduct[]> {
-    const target = await this.prisma.productEmbedding.findUnique({
-      where: { productId },
-    });
-    if (!target) return [];
-
-    const all = await this.prisma.productEmbedding.findMany({
-      where: { productId: { not: productId } },
-    });
-
-    const scored = all
-      .filter((e) => !excludeIds.has(e.productId))
-      .map((e) => ({
-        productId: e.productId,
-        similarity: cosineSimilarity(target.vector, e.vector),
-      }))
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, limit);
-
-    return scored;
+    let literal: string | null;
+    try {
+      const target = await this.prisma.$queryRaw<
+        { embedding: string | null }[]
+      >`
+        SELECT embedding::text AS embedding FROM product_embeddings WHERE product_id = ${productId}
+      `;
+      literal = target[0]?.embedding ?? null;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to look up embedding for product ${productId}, degrading to no similar results: ${String(error)}`,
+      );
+      return [];
+    }
+    if (!literal) return [];
+    return this.similarByLiteral(literal, limit, [productId, ...excludeIds]);
   }
-}
 
-export function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) dot += a[i] * b[i];
-  // Both vectors are already L2-normalized by the provider, so the dot
-  // product alone is the cosine similarity — no need to re-divide by norms.
-  return dot;
+  /** Semantic search's entry point — embeds free text (a search-box query)
+   *  the same way a product is embedded and finds its nearest neighbors.
+   *  Used by SearchService, never a stored ProductEmbedding row itself. */
+  async findSimilarToText(
+    text: string,
+    limit: number,
+    excludeIds: string[] = [],
+  ): Promise<SimilarProduct[]> {
+    const { vector } = await this.provider.embedText(text);
+    return this.similarByLiteral(vectorToLiteral(vector), limit, excludeIds);
+  }
+
+  /** Real pgvector nearest-neighbor query (the HNSW cosine-ops index from
+   *  the Phase 8 migration) — `<=>` is pgvector's cosine *distance*
+   *  (0 = identical direction, 2 = opposite), so similarity is `1 - distance`
+   *  to keep the same -1..1 meaning EmbeddingsService always returned.
+   *  Deliberately fails soft: spec requires search to "remain functional if
+   *  the AI service is unavailable" — a pgvector error degrades semantic
+   *  results to empty rather than 500ing the caller (SearchService falls
+   *  back to keyword-only; RecommendationsService's content-similarity
+   *  signal simply drops out of the blend for that request). */
+  private async similarByLiteral(
+    literal: string,
+    limit: number,
+    excludeIds: string[],
+  ): Promise<SimilarProduct[]> {
+    try {
+      const rows = await this.prisma.$queryRaw<
+        { product_id: string; similarity: number }[]
+      >(
+        Prisma.sql`
+          SELECT product_id, 1 - (embedding <=> ${literal}::vector) AS similarity
+          FROM product_embeddings
+          WHERE embedding IS NOT NULL
+          ${excludeIds.length ? Prisma.sql`AND product_id NOT IN (${Prisma.join(excludeIds)})` : Prisma.empty}
+          ORDER BY embedding <=> ${literal}::vector
+          LIMIT ${limit}
+        `,
+      );
+      return rows.map((r) => ({
+        productId: r.product_id,
+        similarity: r.similarity,
+      }));
+    } catch (error) {
+      this.logger.warn(
+        `Similarity query failed, degrading to no semantic results: ${String(error)}`,
+      );
+      return [];
+    }
+  }
 }

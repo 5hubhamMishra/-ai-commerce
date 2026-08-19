@@ -62,3 +62,42 @@ describe('HashingEmbeddingAdapter', () => {
     expect(vector.every((v) => Number.isFinite(v))).toBe(true);
   });
 });
+
+describe('HashingEmbeddingAdapter.embedText', () => {
+  const adapter = new HashingEmbeddingAdapter();
+
+  it('produces an L2-normalized vector of the declared dimensionality', async () => {
+    const { vector } = await adapter.embedText('wireless headphones for gym');
+    expect(vector.length).toBe(adapter.dimensions);
+    const norm = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
+    expect(norm).toBeCloseTo(1, 8);
+  });
+
+  it('is deterministic for identical text', async () => {
+    const a = await adapter.embedText('wireless headphones for gym');
+    const b = await adapter.embedText('wireless headphones for gym');
+    expect(a.vector).toEqual(b.vector);
+  });
+
+  it('shares the same vector space as embed() — overlapping vocabulary scores nonzero similarity', async () => {
+    const query = await adapter.embedText('wireless bluetooth headphones');
+    const product = await adapter.embed(
+      input({
+        name: 'Wireless Bluetooth Headphones',
+        description: 'Comfortable over-ear headphones',
+        tags: [],
+        specificationValues: [],
+      }),
+    );
+    const dot = query.vector.reduce(
+      (sum, v, i) => sum + v * product.vector[i],
+      0,
+    );
+    expect(dot).toBeGreaterThan(0);
+  });
+
+  it('never produces NaN/Infinity for empty text', async () => {
+    const { vector } = await adapter.embedText('');
+    expect(vector.every((v) => Number.isFinite(v))).toBe(true);
+  });
+});

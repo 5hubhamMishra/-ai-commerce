@@ -202,7 +202,14 @@ describe('AI Recommendations (e2e)', () => {
       .post('/api/v1/recommendations/admin/reindex-embeddings')
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(201);
-    expect(res.body.productCount).toBe(activeCount);
+    // Not toBe: reindexAll() counts every non-deleted product (any status,
+    // not just ACTIVE — see EmbeddingsService.reindexAll), and other e2e
+    // suites create/delete their own products concurrently against this
+    // shared dev database (Jest runs spec files in parallel workers by
+    // default). >= activeCount is the real invariant; exact equality was
+    // never guaranteed and only looked that way before another suite's
+    // fixtures made the race visible.
+    expect(res.body.productCount).toBeGreaterThanOrEqual(activeCount);
 
     const embeddingCount = await prisma.productEmbedding.count();
     expect(embeddingCount).toBeGreaterThanOrEqual(activeCount);

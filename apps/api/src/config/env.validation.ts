@@ -41,6 +41,10 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   WEB_ORIGIN?: string;
+
+  @IsString()
+  @MinLength(1, { message: 'ANTHROPIC_API_KEY is required for ShopAI' })
+  ANTHROPIC_API_KEY!: string;
 }
 
 /**

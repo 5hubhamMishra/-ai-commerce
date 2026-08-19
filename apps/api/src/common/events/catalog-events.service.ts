@@ -7,9 +7,14 @@ import {
 } from './catalog-events.types';
 
 /**
- * Single emission point for catalog domain events. Services call this instead of
- * touching EventEmitter2 directly, so every listener (cache invalidation, and the
- * search/embedding hook points below) reacts to the same event shape.
+ * Single emission point for catalog domain events. Services call this instead
+ * of touching EventEmitter2 directly, so every listener (cache invalidation,
+ * embedding regeneration) reacts to the same event shape. There is no
+ * separate search-index listener — as of Phase 8, keyword search queries
+ * `products`/`product_variants` directly and semantic search queries
+ * `product_embeddings` directly (kept current by the embedding listener
+ * below), so there's no distinct materialized index left for a catalog
+ * change to update. See EVENTS.md.
  */
 @Injectable()
 export class CatalogEventsService {

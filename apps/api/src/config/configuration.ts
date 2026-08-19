@@ -18,6 +18,17 @@ export default () => ({
     // Category.returnWindowDays overrides this per-category when set.
     defaultWindowDays: parseInt(process.env.RETURN_WINDOW_DAYS ?? '10', 10),
   },
+  shopai: {
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    // claude-opus-5 by default — configurable per deployment, not hard-coded
+    // throughout the codebase (same "centralized, not scattered" principle
+    // as recommendation-config.ts/search-config.ts).
+    model: process.env.ANTHROPIC_MODEL ?? 'claude-opus-5',
+    maxToolIterations: parseInt(
+      process.env.SHOPAI_MAX_TOOL_ITERATIONS ?? '6',
+      10,
+    ),
+  },
   marketplace: {
     // Spec: "Marketplace functionality may be disabled initially through
     // feature flags." A single config switch, not a dynamic feature-flag

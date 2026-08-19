@@ -56,6 +56,9 @@ model User {
   events                    BehavioralEvent[]
   customerProfile           CustomerProfile?
   recommendationImpressions RecommendationImpression[]
+  searchQueryLogs           SearchQueryLog[]
+  shopaiConversations       ShopAIConversation[]
+  shopaiInteractionLogs     ShopAIInteractionLog[]
 
   @@map("users")
 }
@@ -1278,19 +1281,21 @@ enum EmbeddingModel {
   HASHING_V1
 }
 
-// Plain Postgres `double precision[]`, not pgvector — pgvector buys indexed
-// approximate-nearest-neighbor search at scale; this catalog is 112 products,
-// where an O(n) in-process cosine-similarity scan against every row is
-// sub-millisecond and genuinely simpler to reason about. Phase 8 (which
-// explicitly asks for "pgvector" as its own scope item) is the natural place
-// to add a real vector column/index if/when catalog size makes it worth it —
-// see ADR-023.
+// Real pgvector column since Phase 8 (was a plain `double precision[]` through
+// Phase 7 — see ADR-023/ADR-024). `Unsupported()` because Prisma Client has no
+// native vector type; every read/write against `embedding` goes through raw
+// SQL in EmbeddingsService, the same "raw SQL where the ORM can't reach"
+// precedent search.service.ts already used for price aggregation. An HNSW
+// cosine-ops index backs nearest-neighbor queries (migration
+// 20260818_phase8_semantic_search) — still genuinely optional at 112
+// products, but real infrastructure the spec explicitly scoped to this
+// phase, not deferred further.
 model ProductEmbedding {
-  id        String         @id @default(uuid())
-  productId String         @unique @map("product_id")
-  vector    Float[]
-  model     EmbeddingModel @default(HASHING_V1)
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  id        String                       @id @default(uuid())
+  productId String                       @unique @map("product_id")
+  embedding Unsupported("vector(64)")?
+  model     EmbeddingModel               @default(HASHING_V1)
+  updatedAt DateTime                     @updatedAt @map("updated_at")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -1330,4 +1335,109 @@ model RecommendationImpression {
   @@index([productId])
   @@index([createdAt])
   @@map("recommendation_impressions")
+}
+
+// Search analytics (PROMPT 09's own "search analytics" bullet) — one row per
+// search request, keyword-only or natural-language. `filters` snapshots the
+// *effective* filters actually applied (explicit query params merged with
+// whatever RuleBasedQueryUnderstandingAdapter extracted from free text, with
+// explicit params winning ties) so a top-queries/zero-result report can be
+// built without re-deriving anything. No FK-cascade concern here the way
+// orders/returns have — a deleted user's past searches are just historical
+// aggregate data, not a record anyone needs to keep pointing at a live row.
+model SearchQueryLog {
+  id           String   @id @default(uuid())
+  query        String
+  filters      Json
+  resultCount  Int      @map("result_count")
+  usedSemantic Boolean  @map("used_semantic")
+  userId       String?  @map("user_id")
+  anonymousId  String?  @map("anonymous_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([anonymousId])
+  @@index([createdAt])
+  @@map("search_query_logs")
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+// One conversation belongs to exactly one identity, set at creation — same
+// nullable-pair identity shape as everywhere else in this codebase
+// (BehavioralEvent, RecommendationImpression, SearchQueryLog). Every
+// read/continue against a conversationId must verify the caller's identity
+// matches this row (IDOR check) before touching ShopAIMessage — this is the
+// first place in the codebase where a caller supplies an existing record ID
+// to *continue*, not just to read back their own aggregate history, so the
+// check is load-bearing, not incidental.
+model ShopAIConversation {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  anonymousId String?  @map("anonymous_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages ShopAIMessage[]
+
+  @@index([userId])
+  @@index([anonymousId])
+  @@map("shopai_conversations")
+}
+
+// Plain final text per turn — not the raw Anthropic content-block stream.
+// Within one HTTP request, ShopAIService's tool-calling loop works with the
+// full provider-native turn structure (assistant tool_use, user tool_result)
+// entirely in memory; only the customer's own message and the assistant's
+// final synthesized reply are persisted as conversation history, replayed
+// as plain user/assistant text turns on the next request. `toolCalls` is an
+// observability-only record of what ran this turn (name + input), never
+// replayed into a future prompt — see AI_ARCHITECTURE.md.
+model ShopAIMessage {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  role           ChatRole
+  content        String   @db.Text
+  toolCalls      Json?    @map("tool_calls")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation ShopAIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("shopai_messages")
+}
+
+// One row per assistant turn (not per tool call) — the "AI observability"
+// PROMPT 10 asks for. Deliberately separate from ShopAIMessage: this is
+// operational telemetry (cost/latency/safety monitoring), not conversation
+// content, and has its own retention/analysis shape (aggregate reporting,
+// same "log first, analyze later" pattern as SearchQueryLog/
+// RecommendationImpression).
+model ShopAIInteractionLog {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  userId         String?  @map("user_id")
+  anonymousId    String?  @map("anonymous_id")
+  model          String
+  inputTokens    Int      @map("input_tokens")
+  outputTokens   Int      @map("output_tokens")
+  toolCallCount  Int      @map("tool_call_count")
+  toolNames      String[] @map("tool_names")
+  latencyMs      Int      @map("latency_ms")
+  stopReason     String   @map("stop_reason")
+  refused        Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("shopai_interaction_logs")
 }

@@ -1,28 +1,56 @@
-import { cosineSimilarity } from './embeddings.service';
+import { Test } from '@nestjs/testing';
+import { PrismaService } from '../prisma/prisma.service';
+import { EmbeddingsService } from './embeddings.service';
+import {
+  EMBEDDING_PROVIDER,
+  type EmbeddingProvider,
+} from './providers/embedding-provider.interface';
 
-describe('cosineSimilarity', () => {
-  it('returns 1 for identical vectors', () => {
-    const v = [0.6, 0.8, 0];
-    expect(cosineSimilarity(v, v)).toBeCloseTo(1, 10);
+/** Spec requirement (PROMPT 09): "search must remain functional if the AI
+ *  service is unavailable." Proven here at the unit level, deterministically
+ *  — a live e2e test would need to actually break the shared dev database's
+ *  pgvector extension to exercise this path, which isn't worth the risk to
+ *  shared infrastructure just to prove a try/catch works. */
+describe('EmbeddingsService graceful degradation', () => {
+  async function buildService(queryRawImpl: () => Promise<unknown>) {
+    const provider: EmbeddingProvider = {
+      dimensions: 64,
+      embed: jest.fn(),
+      embedText: jest.fn().mockResolvedValue({ vector: [0.1, 0.2, 0.3] }),
+    };
+    const prisma: { $queryRaw: jest.Mock } = {
+      $queryRaw: jest.fn(queryRawImpl),
+    };
+
+    const module = await Test.createTestingModule({
+      providers: [
+        EmbeddingsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EMBEDDING_PROVIDER, useValue: provider },
+      ],
+    }).compile();
+
+    return module.get(EmbeddingsService);
+  }
+
+  it('findSimilarToText degrades to an empty array instead of throwing when the pgvector query fails', async () => {
+    const service = await buildService(() =>
+      Promise.reject(new Error('pgvector unavailable')),
+    );
+    await expect(
+      service.findSimilarToText('wireless headphones', 5),
+    ).resolves.toEqual([]);
   });
 
-  it('returns 0 for orthogonal vectors', () => {
-    expect(cosineSimilarity([1, 0], [0, 1])).toBeCloseTo(0, 10);
+  it('findSimilar degrades to an empty array when the target lookup itself fails', async () => {
+    const service = await buildService(() =>
+      Promise.reject(new Error('connection lost')),
+    );
+    await expect(service.findSimilar('product-1', 5)).resolves.toEqual([]);
   });
 
-  it('returns -1 for opposite vectors', () => {
-    expect(cosineSimilarity([0.6, 0.8], [-0.6, -0.8])).toBeCloseTo(-1, 10);
-  });
-
-  it('is symmetric', () => {
-    const a = [0.1, -0.2, 0.9, 0.3];
-    const b = [0.4, 0.4, -0.1, 0.8];
-    expect(cosineSimilarity(a, b)).toBeCloseTo(cosineSimilarity(b, a), 10);
-  });
-
-  it('only compares over the overlapping length of mismatched vectors', () => {
-    const a = [1, 0, 0];
-    const b = [1, 0];
-    expect(cosineSimilarity(a, b)).toBeCloseTo(1, 10);
+  it('findSimilar returns an empty array when the product has no stored embedding', async () => {
+    const service = await buildService(() => Promise.resolve([]));
+    await expect(service.findSimilar('product-1', 5)).resolves.toEqual([]);
   });
 });

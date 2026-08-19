@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BehavioralEventType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { computeLifecycleStage, computeSegment } from './customer-segment.util';
 
 const VIEW_TYPES: BehavioralEventType[] = [
   BehavioralEventType.PRODUCT_VIEWED,
@@ -91,27 +92,11 @@ export class CustomerProfileService {
       },
       eventCount: profile.eventCount,
       orderCount: profile.orderCount,
-      segment: this.computeSegment(profile),
-      lifecycleStage: this.computeLifecycleStage(profile),
+      segment: computeSegment(profile),
+      lifecycleStage: computeLifecycleStage(profile),
       firstSeenAt: profile.firstSeenAt,
       lastEventAt: profile.lastEventAt,
     };
-  }
-
-  /** A small, transparent heuristic — not a fixed enum assigned once and
-   *  forgotten. Recomputed from live counters every time it's read. */
-  private computeSegment(profile: { eventCount: number; orderCount: number }) {
-    if (profile.orderCount >= 3) return 'repeat_buyer';
-    if (profile.orderCount >= 1) return 'buyer';
-    if (profile.eventCount >= 10) return 'engaged_browser';
-    if (profile.eventCount >= 1) return 'browser';
-    return 'new';
-  }
-
-  private computeLifecycleStage(profile: { orderCount: number }) {
-    if (profile.orderCount === 0) return 'prospect';
-    if (profile.orderCount === 1) return 'first_time_customer';
-    return 'repeat_customer';
   }
 
   private async computeDelta(

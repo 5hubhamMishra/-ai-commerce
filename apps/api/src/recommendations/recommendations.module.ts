@@ -15,6 +15,9 @@ import { RecommendationsService } from './recommendations.service';
     BehavioralScoringService,
     EvaluationService,
   ],
-  exports: [RecommendationsService],
+  // EvaluationService is consumed directly by Phase 10's AnalyticsModule
+  // (recommendation analytics / business insights) — same "export what a
+  // later phase needs" precedent as RecommendationsService itself.
+  exports: [RecommendationsService, EvaluationService],
 })
 export class RecommendationsModule {}

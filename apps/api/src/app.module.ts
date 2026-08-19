@@ -9,6 +9,7 @@ import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AddressesModule } from './addresses/addresses.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { AttributesModule } from './attributes/attributes.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
@@ -45,6 +46,7 @@ import { ReturnsModule } from './returns/returns.module';
 import { SearchModule } from './search/search.module';
 import { SellersModule } from './sellers/sellers.module';
 import { ShippingModule } from './shipping/shipping.module';
+import { ShopAIModule } from './shopai/shopai.module';
 import { SupportModule } from './support/support.module';
 import { UsersModule } from './users/users.module';
 import { WarehousesModule } from './warehouses/warehouses.module';
@@ -95,6 +97,8 @@ import { WishlistModule } from './wishlist/wishlist.module';
     SellersModule,
     EventsModule,
     RecommendationsModule,
+    ShopAIModule,
+    AnalyticsModule,
   ],
   providers: [
     {

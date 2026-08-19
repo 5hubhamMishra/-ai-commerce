@@ -171,6 +171,36 @@ export class ProductsService {
     return toDetail(product);
   }
 
+  /** Lightweight hydration for a list of product IDs — used by ShopAI's
+   *  recommendations tool (Phase 9), which gets bare `{productId, score,
+   *  reasons}` back from RecommendationsService and needs real name/price/
+   *  slug to describe results to a customer, not just UUIDs. Deliberately
+   *  not `findBySlugPublic`'s full detail shape (variants/images/specs) —
+   *  this is a summary list, not a product page. */
+  async findSummariesByIds(ids: string[]) {
+    if (ids.length === 0) return [];
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: ids }, deletedAt: null, status: ProductStatus.ACTIVE },
+      include: {
+        variants: { where: { deletedAt: null, isActive: true } },
+      },
+    });
+    const byId = new Map(products.map((p) => [p.id, p]));
+    return ids
+      .map((id) => byId.get(id))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      .map((p) => {
+        const prices = p.variants.map((v) => Number(v.price));
+        return {
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          minPrice: prices.length ? Math.min(...prices) : null,
+          maxPrice: prices.length ? Math.max(...prices) : null,
+        };
+      });
+  }
+
   async getRowById(id: string): Promise<ProductDetailRow> {
     const product = await this.prisma.product.findUnique({
       where: { id },
