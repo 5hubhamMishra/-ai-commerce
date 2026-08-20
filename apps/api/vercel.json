@@ -1,5 +1,7 @@
 {
-  "buildCommand": "npm run build",
+  "framework": null,
+  "buildCommand": "npx prisma migrate deploy && npm run build",
+  "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/cron/:path*", "destination": "/api/cron/:path*" },
     { "source": "/(.*)", "destination": "/api" }
@@ -15,7 +17,7 @@
   "crons": [
     {
       "path": "/api/cron/process-behavioral-queue",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
