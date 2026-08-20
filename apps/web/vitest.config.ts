@@ -10,8 +10,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-    // The default "forks" pool hangs waiting for its worker to respond in this sandbox;
-    // "threads" starts reliably here. See docs/PROJECT_PROGRESS.md Phase 13 session notes.
+    // The default "forks" pool hangs waiting for its worker to respond locally;
+    // "threads" starts reliably here.
     pool: "threads",
     coverage: {
       provider: "v8",

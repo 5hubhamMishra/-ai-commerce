@@ -23,7 +23,7 @@ type ScoredProductBody = {
  * and RBAC on the two admin routes.
  *
  * Does not fabricate paid-order co-purchase history — that path was already
- * live-verified manually (see docs/PROJECT_PROGRESS.md Phase 7 entry).
+ * live-verified manually during Phase 7.
  * `getFrequentlyBoughtWith` is asserted structurally instead of assuming a
  * specific real/fallback mix, since another suite running concurrently
  * against this shared dev database could legitimately hold open paid orders

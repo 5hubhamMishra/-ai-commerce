@@ -7,8 +7,8 @@
  * model says. This script instead drives the real, running HTTP API
  * (POST /shopai/message) with a fixed set of representative shopper scenarios,
  * grading the *actual model's* tool selection and grounding — the thing unit tests
- * structurally cannot exercise. See docs/DECISIONS.md ADR-025 / PROJECT_PROGRESS.md's
- * "Deferred follow-ups": the Anthropic account has had a zero credit balance since
+ * structurally cannot exercise. See docs/DECISIONS.md ADR-025:
+ * the Anthropic account has had a zero credit balance since
  * Phase 9, so every real scenario below is expected to receive the account's real
  * `credit_balance_too_low` 400 today. The harness's job right now is to fail *loudly
  * and honestly* (SKIPPED, with the real API error attached) rather than silently
@@ -125,17 +125,17 @@ async function runScenario(
       // GlobalExceptionFilter deliberately never forwards the real provider error to the
       // client (see docs/SECURITY_REVIEW.md) — every LLM-provider failure surfaces as this
       // same generic 500 here, so a black-box harness cannot distinguish "no billing
-      // credit" from a genuine code regression by the HTTP response alone. This session
+      // credit" from a genuine code regression by the HTTP response alone. This was
       // independently confirmed via the live server log that the root cause is the
       // account's zero Anthropic billing credit (the exact `credit_balance_too_low` error),
-      // not a defect — see docs/PROJECT_PROGRESS.md deferred follow-ups / ADR-025. Treat any
+      // not a defect — see docs/DECISIONS.md ADR-025. Treat any
       // run of this harness that shows anything other than uniform SKIPPED across every
       // scenario as a signal worth investigating against the server log.
       return {
         scenario: scenario.name,
         status: 'SKIPPED',
         detail:
-          'ShopAI returned a generic 500 (the API never exposes provider error detail to clients, by design). Confirmed via the server log this session that the underlying cause is still the zero Anthropic billing credit balance, not a regression — see docs/PROJECT_PROGRESS.md deferred follow-ups.',
+          'ShopAI returned a generic 500 (the API never exposes provider error detail to clients, by design). Confirmed via the server log that the underlying cause is still the zero Anthropic billing credit balance, not a regression — see docs/DECISIONS.md ADR-025.',
       };
     }
     return {

@@ -4,11 +4,9 @@ An AI-native e-commerce + marketplace platform. Personalized discovery, hybrid r
 semantic search, and a conversational shopping assistant (ShopAI) built on top of a real,
 production-shaped commerce foundation — catalog, cart, checkout, orders, payments, returns.
 
-This repository is being built incrementally against
-[`docs/PROJECT_PROGRESS.md`](docs/PROJECT_PROGRESS.md), which tracks phase-by-phase status and
-session history. **Read that file first** if you're picking this project up fresh — it's the
-map of what exists, what's next, and why decisions were made the way they were
-(`docs/DECISIONS.md` has the full architecture decision log).
+This repository was built incrementally, phase by phase. See
+[`docs/DECISIONS.md`](docs/DECISIONS.md) for the full architecture decision log — the map of
+what exists, what's next, and why decisions were made the way they were.
 
 ## Structure
 

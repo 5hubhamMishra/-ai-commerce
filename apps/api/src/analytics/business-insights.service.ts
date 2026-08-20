@@ -41,8 +41,7 @@ const INSIGHTS_LOOKUP_LIMIT = 1000; // generous at this catalog's real scale —
  * (An LLM-authored narrative layer on top of these real numbers is a
  * reasonable future upgrade, not required by PROMPT 11, and would need the
  * same real-Anthropic-billing dependency Phase 9's ShopAI is still waiting
- * on — see docs/DECISIONS.md ADR-025/PROJECT_PROGRESS.md's deferred
- * follow-up.)
+ * on — see docs/DECISIONS.md ADR-025.)
  */
 @Injectable()
 export class BusinessInsightsService {
