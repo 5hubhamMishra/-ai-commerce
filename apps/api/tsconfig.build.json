@@ -1,4 +1,17 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "include": ["src/**/*.ts", "eval/**/*.ts", "prisma/**/*.ts"],
+  // verify-serverless-entrypoint.ts imports api/index.ts directly (by design — it's a
+  // diagnostic script that boots the real serverless handler locally) — TypeScript
+  // follows imports transitively regardless of include/exclude at the directory level,
+  // so that one file pulls api/index.ts (and its dist/ import, not yet built) into this
+  // build's graph. Not needed in the build output anyway; it's a standalone script run
+  // directly via ts-node.
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "eval/verify-serverless-entrypoint.ts"
+  ]
 }

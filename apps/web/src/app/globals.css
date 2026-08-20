@@ -17,8 +17,8 @@
 
   /* --- Text --- */
   --clr-text-primary: #1c1917;
-  --clr-text-secondary: #78716c;
-  --clr-text-disabled: #a8a29e;
+  --clr-text-secondary: #6b6560;
+  --clr-text-disabled: #78716c;
   --clr-text-inverted: #ffffff;
 
   /* --- Brand Accent (Amber) --- */
@@ -329,10 +329,10 @@ body {
   padding: 0.2rem 0.55rem;
   line-height: 1.4;
 }
-.badge-accent  { background: var(--clr-accent);     color: white;                }
-.badge-success { background: var(--clr-success-bg); color: var(--clr-success);   }
-.badge-warning { background: var(--clr-warning-bg); color: var(--clr-warning);   }
-.badge-error   { background: var(--clr-error-bg);   color: var(--clr-error);     }
+.badge-accent  { background: var(--clr-accent);     color: white;                     }
+.badge-success { background: var(--clr-success-bg); color: var(--clr-success-text);   }
+.badge-warning { background: var(--clr-warning-bg); color: var(--clr-warning-text);   }
+.badge-error   { background: var(--clr-error-bg);   color: var(--clr-error-text);     }
 .badge-subtle  { background: var(--clr-accent-subtle); color: var(--clr-accent-text); }
 
 /* Button base */

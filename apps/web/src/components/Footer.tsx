@@ -12,7 +12,7 @@ function FooterCol({ title, links }: { title: string; links: { label: string; hr
         <Link
           key={link.label}
           href={link.href}
-          className="text-sm text-stone-500 hover:text-white transition-colors duration-150 w-fit"
+          className="text-sm text-stone-400 hover:text-white transition-colors duration-150 w-fit"
         >
           {link.label}
         </Link>
@@ -34,7 +34,7 @@ export default function Footer() {
           <p className="text-sm text-stone-400 mt-1">
             Shopping that gets you.
           </p>
-          <p className="text-xs text-stone-500 mt-3 leading-relaxed">
+          <p className="text-xs text-stone-400 mt-3 leading-relaxed">
             Veloura is a modern AI-powered e-commerce demonstration storefront showcasing advanced recommendations, dynamic design, and intelligent search capabilities.
           </p>
         </div>
@@ -65,11 +65,11 @@ export default function Footer() {
       <div className="border-t border-stone-800 mx-4" />
 
       <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="text-xs text-stone-600">
+        <div className="text-xs text-stone-400">
           &copy; {new Date().getFullYear()} Veloura AI Commerce. All rights reserved.
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/profile" className="text-xs text-stone-600 hover:text-stone-400 transition-colors">
+          <Link href="/profile" className="text-xs text-stone-400 hover:text-white transition-colors">
             Privacy Policy
           </Link>
         </div>

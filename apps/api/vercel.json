@@ -1,0 +1,21 @@
+{
+  "buildCommand": "npm run build",
+  "rewrites": [
+    { "source": "/api/cron/:path*", "destination": "/api/cron/:path*" },
+    { "source": "/(.*)", "destination": "/api" }
+  ],
+  "functions": {
+    "api/index.ts": {
+      "memory": 1024
+    },
+    "api/cron/*.ts": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/process-behavioral-queue",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

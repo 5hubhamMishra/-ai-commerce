@@ -1,21 +1,9 @@
 import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import { AppModule } from './app.module';
+import { createApp } from './create-app';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await createApp();
   const config = app.get(ConfigService);
-
-  app.use(helmet());
-  app.use(cookieParser());
-  app.enableCors({
-    origin: config.get<string>('webOrigin'),
-    credentials: true,
-  });
-  // Health checks stay unversioned so load balancers/orchestrators don't need to track API versions.
-  app.setGlobalPrefix('api/v1', { exclude: ['health', 'ready'] });
 
   const port = config.get<number>('port') ?? 4000;
   await app.listen(port);

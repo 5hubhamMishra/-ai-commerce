@@ -87,12 +87,12 @@ export default function ProductCard({ product, reason }: { product: Product; rea
           />
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
             {hasDiscount && (
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white shadow-sm">
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-[var(--clr-ink)] shadow-sm">
                 -{discount}%
               </span>
             )}
             {isLowStock && (
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[var(--clr-warning-bg)] text-[var(--clr-warning)] shadow-sm">
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[var(--clr-warning-bg)] text-[var(--clr-warning-text)] shadow-sm">
                 Only {product.stock} left
               </span>
             )}
@@ -123,7 +123,7 @@ export default function ProductCard({ product, reason }: { product: Product; rea
                 <span className="text-xs line-through text-[var(--clr-text-disabled)]">
                   {formatPrice(product.compareAtPrice!)}
                 </span>
-                <span className="text-[10px] font-medium text-[var(--clr-success)]">
+                <span className="text-[10px] font-medium text-[var(--clr-success-text)]">
                   Save {formatPrice(product.compareAtPrice! - product.price)}
                 </span>
               </>
@@ -153,7 +153,7 @@ export default function ProductCard({ product, reason }: { product: Product; rea
             product.stock === 0 
               ? 'bg-[var(--clr-surface-2)] text-[var(--clr-text-disabled)]'
               : cartAdded
-                ? 'bg-[var(--clr-success)] text-white'
+                ? 'bg-[var(--clr-success-text)] text-white'
                 : 'bg-[var(--clr-ink)] text-white hover:bg-[var(--clr-accent)]'
           }`}
         >

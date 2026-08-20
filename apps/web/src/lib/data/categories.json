@@ -94,5 +94,53 @@
       "Spigen",
       "boAt"
     ]
+  },
+  {
+    "name": "Footwear",
+    "slug": "footwear",
+    "brands": [
+      "Nike",
+      "Adidas",
+      "Puma",
+      "Reebok",
+      "Woodland",
+      "Bata"
+    ]
+  },
+  {
+    "name": "Shirts",
+    "slug": "shirts",
+    "brands": [
+      "Levi's",
+      "H&M",
+      "Zara",
+      "Allen Solly",
+      "Van Heusen",
+      "Peter England"
+    ]
+  },
+  {
+    "name": "Pants",
+    "slug": "pants",
+    "brands": [
+      "Levi's",
+      "Wrangler",
+      "Lee",
+      "H&M",
+      "Zara",
+      "Allen Solly"
+    ]
+  },
+  {
+    "name": "Groceries",
+    "slug": "groceries",
+    "brands": [
+      "Tata",
+      "Amul",
+      "Nestle",
+      "ITC",
+      "Britannia",
+      "Fortune"
+    ]
   }
 ]

@@ -32,6 +32,19 @@ const useCaseWords = [
   "wildlife",
   "home theater",
   "party",
+  "gym workouts",
+  "hiking",
+  "formal occasions",
+  "everyday walking",
+  "office wear",
+  "casual outings",
+  "formal events",
+  "everyday wear",
+  "daily cooking",
+  "breakfast",
+  "snacking",
+  "healthy eating",
+  "baking",
 ];
 
 /** Lightweight query-understanding: extracts category, budget, use case and brand from free text. */
@@ -86,6 +99,21 @@ export function parseQuery(raw: string): ParsedQuery {
     speaker: "Home Audio",
     mouse: "Gaming",
     keyboard: "Gaming",
+    shoe: "Footwear",
+    shoes: "Footwear",
+    sneaker: "Footwear",
+    sneakers: "Footwear",
+    footwear: "Footwear",
+    shirt: "Shirts",
+    shirts: "Shirts",
+    pant: "Pants",
+    pants: "Pants",
+    trouser: "Pants",
+    trousers: "Pants",
+    jeans: "Pants",
+    chinos: "Pants",
+    grocery: "Groceries",
+    groceries: "Groceries",
   };
   if (!result.category) {
     for (const [alias, cat] of Object.entries(aliases)) {
@@ -106,7 +134,16 @@ export function parseQuery(raw: string): ParsedQuery {
   result.keywords = q
     .replace(/[^\w\s₹]/g, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 2 && !["under", "below", "over", "above", "for", "the", "with", "and"].includes(w));
+    .filter(
+      (w) =>
+        w.length > 2 &&
+        // Bare numbers are already captured semantically via min/maxPrice above — kept
+        // as literal text keywords, "3000" would almost never substring-match a
+        // product's description, silently making a pure-budget query ("under 3000")
+        // look like it had unmatched topical intent and return nothing at all.
+        !/^\d+$/.test(w) &&
+        !["under", "below", "over", "above", "for", "the", "with", "and"].includes(w),
+    );
 
   return result;
 }
@@ -114,17 +151,38 @@ export function parseQuery(raw: string): ParsedQuery {
 export function searchProducts(raw: string, limit = 24): Product[] {
   if (!raw.trim()) return [];
   const parsed = parseQuery(raw);
+  // Whether the query expresses any topical intent (what to buy) as opposed to only a
+  // budget constraint (how much to spend). A budget signal alone — e.g. maxPrice from
+  // "under 30000" — used to be enough on its own to include a product, so "laptop under
+  // 30000" could return affordable headphones/gaming gear with no laptop connection at
+  // all. Only a pure budget query ("under 5000", no category/brand/useCase/keywords)
+  // should legitimately match across every category.
+  const hasTopicalIntent =
+    parsed.keywords.length > 0 || !!parsed.category || !!parsed.brand || !!parsed.useCase;
 
   const scored = products.map((p) => {
     let score = 0;
+    let topicalMatch = false;
     const haystack = `${p.name} ${p.brand} ${p.category} ${p.description} ${p.tags.join(" ")}`.toLowerCase();
 
     for (const kw of parsed.keywords) {
-      if (haystack.includes(kw)) score += 2;
+      if (haystack.includes(kw)) {
+        score += 2;
+        topicalMatch = true;
+      }
     }
-    if (parsed.category && p.category === parsed.category) score += 6;
-    if (parsed.brand && p.brand === parsed.brand) score += 5;
-    if (parsed.useCase && p.useCases?.some((u) => u.includes(parsed.useCase!))) score += 5;
+    if (parsed.category && p.category === parsed.category) {
+      score += 6;
+      topicalMatch = true;
+    }
+    if (parsed.brand && p.brand === parsed.brand) {
+      score += 5;
+      topicalMatch = true;
+    }
+    if (parsed.useCase && p.useCases?.some((u) => u.includes(parsed.useCase!))) {
+      score += 5;
+      topicalMatch = true;
+    }
     if (parsed.maxPrice !== undefined) {
       if (p.price <= parsed.maxPrice) score += 3;
       else score -= 4;
@@ -133,12 +191,16 @@ export function searchProducts(raw: string, limit = 24): Product[] {
       if (p.price >= parsed.minPrice) score += 1;
       else score -= 4;
     }
-    score += p.rating * 0.3;
-    return { p, score };
+    // Rating is a tiebreaker among real matches only — applied unconditionally, it gave
+    // every product in the catalog a positive baseline score, so an irrelevant query (or
+    // one that ran out of real matches) silently padded results with unrelated high-rated
+    // products instead of returning fewer/no results.
+    if (score > 0) score += p.rating * 0.3;
+    return { p, score, topicalMatch };
   });
 
   return scored
-    .filter((x) => x.score > 0)
+    .filter((x) => x.score > 0 && (!hasTopicalIntent || x.topicalMatch))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.p);

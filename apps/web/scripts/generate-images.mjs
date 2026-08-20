@@ -11,6 +11,10 @@ const palette = {
   cameras: ["#422006", "#713f12"],
   "home-audio": ["#1e1b4b", "#312e81"],
   accessories: ["#164e63", "#155e75"],
+  footwear: ["#7f1d1d", "#991b1b"],
+  shirts: ["#0c4a6e", "#075985"],
+  pants: ["#292524", "#44403c"],
+  groceries: ["#365314", "#3f6212"],
 };
 
 for (const cat of categories) {

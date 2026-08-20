@@ -11,7 +11,14 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // DATABASE_URL is the pooled connection (Neon's PgBouncer-compatible pooler, needed for
+  // serverless — a fresh connection per cold start would exhaust Postgres's real
+  // connection limit under concurrent invocations). DIRECT_URL is Neon's unpooled
+  // connection, required for `prisma migrate` (schema-changing DDL needs a direct
+  // session, not one multiplexed through a pooler) — falls back to DATABASE_URL so local
+  // dev against plain Docker Postgres (no pooler, one URL for everything) needs no change.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {

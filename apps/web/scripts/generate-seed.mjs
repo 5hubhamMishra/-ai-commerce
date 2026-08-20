@@ -66,9 +66,42 @@ const categories = [
     useCases: ["travel", "office", "gaming", "everyday carry"],
     specKeys: ["Material", "Compatibility", "Capacity", "Ports"],
   },
+  {
+    name: "Footwear",
+    slug: "footwear",
+    brands: ["Nike", "Adidas", "Puma", "Reebok", "Woodland", "Bata"],
+    priceRange: [800, 15000],
+    useCases: ["running", "gym workouts", "casual wear", "hiking", "formal occasions", "everyday walking"],
+    specKeys: ["Upper Material", "Sole Type", "Closure", "Available Sizes", "Weight"],
+  },
+  {
+    name: "Shirts",
+    slug: "shirts",
+    brands: ["Levi's", "H&M", "Zara", "Allen Solly", "Van Heusen", "Peter England"],
+    priceRange: [500, 4500],
+    useCases: ["office wear", "casual outings", "formal events", "everyday wear"],
+    specKeys: ["Fabric", "Fit", "Sleeve Length", "Pattern", "Available Sizes"],
+  },
+  {
+    name: "Pants",
+    slug: "pants",
+    brands: ["Levi's", "Wrangler", "Lee", "H&M", "Zara", "Allen Solly"],
+    priceRange: [700, 5000],
+    useCases: ["office wear", "casual outings", "everyday wear", "travel"],
+    specKeys: ["Fabric", "Fit", "Waist Type", "Available Sizes", "Wash"],
+  },
+  {
+    name: "Groceries",
+    slug: "groceries",
+    brands: ["Tata", "Amul", "Nestle", "ITC", "Britannia", "Fortune"],
+    priceRange: [40, 1200],
+    useCases: ["daily cooking", "breakfast", "snacking", "healthy eating", "baking"],
+    specKeys: ["Net Weight", "Shelf Life", "Dietary Info", "Storage Instructions"],
+  },
 ];
 
 const adjectives = ["Pro", "Air", "Max", "Lite", "Ultra", "Plus", "SE", "Studio", "X", "GT"];
+const groceryAdjectives = ["Premium", "Classic", "Organic", "Value Pack", "Gold", "Everyday"];
 const productNouns = {
   Laptops: ["Book", "Notebook", "Pavilion", "Vivobook", "ThinkPad", "Inspiron", "Zenbook", "Spectre"],
   Headphones: ["WH", "QuietComfort", "Tune", "Momentum", "Rockerz", "AirPods"],
@@ -78,6 +111,10 @@ const productNouns = {
   Cameras: ["EOS", "Alpha", "Z-series", "X-T", "HERO", "Osmo"],
   "Home Audio": ["Beam", "Flip", "SoundLink", "Emberton", "Stone"],
   Accessories: ["PowerCore", "BoostCharge", "MX Keys", "Extreme Pro", "ArcSeries"],
+  Footwear: ["Air Max", "Ultraboost", "RS-X", "Classic Runner", "Trail Runner", "Court Vision"],
+  Shirts: ["Oxford Shirt", "Formal Shirt", "Casual Shirt", "Linen Shirt", "Checked Shirt", "Slim Fit Shirt"],
+  Pants: ["Slim Fit Chinos", "Straight Jeans", "Formal Trousers", "Cargo Pants", "Jogger Pants"],
+  Groceries: ["Basmati Rice", "Cooking Oil", "Whole Wheat Atta", "Toor Dal", "Green Tea", "Peanut Butter", "Breakfast Cereal", "Masala Mix"],
 };
 
 function seededRandom(seed) {
@@ -101,9 +138,11 @@ for (const cat of categories) {
   for (let i = 0; i < count; i++) {
     const brand = pick(cat.brands);
     const noun = pick(nouns);
-    const adj = rand() > 0.4 ? ` ${pick(adjectives)}` : "";
+    const isGrocery = cat.name === "Groceries";
+    const adjList = isGrocery ? groceryAdjectives : adjectives;
+    const adj = rand() > 0.4 ? ` ${pick(adjList)}` : "";
     const gen = randInt(1, 9);
-    const name = `${brand} ${noun}${adj} ${gen}`;
+    const name = isGrocery ? `${brand} ${noun}${adj}` : `${brand} ${noun}${adj} ${gen}`;
     const [minP, maxP] = cat.priceRange;
     const price = round(randInt(minP, maxP), 100);
     const hasDiscount = rand() > 0.55;
@@ -112,7 +151,7 @@ for (const cat of categories) {
     const reviewCount = randInt(6, 480);
     const specs = {};
     for (const key of cat.specKeys) {
-      specs[key] = specValue(cat.name, key, rand, price);
+      specs[key] = specValue(cat.name, key, rand, price, cat.priceRange);
     }
     const tags = [cat.name.toLowerCase(), brand.toLowerCase().replace(/\s+/g, "-")];
     if (hasDiscount) tags.push("deal");
@@ -149,8 +188,28 @@ function shuffle(arr, rand) {
   return a;
 }
 
-function specValue(category, key, rand, price) {
-  const tier = price > 80000 ? "high" : price > 25000 ? "mid" : "entry";
+function specValue(category, key, rand, price, priceRange) {
+  // Tier relative to the category's own price range, not a fixed global threshold — a
+  // fixed $80k/$25k split put every Footwear/Shirts/Pants/Groceries product (all well
+  // under $25k) into "entry" every time, with zero spec variety within those categories.
+  const [minP, maxP] = priceRange;
+  const span = maxP - minP || 1;
+  const frac = (price - minP) / span;
+  const tier = frac > 0.66 ? "high" : frac > 0.33 ? "mid" : "entry";
+
+  // "Available Sizes" means something different per category (shoe sizes vs. clothing
+  // letter sizes vs. waist inches) — a single shared table entry gave shirts and pants
+  // the same shoe-size-shaped values as Footwear. Branch by category before falling
+  // through to the shared table below.
+  if (key === "Available Sizes") {
+    if (category === "Shirts") {
+      return { high: "S - XXL", mid: "S - XL", entry: "M - L" }[tier];
+    }
+    if (category === "Pants") {
+      return { high: "28-40 inch waist", mid: "28-36 inch waist", entry: "30-34 inch waist" }[tier];
+    }
+  }
+
   const table = {
     Processor: { high: "Intel Core i9 / Apple M3 Pro", mid: "Intel Core i5 13th Gen", entry: "Intel Core i3 / Ryzen 5" },
     RAM: { high: "32GB", mid: "16GB", entry: "8GB" },
@@ -179,6 +238,20 @@ function specValue(category, key, rand, price) {
     Material: { high: "Aluminum + Braided Cable", mid: "ABS Plastic", entry: "Silicone" },
     Capacity: { high: "20000mAh", mid: "10000mAh", entry: "5000mAh" },
     Ports: { high: "3x USB-C, 2x USB-A, HDMI", mid: "2x USB-C, 1x USB-A", entry: "1x USB-C" },
+    "Upper Material": { high: "Genuine Leather", mid: "Synthetic Leather", entry: "Canvas" },
+    "Sole Type": { high: "EVA Cushioned + Rubber Outsole", mid: "Rubber Outsole", entry: "PU Sole" },
+    Closure: { high: "Lace-Up with Ortholite Insole", mid: "Lace-Up", entry: "Slip-On" },
+    "Available Sizes": { high: "UK 6-11 (Half Sizes Available)", mid: "UK 6-10", entry: "UK 7-9" },
+    Fabric: { high: "100% Cotton", mid: "Cotton-Polyester Blend", entry: "Polyester" },
+    Fit: { high: "Slim Fit", mid: "Regular Fit", entry: "Relaxed Fit" },
+    "Sleeve Length": { high: "Full Sleeve", mid: "Half Sleeve", entry: "Full Sleeve" },
+    Pattern: { high: "Checked", mid: "Striped", entry: "Solid" },
+    "Waist Type": { high: "Mid-Rise", mid: "Regular Waist", entry: "Elastic Waist" },
+    Wash: { high: "Stone Wash", mid: "Dark Wash", entry: "Light Wash" },
+    "Net Weight": { high: "5kg Pack", mid: "1kg Pack", entry: "500g Pack" },
+    "Shelf Life": { high: "12 months", mid: "6 months", entry: "3 months" },
+    "Dietary Info": { high: "Organic, Gluten-Free", mid: "Vegetarian", entry: "No Added Preservatives" },
+    "Storage Instructions": { high: "Store in a cool, dry place", mid: "Store in an airtight container", entry: "Refrigerate after opening" },
   };
   return table[key]?.[tier] ?? "Standard";
 }
@@ -194,6 +267,10 @@ function describeProduct(category, name, brand, useCases) {
     Cameras: `The ${name} is built for ${useCaseText}, offering strong low-light performance and reliable autofocus in a compact body.`,
     "Home Audio": `Fill the room with sound suited for ${useCaseText}. The ${name} pairs easily and holds a stable connection across rooms.`,
     Accessories: `A dependable everyday companion for ${useCaseText}, the ${name} is built by ${brand} to handle daily wear without fuss.`,
+    Footwear: `Built for ${useCaseText}, the ${name} offers reliable grip and all-day comfort with a durable construction from ${brand}.`,
+    Shirts: `The ${name} is tailored for ${useCaseText}, offering a comfortable fit and breathable fabric that holds up to regular wear.`,
+    Pants: `Designed for ${useCaseText}, the ${name} combines a comfortable fit with durable fabric that moves with you.`,
+    Groceries: `${name} is a pantry staple for ${useCaseText}, sourced and packaged by ${brand} to stay fresh from shelf to table.`,
   };
   return templates[category];
 }

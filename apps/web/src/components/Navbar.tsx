@@ -190,12 +190,20 @@ export default function Navbar() {
             </form>
 
             <div className="flex items-center gap-1">
-              <Link href="/wishlist" className="hidden sm:flex relative rounded-lg p-2 hover:bg-stone-100 text-[var(--clr-text-secondary)] transition-colors">
+              <Link
+                href="/wishlist"
+                aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ""}`}
+                className="hidden sm:flex relative rounded-lg p-2 hover:bg-stone-100 text-[var(--clr-text-secondary)] transition-colors"
+              >
                 <HeartIcon className="h-5 w-5" />
                 <Badge count={wishlistCount} />
               </Link>
-              
-              <Link href="/cart" className="relative rounded-lg p-2 hover:bg-stone-100 text-[var(--clr-text-secondary)] transition-colors">
+
+              <Link
+                href="/cart"
+                aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ""}`}
+                className="relative rounded-lg p-2 hover:bg-stone-100 text-[var(--clr-text-secondary)] transition-colors"
+              >
                 <CartIcon className="h-5 w-5" />
                 <Badge count={cartCount} />
               </Link>

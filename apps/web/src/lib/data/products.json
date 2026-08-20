@@ -46,12 +46,12 @@
     "reviewCount": 25,
     "description": "The Apple Zenbook 4 pairs a fast processor with a crisp display, built for business and coding and gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Display": "14-inch HD",
+      "Graphics": "Integrated Graphics",
+      "Battery Life": "Up to 8 hours"
     },
     "tags": [
       "laptops",
@@ -79,12 +79,12 @@
     "reviewCount": 93,
     "description": "The Acer Notebook 7 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Display": "14-inch HD",
+      "Graphics": "Integrated Graphics",
+      "Battery Life": "Up to 8 hours"
     },
     "tags": [
       "laptops",
@@ -111,12 +111,12 @@
     "reviewCount": 273,
     "description": "The Acer Vivobook Air 9 pairs a fast processor with a crisp display, built for machine learning and coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
     },
     "tags": [
       "laptops",
@@ -143,12 +143,12 @@
     "reviewCount": 460,
     "description": "The Apple Notebook Pro 1 pairs a fast processor with a crisp display, built for video editing. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
     },
     "tags": [
       "laptops",
@@ -209,12 +209,12 @@
     "reviewCount": 449,
     "description": "The HP Spectre Ultra 8 pairs a fast processor with a crisp display, built for video editing and machine learning. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
     },
     "tags": [
       "laptops",
@@ -241,12 +241,12 @@
     "reviewCount": 86,
     "description": "The Apple Zenbook SE 4 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Display": "15.6-inch FHD IPS",
-      "Graphics": "RTX 3050 4GB",
-      "Battery Life": "Up to 12 hours"
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Display": "14-inch HD",
+      "Graphics": "Integrated Graphics",
+      "Battery Life": "Up to 8 hours"
     },
     "tags": [
       "laptops",
@@ -272,12 +272,12 @@
     "reviewCount": 340,
     "description": "The ASUS Vivobook GT 6 pairs a fast processor with a crisp display, built for gaming and business and coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Display": "15.6-inch FHD IPS",
-      "Graphics": "RTX 3050 4GB",
-      "Battery Life": "Up to 12 hours"
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Display": "14-inch HD",
+      "Graphics": "Integrated Graphics",
+      "Battery Life": "Up to 8 hours"
     },
     "tags": [
       "laptops",
@@ -306,12 +306,12 @@
     "reviewCount": 200,
     "description": "The Dell Notebook 5 pairs a fast processor with a crisp display, built for coding. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Display": "14-inch HD",
+      "Graphics": "Integrated Graphics",
+      "Battery Life": "Up to 8 hours"
     },
     "tags": [
       "laptops",
@@ -339,12 +339,12 @@
     "reviewCount": 213,
     "description": "The Acer Pavilion Max 1 pairs a fast processor with a crisp display, built for gaming. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Display": "15.6-inch FHD IPS",
-      "Graphics": "RTX 3050 4GB",
-      "Battery Life": "Up to 12 hours"
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Display": "14-inch HD",
+      "Graphics": "Integrated Graphics",
+      "Battery Life": "Up to 8 hours"
     },
     "tags": [
       "laptops",
@@ -406,12 +406,12 @@
     "reviewCount": 121,
     "description": "The Dell Vivobook Pro 3 pairs a fast processor with a crisp display, built for business. Solid battery life and a comfortable keyboard make it easy to work from anywhere.",
     "specs": {
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Graphics": "RTX 4070 8GB",
-      "Battery Life": "Up to 20 hours"
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Display": "15.6-inch FHD IPS",
+      "Graphics": "RTX 3050 4GB",
+      "Battery Life": "Up to 12 hours"
     },
     "tags": [
       "laptops",
@@ -471,11 +471,11 @@
     "reviewCount": 439,
     "description": "Sony Tune 9 delivers balanced sound with reliable connectivity, tuned for commute and gaming. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "20mm",
-      "Battery Life": "Up to 8 hours",
-      "Connectivity": "Bluetooth 5.0",
-      "Noise Cancellation": "Passive Isolation",
-      "Weight": "180g"
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
     },
     "tags": [
       "headphones",
@@ -503,11 +503,11 @@
     "reviewCount": 234,
     "description": "JBL AirPods 3 delivers balanced sound with reliable connectivity, tuned for gaming and travel and studio. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "30mm",
-      "Battery Life": "Up to 12 hours",
-      "Connectivity": "Bluetooth 5.2",
-      "Noise Cancellation": "Active Noise Cancellation",
-      "Weight": "250g"
+      "Driver Size": "40mm",
+      "Battery Life": "Up to 20 hours",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Noise Cancellation": "Adaptive ANC",
+      "Weight": "220g"
     },
     "tags": [
       "headphones",
@@ -537,11 +537,11 @@
     "reviewCount": 335,
     "description": "Sony WH GT 1 delivers balanced sound with reliable connectivity, tuned for studio. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "20mm",
-      "Battery Life": "Up to 8 hours",
-      "Connectivity": "Bluetooth 5.0",
-      "Noise Cancellation": "Passive Isolation",
-      "Weight": "180g"
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
     },
     "tags": [
       "headphones",
@@ -569,11 +569,11 @@
     "reviewCount": 136,
     "description": "Sennheiser Momentum 8 delivers balanced sound with reliable connectivity, tuned for gaming. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "30mm",
-      "Battery Life": "Up to 12 hours",
-      "Connectivity": "Bluetooth 5.2",
-      "Noise Cancellation": "Active Noise Cancellation",
-      "Weight": "250g"
+      "Driver Size": "40mm",
+      "Battery Life": "Up to 20 hours",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Noise Cancellation": "Adaptive ANC",
+      "Weight": "220g"
     },
     "tags": [
       "headphones",
@@ -599,11 +599,11 @@
     "reviewCount": 36,
     "description": "boAt WH GT 5 delivers balanced sound with reliable connectivity, tuned for work calls and commute. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "20mm",
-      "Battery Life": "Up to 8 hours",
-      "Connectivity": "Bluetooth 5.0",
-      "Noise Cancellation": "Passive Isolation",
-      "Weight": "180g"
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
     },
     "tags": [
       "headphones",
@@ -631,11 +631,11 @@
     "reviewCount": 67,
     "description": "Apple QuietComfort Air 3 delivers balanced sound with reliable connectivity, tuned for commute and gym and travel. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "30mm",
-      "Battery Life": "Up to 12 hours",
-      "Connectivity": "Bluetooth 5.2",
-      "Noise Cancellation": "Active Noise Cancellation",
-      "Weight": "250g"
+      "Driver Size": "40mm",
+      "Battery Life": "Up to 20 hours",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Noise Cancellation": "Adaptive ANC",
+      "Weight": "220g"
     },
     "tags": [
       "headphones",
@@ -663,11 +663,11 @@
     "reviewCount": 267,
     "description": "Bose QuietComfort Plus 3 delivers balanced sound with reliable connectivity, tuned for gaming and commute and studio. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "20mm",
-      "Battery Life": "Up to 8 hours",
-      "Connectivity": "Bluetooth 5.0",
-      "Noise Cancellation": "Passive Isolation",
-      "Weight": "180g"
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
     },
     "tags": [
       "headphones",
@@ -697,11 +697,11 @@
     "reviewCount": 458,
     "description": "Sony AirPods Max 2 delivers balanced sound with reliable connectivity, tuned for gym. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "20mm",
-      "Battery Life": "Up to 8 hours",
-      "Connectivity": "Bluetooth 5.0",
-      "Noise Cancellation": "Passive Isolation",
-      "Weight": "180g"
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
     },
     "tags": [
       "headphones",
@@ -729,11 +729,11 @@
     "reviewCount": 135,
     "description": "Bose QuietComfort SE 7 delivers balanced sound with reliable connectivity, tuned for travel and gym. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "20mm",
-      "Battery Life": "Up to 8 hours",
-      "Connectivity": "Bluetooth 5.0",
-      "Noise Cancellation": "Passive Isolation",
-      "Weight": "180g"
+      "Driver Size": "30mm",
+      "Battery Life": "Up to 12 hours",
+      "Connectivity": "Bluetooth 5.2",
+      "Noise Cancellation": "Active Noise Cancellation",
+      "Weight": "250g"
     },
     "tags": [
       "headphones",
@@ -831,11 +831,11 @@
     "reviewCount": 189,
     "description": "Sony QuietComfort 2 delivers balanced sound with reliable connectivity, tuned for commute and travel and gaming. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "30mm",
-      "Battery Life": "Up to 12 hours",
-      "Connectivity": "Bluetooth 5.2",
-      "Noise Cancellation": "Active Noise Cancellation",
-      "Weight": "250g"
+      "Driver Size": "40mm",
+      "Battery Life": "Up to 20 hours",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Noise Cancellation": "Adaptive ANC",
+      "Weight": "220g"
     },
     "tags": [
       "headphones",
@@ -896,11 +896,11 @@
     "reviewCount": 79,
     "description": "Apple WH Plus 4 delivers balanced sound with reliable connectivity, tuned for gym. Lightweight design keeps it comfortable through long listening sessions.",
     "specs": {
-      "Driver Size": "30mm",
-      "Battery Life": "Up to 12 hours",
-      "Connectivity": "Bluetooth 5.2",
-      "Noise Cancellation": "Active Noise Cancellation",
-      "Weight": "250g"
+      "Driver Size": "40mm",
+      "Battery Life": "Up to 20 hours",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Noise Cancellation": "Adaptive ANC",
+      "Weight": "220g"
     },
     "tags": [
       "headphones",
@@ -960,12 +960,12 @@
     "reviewCount": 136,
     "description": "Vivo V-series 7 combines a smooth display with a capable camera system, well suited for gaming. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Camera": "108MP Triple Camera, OIS",
-      "Battery": "5000mAh, 65W Fast Charging"
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
     },
     "tags": [
       "smartphones",
@@ -1028,12 +1028,12 @@
     "reviewCount": 443,
     "description": "OnePlus iPhone X 3 combines a smooth display with a capable camera system, well suited for everyday use and gaming and business. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Camera": "50MP Dual Camera",
-      "Battery": "5000mAh, 33W Charging"
+      "Display": "14-inch HD",
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Camera": "13MP Camera",
+      "Battery": "4500mAh"
     },
     "tags": [
       "smartphones",
@@ -1131,12 +1131,12 @@
     "reviewCount": 314,
     "description": "Vivo V-series Air 9 combines a smooth display with a capable camera system, well suited for photography and everyday use. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Camera": "50MP Dual Camera",
-      "Battery": "5000mAh, 33W Charging"
+      "Display": "14-inch HD",
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Camera": "13MP Camera",
+      "Battery": "4500mAh"
     },
     "tags": [
       "smartphones",
@@ -1164,12 +1164,12 @@
     "reviewCount": 452,
     "description": "Apple Galaxy Pro 5 combines a smooth display with a capable camera system, well suited for business and everyday use. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Camera": "50MP Dual Camera",
-      "Battery": "5000mAh, 33W Charging"
+      "Display": "14-inch HD",
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Camera": "13MP Camera",
+      "Battery": "4500mAh"
     },
     "tags": [
       "smartphones",
@@ -1230,12 +1230,12 @@
     "reviewCount": 368,
     "description": "OnePlus V-series Max 5 combines a smooth display with a capable camera system, well suited for gaming and everyday use and business. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Camera": "108MP Triple Camera, OIS",
-      "Battery": "5000mAh, 65W Fast Charging"
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
     },
     "tags": [
       "smartphones",
@@ -1331,12 +1331,12 @@
     "reviewCount": 34,
     "description": "Google Nord X 1 combines a smooth display with a capable camera system, well suited for photography. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Processor": "Intel Core i5 13th Gen",
-      "RAM": "16GB",
-      "Storage": "512GB SSD",
-      "Camera": "50MP Dual Camera",
-      "Battery": "5000mAh, 33W Charging"
+      "Display": "14-inch HD",
+      "Processor": "Intel Core i3 / Ryzen 5",
+      "RAM": "8GB",
+      "Storage": "256GB SSD",
+      "Camera": "13MP Camera",
+      "Battery": "4500mAh"
     },
     "tags": [
       "smartphones",
@@ -1365,12 +1365,12 @@
     "reviewCount": 243,
     "description": "Apple V-series 5 combines a smooth display with a capable camera system, well suited for photography. All-day battery keeps up with a busy schedule.",
     "specs": {
-      "Display": "16-inch 3K OLED, 120Hz",
-      "Processor": "Intel Core i9 / Apple M3 Pro",
-      "RAM": "32GB",
-      "Storage": "1TB SSD",
-      "Camera": "108MP Triple Camera, OIS",
-      "Battery": "5000mAh, 65W Fast Charging"
+      "Display": "15.6-inch FHD IPS",
+      "Processor": "Intel Core i5 13th Gen",
+      "RAM": "16GB",
+      "Storage": "512GB SSD",
+      "Camera": "50MP Dual Camera",
+      "Battery": "5000mAh, 33W Charging"
     },
     "tags": [
       "smartphones",
@@ -1429,11 +1429,11 @@
     "reviewCount": 90,
     "description": "Built for casual gaming and competitive gaming, the Corsair Cloud 2 offers precise response and durable switches that hold up to daily use.",
     "specs": {
-      "Type": "Wired, RGB",
-      "Connectivity": "Bluetooth 5.2",
-      "Switch Type": "Mechanical Blue",
-      "DPI": "16000 DPI",
-      "Compatibility": "Windows / Mac"
+      "Type": "Wireless, Ergonomic",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Switch Type": "Optical Mechanical",
+      "DPI": "26000 DPI",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "gaming",
@@ -1462,11 +1462,11 @@
     "reviewCount": 456,
     "description": "Built for streaming, the ASUS ROG ROG Strix Plus 5 offers precise response and durable switches that hold up to daily use.",
     "specs": {
-      "Type": "Wired",
-      "Connectivity": "Bluetooth 5.0",
-      "Switch Type": "Membrane",
-      "DPI": "6400 DPI",
-      "Compatibility": "Windows"
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
     },
     "tags": [
       "gaming",
@@ -1527,11 +1527,11 @@
     "reviewCount": 164,
     "description": "Built for competitive gaming and casual gaming and streaming, the SteelSeries Viper 9 offers precise response and durable switches that hold up to daily use.",
     "specs": {
-      "Type": "Wired",
-      "Connectivity": "Bluetooth 5.0",
-      "Switch Type": "Membrane",
-      "DPI": "6400 DPI",
-      "Compatibility": "Windows"
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
     },
     "tags": [
       "gaming",
@@ -1595,11 +1595,11 @@
     "reviewCount": 394,
     "description": "Built for casual gaming and streaming, the Razer K70 Plus 8 offers precise response and durable switches that hold up to daily use.",
     "specs": {
-      "Type": "Wired, RGB",
-      "Connectivity": "Bluetooth 5.2",
-      "Switch Type": "Mechanical Blue",
-      "DPI": "16000 DPI",
-      "Compatibility": "Windows / Mac"
+      "Type": "Wireless, Ergonomic",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Switch Type": "Optical Mechanical",
+      "DPI": "26000 DPI",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "gaming",
@@ -1629,11 +1629,11 @@
     "reviewCount": 307,
     "description": "Built for streaming and casual gaming, the Corsair Cloud 6 offers precise response and durable switches that hold up to daily use.",
     "specs": {
-      "Type": "Wired, RGB",
-      "Connectivity": "Bluetooth 5.2",
-      "Switch Type": "Mechanical Blue",
-      "DPI": "16000 DPI",
-      "Compatibility": "Windows / Mac"
+      "Type": "Wireless, Ergonomic",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Switch Type": "Optical Mechanical",
+      "DPI": "26000 DPI",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "gaming",
@@ -1759,11 +1759,11 @@
     "reviewCount": 368,
     "description": "Built for competitive gaming and casual gaming, the SteelSeries DeathAdder Plus 6 offers precise response and durable switches that hold up to daily use.",
     "specs": {
-      "Type": "Wired",
-      "Connectivity": "Bluetooth 5.0",
-      "Switch Type": "Membrane",
-      "DPI": "6400 DPI",
-      "Compatibility": "Windows"
+      "Type": "Wired, RGB",
+      "Connectivity": "Bluetooth 5.2",
+      "Switch Type": "Mechanical Blue",
+      "DPI": "16000 DPI",
+      "Compatibility": "Windows / Mac"
     },
     "tags": [
       "gaming",
@@ -1886,11 +1886,11 @@
     "reviewCount": 150,
     "description": "Track swimming and running and everyday use with the Fitbit Band X 1. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68",
-      "Sensors": "Heart Rate, SpO2, GPS",
-      "Compatibility": "Windows / Mac"
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68",
+      "Sensors": "Heart Rate, SpO2, GPS, ECG",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "wearables",
@@ -1921,11 +1921,11 @@
     "reviewCount": 185,
     "description": "Track swimming with the Garmin Fenix 2. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68",
-      "Sensors": "Heart Rate, SpO2, GPS",
-      "Compatibility": "Windows / Mac"
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68",
+      "Sensors": "Heart Rate, SpO2, GPS, ECG",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "wearables",
@@ -1952,11 +1952,11 @@
     "reviewCount": 152,
     "description": "Track swimming with the Garmin Band Pro 1. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68",
-      "Sensors": "Heart Rate, SpO2, GPS",
-      "Compatibility": "Windows / Mac"
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68",
+      "Sensors": "Heart Rate, SpO2, GPS, ECG",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "wearables",
@@ -2045,11 +2045,11 @@
     "reviewCount": 457,
     "description": "Track swimming and running and fitness tracking with the boAt ColorFit Ultra 8. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "14-inch HD",
-      "Battery Life": "Up to 8 hours",
-      "Water Resistance": "IP54",
-      "Sensors": "Heart Rate",
-      "Compatibility": "Windows"
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
     },
     "tags": [
       "wearables",
@@ -2111,11 +2111,11 @@
     "reviewCount": 310,
     "description": "Track running and swimming and fitness tracking with the boAt Watch Lite 6. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "14-inch HD",
-      "Battery Life": "Up to 8 hours",
-      "Water Resistance": "IP54",
-      "Sensors": "Heart Rate",
-      "Compatibility": "Windows"
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
     },
     "tags": [
       "wearables",
@@ -2175,11 +2175,11 @@
     "reviewCount": 391,
     "description": "Track swimming and everyday use with the boAt Watch X 7. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68",
-      "Sensors": "Heart Rate, SpO2, GPS",
-      "Compatibility": "Windows / Mac"
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68",
+      "Sensors": "Heart Rate, SpO2, GPS, ECG",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "wearables",
@@ -2207,11 +2207,11 @@
     "reviewCount": 371,
     "description": "Track swimming and everyday use and running with the Garmin Band 8. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "14-inch HD",
-      "Battery Life": "Up to 8 hours",
-      "Water Resistance": "IP54",
-      "Sensors": "Heart Rate",
-      "Compatibility": "Windows"
+      "Display": "15.6-inch FHD IPS",
+      "Battery Life": "Up to 12 hours",
+      "Water Resistance": "IP68",
+      "Sensors": "Heart Rate, SpO2, GPS",
+      "Compatibility": "Windows / Mac"
     },
     "tags": [
       "wearables",
@@ -2272,11 +2272,11 @@
     "reviewCount": 441,
     "description": "Track swimming and fitness tracking with the boAt ColorFit 4. Accurate sensors and multi-day battery life keep you moving without constant charging.",
     "specs": {
-      "Display": "15.6-inch FHD IPS",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68",
-      "Sensors": "Heart Rate, SpO2, GPS",
-      "Compatibility": "Windows / Mac"
+      "Display": "16-inch 3K OLED, 120Hz",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68",
+      "Sensors": "Heart Rate, SpO2, GPS, ECG",
+      "Compatibility": "Windows / Mac / Linux"
     },
     "tags": [
       "wearables",
@@ -2371,11 +2371,11 @@
     "reviewCount": 296,
     "description": "The GoPro X-T Pro 6 is built for professional photography, offering strong low-light performance and reliable autofocus in a compact body.",
     "specs": {
-      "Sensor": "Full-Frame 45MP",
-      "Resolution": "8K Video / 45MP Photo",
-      "ISO Range": "100-102400",
-      "Video": "8K30 / 4K120",
-      "Stabilization": "5-Axis IBIS"
+      "Sensor": "APS-C 26MP",
+      "Resolution": "4K Video / 26MP Photo",
+      "ISO Range": "100-51200",
+      "Video": "4K60",
+      "Stabilization": "Optical"
     },
     "tags": [
       "cameras",
@@ -2403,11 +2403,11 @@
     "reviewCount": 351,
     "description": "The GoPro X-T 4 is built for professional photography, offering strong low-light performance and reliable autofocus in a compact body.",
     "specs": {
-      "Sensor": "APS-C 26MP",
-      "Resolution": "4K Video / 26MP Photo",
-      "ISO Range": "100-51200",
-      "Video": "4K60",
-      "Stabilization": "Optical"
+      "Sensor": "1-inch 20MP",
+      "Resolution": "1080p / 20MP",
+      "ISO Range": "100-12800",
+      "Video": "1080p60",
+      "Stabilization": "Electronic"
     },
     "tags": [
       "cameras",
@@ -2500,11 +2500,11 @@
     "reviewCount": 192,
     "description": "The Canon Z-series 8 is built for wildlife and travel, offering strong low-light performance and reliable autofocus in a compact body.",
     "specs": {
-      "Sensor": "APS-C 26MP",
-      "Resolution": "4K Video / 26MP Photo",
-      "ISO Range": "100-51200",
-      "Video": "4K60",
-      "Stabilization": "Optical"
+      "Sensor": "1-inch 20MP",
+      "Resolution": "1080p / 20MP",
+      "ISO Range": "100-12800",
+      "Video": "1080p60",
+      "Stabilization": "Electronic"
     },
     "tags": [
       "cameras",
@@ -2598,11 +2598,11 @@
     "reviewCount": 230,
     "description": "The DJI X-T 6 is built for travel and vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
     "specs": {
-      "Sensor": "Full-Frame 45MP",
-      "Resolution": "8K Video / 45MP Photo",
-      "ISO Range": "100-102400",
-      "Video": "8K30 / 4K120",
-      "Stabilization": "5-Axis IBIS"
+      "Sensor": "APS-C 26MP",
+      "Resolution": "4K Video / 26MP Photo",
+      "ISO Range": "100-51200",
+      "Video": "4K60",
+      "Stabilization": "Optical"
     },
     "tags": [
       "cameras",
@@ -2631,11 +2631,11 @@
     "reviewCount": 31,
     "description": "The Fujifilm EOS X 6 is built for professional photography and vlogging, offering strong low-light performance and reliable autofocus in a compact body.",
     "specs": {
-      "Sensor": "Full-Frame 45MP",
-      "Resolution": "8K Video / 45MP Photo",
-      "ISO Range": "100-102400",
-      "Video": "8K30 / 4K120",
-      "Stabilization": "5-Axis IBIS"
+      "Sensor": "APS-C 26MP",
+      "Resolution": "4K Video / 26MP Photo",
+      "ISO Range": "100-51200",
+      "Video": "4K60",
+      "Stabilization": "Optical"
     },
     "tags": [
       "cameras",
@@ -2822,10 +2822,10 @@
     "reviewCount": 7,
     "description": "Fill the room with sound suited for home theater. The Amazon Emberton GT 8 pairs easily and holds a stable connection across rooms.",
     "specs": {
-      "Output Power": "120W RMS",
-      "Connectivity": "Bluetooth 5.2",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68"
+      "Output Power": "300W RMS",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68"
     },
     "tags": [
       "home audio",
@@ -2884,10 +2884,10 @@
     "reviewCount": 247,
     "description": "Fill the room with sound suited for party and smart home. The Marshall SoundLink 1 pairs easily and holds a stable connection across rooms.",
     "specs": {
-      "Output Power": "120W RMS",
-      "Connectivity": "Bluetooth 5.2",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68"
+      "Output Power": "300W RMS",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68"
     },
     "tags": [
       "home audio",
@@ -2980,10 +2980,10 @@
     "reviewCount": 165,
     "description": "Fill the room with sound suited for background music and smart home and home theater. The JBL Beam 1 pairs easily and holds a stable connection across rooms.",
     "specs": {
-      "Output Power": "120W RMS",
-      "Connectivity": "Bluetooth 5.2",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68"
+      "Output Power": "300W RMS",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68"
     },
     "tags": [
       "home audio",
@@ -3043,10 +3043,10 @@
     "reviewCount": 357,
     "description": "Fill the room with sound suited for smart home and home theater and party. The JBL Flip 6 pairs easily and holds a stable connection across rooms.",
     "specs": {
-      "Output Power": "120W RMS",
-      "Connectivity": "Bluetooth 5.2",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68"
+      "Output Power": "300W RMS",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68"
     },
     "tags": [
       "home audio",
@@ -3139,10 +3139,10 @@
     "reviewCount": 340,
     "description": "Fill the room with sound suited for party and background music. The Amazon SoundLink Max 8 pairs easily and holds a stable connection across rooms.",
     "specs": {
-      "Output Power": "120W RMS",
-      "Connectivity": "Bluetooth 5.2",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68"
+      "Output Power": "300W RMS",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68"
     },
     "tags": [
       "home audio",
@@ -3169,10 +3169,10 @@
     "reviewCount": 461,
     "description": "Fill the room with sound suited for home theater and background music. The Amazon SoundLink 9 pairs easily and holds a stable connection across rooms.",
     "specs": {
-      "Output Power": "120W RMS",
-      "Connectivity": "Bluetooth 5.2",
-      "Battery Life": "Up to 12 hours",
-      "Water Resistance": "IP68"
+      "Output Power": "300W RMS",
+      "Connectivity": "Bluetooth 5.3, USB-C, Multipoint",
+      "Battery Life": "Up to 20 hours",
+      "Water Resistance": "5ATM + IP68"
     },
     "tags": [
       "home audio",
@@ -3200,10 +3200,10 @@
     "reviewCount": 216,
     "description": "A dependable everyday companion for office and gaming, the Logitech MX Keys Lite 6 is built by Logitech to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3261,10 +3261,10 @@
     "reviewCount": 36,
     "description": "A dependable everyday companion for gaming and travel, the Belkin ArcSeries Air 3 is built by Belkin to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "ABS Plastic",
+      "Compatibility": "Windows / Mac",
+      "Capacity": "10000mAh",
+      "Ports": "2x USB-C, 1x USB-A"
     },
     "tags": [
       "accessories",
@@ -3292,10 +3292,10 @@
     "reviewCount": 423,
     "description": "A dependable everyday companion for office and travel, the boAt ArcSeries Pro 9 is built by boAt to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3324,10 +3324,10 @@
     "reviewCount": 18,
     "description": "A dependable everyday companion for everyday carry and office, the Logitech Extreme Pro 6 is built by Logitech to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3355,10 +3355,10 @@
     "reviewCount": 179,
     "description": "A dependable everyday companion for everyday carry and travel, the Spigen BoostCharge Plus 7 is built by Spigen to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3478,10 +3478,10 @@
     "reviewCount": 154,
     "description": "A dependable everyday companion for office, the Belkin PowerCore SE 5 is built by Belkin to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3509,10 +3509,10 @@
     "reviewCount": 415,
     "description": "A dependable everyday companion for everyday carry and gaming and office, the Belkin Extreme Pro 4 is built by Belkin to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3574,10 +3574,10 @@
     "reviewCount": 345,
     "description": "A dependable everyday companion for gaming and everyday carry, the SanDisk BoostCharge Studio 9 is built by SanDisk to handle daily wear without fuss.",
     "specs": {
-      "Material": "Silicone",
-      "Compatibility": "Windows",
-      "Capacity": "5000mAh",
-      "Ports": "1x USB-C"
+      "Material": "Aluminum + Braided Cable",
+      "Compatibility": "Windows / Mac / Linux",
+      "Capacity": "20000mAh",
+      "Ports": "3x USB-C, 2x USB-A, HDMI"
     },
     "tags": [
       "accessories",
@@ -3626,6 +3626,1785 @@
       "gaming",
       "everyday carry",
       "office"
+    ]
+  },
+  {
+    "id": "p113",
+    "name": "Woodland Court Vision Ultra 6",
+    "brand": "Woodland",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 12400,
+    "rating": 4.3,
+    "reviewCount": 461,
+    "description": "Built for everyday walking, the Woodland Court Vision Ultra 6 offers reliable grip and all-day comfort with a durable construction from Woodland.",
+    "specs": {
+      "Upper Material": "Genuine Leather",
+      "Sole Type": "EVA Cushioned + Rubber Outsole",
+      "Closure": "Lace-Up with Ortholite Insole",
+      "Available Sizes": "UK 6-11 (Half Sizes Available)",
+      "Weight": "220g"
+    },
+    "tags": [
+      "footwear",
+      "woodland"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 107,
+    "featured": false,
+    "useCases": [
+      "everyday walking"
+    ]
+  },
+  {
+    "id": "p114",
+    "name": "Nike RS-X SE 3",
+    "brand": "Nike",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 7600,
+    "rating": 4.4,
+    "reviewCount": 440,
+    "description": "Built for gym workouts and hiking and formal occasions, the Nike RS-X SE 3 offers reliable grip and all-day comfort with a durable construction from Nike.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "nike"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 120,
+    "featured": true,
+    "useCases": [
+      "gym workouts",
+      "hiking",
+      "formal occasions"
+    ]
+  },
+  {
+    "id": "p115",
+    "name": "Nike Classic Runner 7",
+    "brand": "Nike",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 7700,
+    "compareAtPrice": 8800,
+    "rating": 3.4,
+    "reviewCount": 441,
+    "description": "Built for everyday walking and casual wear and formal occasions, the Nike Classic Runner 7 offers reliable grip and all-day comfort with a durable construction from Nike.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "nike",
+      "deal"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 35,
+    "featured": false,
+    "useCases": [
+      "everyday walking",
+      "casual wear",
+      "formal occasions"
+    ]
+  },
+  {
+    "id": "p116",
+    "name": "Bata RS-X 6",
+    "brand": "Bata",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 8700,
+    "rating": 4.2,
+    "reviewCount": 15,
+    "description": "Built for formal occasions and everyday walking and hiking, the Bata RS-X 6 offers reliable grip and all-day comfort with a durable construction from Bata.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "bata"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 21,
+    "featured": false,
+    "useCases": [
+      "formal occasions",
+      "everyday walking",
+      "hiking"
+    ]
+  },
+  {
+    "id": "p117",
+    "name": "Woodland RS-X Studio 5",
+    "brand": "Woodland",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 1200,
+    "rating": 4.7,
+    "reviewCount": 18,
+    "description": "Built for casual wear and gym workouts and everyday walking, the Woodland RS-X Studio 5 offers reliable grip and all-day comfort with a durable construction from Woodland.",
+    "specs": {
+      "Upper Material": "Canvas",
+      "Sole Type": "PU Sole",
+      "Closure": "Slip-On",
+      "Available Sizes": "UK 7-9",
+      "Weight": "180g"
+    },
+    "tags": [
+      "footwear",
+      "woodland",
+      "top-rated"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 77,
+    "featured": false,
+    "useCases": [
+      "casual wear",
+      "gym workouts",
+      "everyday walking"
+    ]
+  },
+  {
+    "id": "p118",
+    "name": "Puma Air Max 5",
+    "brand": "Puma",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 1500,
+    "compareAtPrice": 1700,
+    "rating": 4.8,
+    "reviewCount": 216,
+    "description": "Built for formal occasions and everyday walking, the Puma Air Max 5 offers reliable grip and all-day comfort with a durable construction from Puma.",
+    "specs": {
+      "Upper Material": "Canvas",
+      "Sole Type": "PU Sole",
+      "Closure": "Slip-On",
+      "Available Sizes": "UK 7-9",
+      "Weight": "180g"
+    },
+    "tags": [
+      "footwear",
+      "puma",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 110,
+    "featured": false,
+    "useCases": [
+      "formal occasions",
+      "everyday walking"
+    ]
+  },
+  {
+    "id": "p119",
+    "name": "Woodland Air Max 5",
+    "brand": "Woodland",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 4300,
+    "rating": 3.6,
+    "reviewCount": 319,
+    "description": "Built for gym workouts, the Woodland Air Max 5 offers reliable grip and all-day comfort with a durable construction from Woodland.",
+    "specs": {
+      "Upper Material": "Canvas",
+      "Sole Type": "PU Sole",
+      "Closure": "Slip-On",
+      "Available Sizes": "UK 7-9",
+      "Weight": "180g"
+    },
+    "tags": [
+      "footwear",
+      "woodland"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 17,
+    "featured": true,
+    "useCases": [
+      "gym workouts"
+    ]
+  },
+  {
+    "id": "p120",
+    "name": "Bata Ultraboost 7",
+    "brand": "Bata",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 8400,
+    "compareAtPrice": 10700,
+    "rating": 3.9,
+    "reviewCount": 141,
+    "description": "Built for hiking and casual wear, the Bata Ultraboost 7 offers reliable grip and all-day comfort with a durable construction from Bata.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "bata",
+      "deal"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 108,
+    "featured": true,
+    "useCases": [
+      "hiking",
+      "casual wear"
+    ]
+  },
+  {
+    "id": "p121",
+    "name": "Puma Trail Runner Air 2",
+    "brand": "Puma",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 9800,
+    "rating": 4,
+    "reviewCount": 154,
+    "description": "Built for everyday walking and running, the Puma Trail Runner Air 2 offers reliable grip and all-day comfort with a durable construction from Puma.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "puma"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 72,
+    "featured": false,
+    "useCases": [
+      "everyday walking",
+      "running"
+    ]
+  },
+  {
+    "id": "p122",
+    "name": "Reebok Classic Runner SE 2",
+    "brand": "Reebok",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 8500,
+    "compareAtPrice": 10300,
+    "rating": 4.7,
+    "reviewCount": 117,
+    "description": "Built for gym workouts and running, the Reebok Classic Runner SE 2 offers reliable grip and all-day comfort with a durable construction from Reebok.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "reebok",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 69,
+    "featured": false,
+    "useCases": [
+      "gym workouts",
+      "running"
+    ]
+  },
+  {
+    "id": "p123",
+    "name": "Adidas Court Vision 2",
+    "brand": "Adidas",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 2200,
+    "compareAtPrice": 2700,
+    "rating": 4.6,
+    "reviewCount": 115,
+    "description": "Built for formal occasions and everyday walking, the Adidas Court Vision 2 offers reliable grip and all-day comfort with a durable construction from Adidas.",
+    "specs": {
+      "Upper Material": "Canvas",
+      "Sole Type": "PU Sole",
+      "Closure": "Slip-On",
+      "Available Sizes": "UK 7-9",
+      "Weight": "180g"
+    },
+    "tags": [
+      "footwear",
+      "adidas",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 94,
+    "featured": false,
+    "useCases": [
+      "formal occasions",
+      "everyday walking"
+    ]
+  },
+  {
+    "id": "p124",
+    "name": "Bata Court Vision GT 6",
+    "brand": "Bata",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 14500,
+    "rating": 4.1,
+    "reviewCount": 422,
+    "description": "Built for gym workouts, the Bata Court Vision GT 6 offers reliable grip and all-day comfort with a durable construction from Bata.",
+    "specs": {
+      "Upper Material": "Genuine Leather",
+      "Sole Type": "EVA Cushioned + Rubber Outsole",
+      "Closure": "Lace-Up with Ortholite Insole",
+      "Available Sizes": "UK 6-11 (Half Sizes Available)",
+      "Weight": "220g"
+    },
+    "tags": [
+      "footwear",
+      "bata"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 31,
+    "featured": true,
+    "useCases": [
+      "gym workouts"
+    ]
+  },
+  {
+    "id": "p125",
+    "name": "Adidas RS-X 1",
+    "brand": "Adidas",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 8600,
+    "compareAtPrice": 10800,
+    "rating": 3.7,
+    "reviewCount": 107,
+    "description": "Built for running, the Adidas RS-X 1 offers reliable grip and all-day comfort with a durable construction from Adidas.",
+    "specs": {
+      "Upper Material": "Synthetic Leather",
+      "Sole Type": "Rubber Outsole",
+      "Closure": "Lace-Up",
+      "Available Sizes": "UK 6-10",
+      "Weight": "250g"
+    },
+    "tags": [
+      "footwear",
+      "adidas",
+      "deal"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 11,
+    "featured": false,
+    "useCases": [
+      "running"
+    ]
+  },
+  {
+    "id": "p126",
+    "name": "Woodland Court Vision SE 9",
+    "brand": "Woodland",
+    "category": "Footwear",
+    "subcategory": "footwear",
+    "price": 1300,
+    "rating": 4.1,
+    "reviewCount": 122,
+    "description": "Built for casual wear, the Woodland Court Vision SE 9 offers reliable grip and all-day comfort with a durable construction from Woodland.",
+    "specs": {
+      "Upper Material": "Canvas",
+      "Sole Type": "PU Sole",
+      "Closure": "Slip-On",
+      "Available Sizes": "UK 7-9",
+      "Weight": "180g"
+    },
+    "tags": [
+      "footwear",
+      "woodland"
+    ],
+    "images": [
+      "/products/footwear.svg"
+    ],
+    "stock": 26,
+    "featured": false,
+    "useCases": [
+      "casual wear"
+    ]
+  },
+  {
+    "id": "p127",
+    "name": "Peter England Checked Shirt Air 9",
+    "brand": "Peter England",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 3900,
+    "rating": 4.1,
+    "reviewCount": 28,
+    "description": "The Peter England Checked Shirt Air 9 is tailored for everyday wear and formal events and casual outings, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "peter-england"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 71,
+    "featured": false,
+    "useCases": [
+      "everyday wear",
+      "formal events",
+      "casual outings"
+    ]
+  },
+  {
+    "id": "p128",
+    "name": "Peter England Oxford Shirt Plus 5",
+    "brand": "Peter England",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 1200,
+    "rating": 3.7,
+    "reviewCount": 306,
+    "description": "The Peter England Oxford Shirt Plus 5 is tailored for office wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Solid",
+      "Available Sizes": "M - L"
+    },
+    "tags": [
+      "shirts",
+      "peter-england"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 2,
+    "featured": false,
+    "useCases": [
+      "office wear"
+    ]
+  },
+  {
+    "id": "p129",
+    "name": "Peter England Oxford Shirt Lite 9",
+    "brand": "Peter England",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 2700,
+    "rating": 3.8,
+    "reviewCount": 319,
+    "description": "The Peter England Oxford Shirt Lite 9 is tailored for casual outings and everyday wear and office wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Cotton-Polyester Blend",
+      "Fit": "Regular Fit",
+      "Sleeve Length": "Half Sleeve",
+      "Pattern": "Striped",
+      "Available Sizes": "S - XL"
+    },
+    "tags": [
+      "shirts",
+      "peter-england"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 70,
+    "featured": false,
+    "useCases": [
+      "casual outings",
+      "everyday wear",
+      "office wear"
+    ]
+  },
+  {
+    "id": "p130",
+    "name": "Peter England Casual Shirt 7",
+    "brand": "Peter England",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 1900,
+    "rating": 4.6,
+    "reviewCount": 335,
+    "description": "The Peter England Casual Shirt 7 is tailored for everyday wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Cotton-Polyester Blend",
+      "Fit": "Regular Fit",
+      "Sleeve Length": "Half Sleeve",
+      "Pattern": "Striped",
+      "Available Sizes": "S - XL"
+    },
+    "tags": [
+      "shirts",
+      "peter-england",
+      "top-rated"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 73,
+    "featured": false,
+    "useCases": [
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p131",
+    "name": "Peter England Oxford Shirt Lite 6",
+    "brand": "Peter England",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 3700,
+    "compareAtPrice": 4400,
+    "rating": 4.3,
+    "reviewCount": 183,
+    "description": "The Peter England Oxford Shirt Lite 6 is tailored for everyday wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "peter-england",
+      "deal"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 54,
+    "featured": false,
+    "useCases": [
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p132",
+    "name": "Allen Solly Formal Shirt Air 4",
+    "brand": "Allen Solly",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 3100,
+    "rating": 3.5,
+    "reviewCount": 113,
+    "description": "The Allen Solly Formal Shirt Air 4 is tailored for everyday wear and casual outings, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Cotton-Polyester Blend",
+      "Fit": "Regular Fit",
+      "Sleeve Length": "Half Sleeve",
+      "Pattern": "Striped",
+      "Available Sizes": "S - XL"
+    },
+    "tags": [
+      "shirts",
+      "allen-solly"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 112,
+    "featured": false,
+    "useCases": [
+      "everyday wear",
+      "casual outings"
+    ]
+  },
+  {
+    "id": "p133",
+    "name": "Zara Slim Fit Shirt Plus 2",
+    "brand": "Zara",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 4400,
+    "rating": 3.7,
+    "reviewCount": 412,
+    "description": "The Zara Slim Fit Shirt Plus 2 is tailored for formal events and casual outings and office wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "zara"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 105,
+    "featured": false,
+    "useCases": [
+      "formal events",
+      "casual outings",
+      "office wear"
+    ]
+  },
+  {
+    "id": "p134",
+    "name": "Allen Solly Casual Shirt SE 3",
+    "brand": "Allen Solly",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 3400,
+    "rating": 3.4,
+    "reviewCount": 169,
+    "description": "The Allen Solly Casual Shirt SE 3 is tailored for everyday wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "allen-solly"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 44,
+    "featured": false,
+    "useCases": [
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p135",
+    "name": "Zara Slim Fit Shirt Studio 8",
+    "brand": "Zara",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 4500,
+    "compareAtPrice": 5500,
+    "rating": 4.6,
+    "reviewCount": 50,
+    "description": "The Zara Slim Fit Shirt Studio 8 is tailored for office wear and everyday wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "zara",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 120,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p136",
+    "name": "Zara Formal Shirt Studio 8",
+    "brand": "Zara",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 3600,
+    "rating": 3.7,
+    "reviewCount": 453,
+    "description": "The Zara Formal Shirt Studio 8 is tailored for office wear and casual outings, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "zara"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 102,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "casual outings"
+    ]
+  },
+  {
+    "id": "p137",
+    "name": "Levi's Slim Fit Shirt Lite 5",
+    "brand": "Levi's",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 1200,
+    "compareAtPrice": 1500,
+    "rating": 4.5,
+    "reviewCount": 192,
+    "description": "The Levi's Slim Fit Shirt Lite 5 is tailored for everyday wear and office wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Solid",
+      "Available Sizes": "M - L"
+    },
+    "tags": [
+      "shirts",
+      "levi's",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 40,
+    "featured": true,
+    "useCases": [
+      "everyday wear",
+      "office wear"
+    ]
+  },
+  {
+    "id": "p138",
+    "name": "Peter England Formal Shirt X 2",
+    "brand": "Peter England",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 1200,
+    "rating": 4.1,
+    "reviewCount": 191,
+    "description": "The Peter England Formal Shirt X 2 is tailored for office wear and everyday wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Solid",
+      "Available Sizes": "M - L"
+    },
+    "tags": [
+      "shirts",
+      "peter-england"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 106,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p139",
+    "name": "Zara Checked Shirt 1",
+    "brand": "Zara",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 3800,
+    "compareAtPrice": 4600,
+    "rating": 3.9,
+    "reviewCount": 453,
+    "description": "The Zara Checked Shirt 1 is tailored for casual outings and office wear, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Checked",
+      "Available Sizes": "S - XXL"
+    },
+    "tags": [
+      "shirts",
+      "zara",
+      "deal"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 40,
+    "featured": false,
+    "useCases": [
+      "casual outings",
+      "office wear"
+    ]
+  },
+  {
+    "id": "p140",
+    "name": "Zara Checked Shirt 2",
+    "brand": "Zara",
+    "category": "Shirts",
+    "subcategory": "shirts",
+    "price": 1500,
+    "compareAtPrice": 2000,
+    "rating": 3.9,
+    "reviewCount": 67,
+    "description": "The Zara Checked Shirt 2 is tailored for office wear and formal events, offering a comfortable fit and breathable fabric that holds up to regular wear.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Sleeve Length": "Full Sleeve",
+      "Pattern": "Solid",
+      "Available Sizes": "M - L"
+    },
+    "tags": [
+      "shirts",
+      "zara",
+      "deal"
+    ],
+    "images": [
+      "/products/shirts.svg"
+    ],
+    "stock": 96,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "formal events"
+    ]
+  },
+  {
+    "id": "p141",
+    "name": "Levi's Slim Fit Chinos Lite 5",
+    "brand": "Levi's",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 4700,
+    "compareAtPrice": 5700,
+    "rating": 3.5,
+    "reviewCount": 408,
+    "description": "Designed for travel, the Levi's Slim Fit Chinos Lite 5 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Waist Type": "Mid-Rise",
+      "Available Sizes": "28-40 inch waist",
+      "Wash": "Stone Wash"
+    },
+    "tags": [
+      "pants",
+      "levi's",
+      "deal"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 27,
+    "featured": false,
+    "useCases": [
+      "travel"
+    ]
+  },
+  {
+    "id": "p142",
+    "name": "Zara Slim Fit Chinos SE 5",
+    "brand": "Zara",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 1400,
+    "rating": 4.5,
+    "reviewCount": 177,
+    "description": "Designed for everyday wear, the Zara Slim Fit Chinos SE 5 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "zara",
+      "top-rated"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 53,
+    "featured": false,
+    "useCases": [
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p143",
+    "name": "Wrangler Cargo Pants 8",
+    "brand": "Wrangler",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 3200,
+    "rating": 3.6,
+    "reviewCount": 171,
+    "description": "Designed for casual outings and office wear and everyday wear, the Wrangler Cargo Pants 8 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Cotton-Polyester Blend",
+      "Fit": "Regular Fit",
+      "Waist Type": "Regular Waist",
+      "Available Sizes": "28-36 inch waist",
+      "Wash": "Dark Wash"
+    },
+    "tags": [
+      "pants",
+      "wrangler"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 118,
+    "featured": false,
+    "useCases": [
+      "casual outings",
+      "office wear",
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p144",
+    "name": "Lee Straight Jeans X 1",
+    "brand": "Lee",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 1500,
+    "compareAtPrice": 1800,
+    "rating": 4.8,
+    "reviewCount": 265,
+    "description": "Designed for travel, the Lee Straight Jeans X 1 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "lee",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 14,
+    "featured": false,
+    "useCases": [
+      "travel"
+    ]
+  },
+  {
+    "id": "p145",
+    "name": "Levi's Formal Trousers Ultra 4",
+    "brand": "Levi's",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 1700,
+    "compareAtPrice": 2000,
+    "rating": 4,
+    "reviewCount": 216,
+    "description": "Designed for travel and casual outings and everyday wear, the Levi's Formal Trousers Ultra 4 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "levi's",
+      "deal"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 14,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "casual outings",
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p146",
+    "name": "Zara Formal Trousers 4",
+    "brand": "Zara",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 2900,
+    "rating": 3.8,
+    "reviewCount": 243,
+    "description": "Designed for office wear, the Zara Formal Trousers 4 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Cotton-Polyester Blend",
+      "Fit": "Regular Fit",
+      "Waist Type": "Regular Waist",
+      "Available Sizes": "28-36 inch waist",
+      "Wash": "Dark Wash"
+    },
+    "tags": [
+      "pants",
+      "zara"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 41,
+    "featured": false,
+    "useCases": [
+      "office wear"
+    ]
+  },
+  {
+    "id": "p147",
+    "name": "Wrangler Straight Jeans Pro 2",
+    "brand": "Wrangler",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 3900,
+    "compareAtPrice": 4400,
+    "rating": 4.9,
+    "reviewCount": 224,
+    "description": "Designed for travel and casual outings and everyday wear, the Wrangler Straight Jeans Pro 2 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Waist Type": "Mid-Rise",
+      "Available Sizes": "28-40 inch waist",
+      "Wash": "Stone Wash"
+    },
+    "tags": [
+      "pants",
+      "wrangler",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 40,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "casual outings",
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p148",
+    "name": "Lee Straight Jeans X 1",
+    "brand": "Lee",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 2000,
+    "compareAtPrice": 2600,
+    "rating": 4.6,
+    "reviewCount": 39,
+    "description": "Designed for office wear and everyday wear and travel, the Lee Straight Jeans X 1 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "lee",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 47,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "everyday wear",
+      "travel"
+    ]
+  },
+  {
+    "id": "p149",
+    "name": "Zara Straight Jeans Lite 5",
+    "brand": "Zara",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 1700,
+    "rating": 4.1,
+    "reviewCount": 416,
+    "description": "Designed for office wear and everyday wear, the Zara Straight Jeans Lite 5 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "zara"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 21,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "everyday wear"
+    ]
+  },
+  {
+    "id": "p150",
+    "name": "Allen Solly Cargo Pants 9",
+    "brand": "Allen Solly",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 4000,
+    "rating": 4,
+    "reviewCount": 267,
+    "description": "Designed for office wear, the Allen Solly Cargo Pants 9 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Waist Type": "Mid-Rise",
+      "Available Sizes": "28-40 inch waist",
+      "Wash": "Stone Wash"
+    },
+    "tags": [
+      "pants",
+      "allen-solly"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 111,
+    "featured": false,
+    "useCases": [
+      "office wear"
+    ]
+  },
+  {
+    "id": "p151",
+    "name": "Lee Jogger Pants GT 8",
+    "brand": "Lee",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 1000,
+    "rating": 3.6,
+    "reviewCount": 68,
+    "description": "Designed for casual outings and everyday wear and travel, the Lee Jogger Pants GT 8 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "lee"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 87,
+    "featured": false,
+    "useCases": [
+      "casual outings",
+      "everyday wear",
+      "travel"
+    ]
+  },
+  {
+    "id": "p152",
+    "name": "Wrangler Jogger Pants GT 9",
+    "brand": "Wrangler",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 3100,
+    "rating": 4.4,
+    "reviewCount": 145,
+    "description": "Designed for casual outings and everyday wear and office wear, the Wrangler Jogger Pants GT 9 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Cotton-Polyester Blend",
+      "Fit": "Regular Fit",
+      "Waist Type": "Regular Waist",
+      "Available Sizes": "28-36 inch waist",
+      "Wash": "Dark Wash"
+    },
+    "tags": [
+      "pants",
+      "wrangler"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 16,
+    "featured": false,
+    "useCases": [
+      "casual outings",
+      "everyday wear",
+      "office wear"
+    ]
+  },
+  {
+    "id": "p153",
+    "name": "Allen Solly Cargo Pants Max 6",
+    "brand": "Allen Solly",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 1900,
+    "rating": 3.4,
+    "reviewCount": 63,
+    "description": "Designed for travel and office wear and casual outings, the Allen Solly Cargo Pants Max 6 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "Polyester",
+      "Fit": "Relaxed Fit",
+      "Waist Type": "Elastic Waist",
+      "Available Sizes": "30-34 inch waist",
+      "Wash": "Light Wash"
+    },
+    "tags": [
+      "pants",
+      "allen-solly"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 28,
+    "featured": false,
+    "useCases": [
+      "travel",
+      "office wear",
+      "casual outings"
+    ]
+  },
+  {
+    "id": "p154",
+    "name": "H&M Jogger Pants 1",
+    "brand": "H&M",
+    "category": "Pants",
+    "subcategory": "pants",
+    "price": 4000,
+    "rating": 3.8,
+    "reviewCount": 166,
+    "description": "Designed for office wear and casual outings, the H&M Jogger Pants 1 combines a comfortable fit with durable fabric that moves with you.",
+    "specs": {
+      "Fabric": "100% Cotton",
+      "Fit": "Slim Fit",
+      "Waist Type": "Mid-Rise",
+      "Available Sizes": "28-40 inch waist",
+      "Wash": "Stone Wash"
+    },
+    "tags": [
+      "pants",
+      "h&m"
+    ],
+    "images": [
+      "/products/pants.svg"
+    ],
+    "stock": 3,
+    "featured": false,
+    "useCases": [
+      "office wear",
+      "casual outings"
+    ]
+  },
+  {
+    "id": "p155",
+    "name": "Nestle Whole Wheat Atta",
+    "brand": "Nestle",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 300,
+    "compareAtPrice": 400,
+    "rating": 3.4,
+    "reviewCount": 329,
+    "description": "Nestle Whole Wheat Atta is a pantry staple for breakfast, sourced and packaged by Nestle to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "nestle",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 103,
+    "featured": false,
+    "useCases": [
+      "breakfast"
+    ]
+  },
+  {
+    "id": "p156",
+    "name": "Amul Peanut Butter Everyday",
+    "brand": "Amul",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 900,
+    "compareAtPrice": 1000,
+    "rating": 4,
+    "reviewCount": 442,
+    "description": "Amul Peanut Butter Everyday is a pantry staple for daily cooking, sourced and packaged by Amul to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "5kg Pack",
+      "Shelf Life": "12 months",
+      "Dietary Info": "Organic, Gluten-Free",
+      "Storage Instructions": "Store in a cool, dry place"
+    },
+    "tags": [
+      "groceries",
+      "amul",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 38,
+    "featured": false,
+    "useCases": [
+      "daily cooking"
+    ]
+  },
+  {
+    "id": "p157",
+    "name": "Amul Whole Wheat Atta",
+    "brand": "Amul",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 600,
+    "compareAtPrice": 700,
+    "rating": 3.6,
+    "reviewCount": 307,
+    "description": "Amul Whole Wheat Atta is a pantry staple for breakfast and healthy eating and daily cooking, sourced and packaged by Amul to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "1kg Pack",
+      "Shelf Life": "6 months",
+      "Dietary Info": "Vegetarian",
+      "Storage Instructions": "Store in an airtight container"
+    },
+    "tags": [
+      "groceries",
+      "amul",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 0,
+    "featured": false,
+    "useCases": [
+      "breakfast",
+      "healthy eating",
+      "daily cooking"
+    ]
+  },
+  {
+    "id": "p158",
+    "name": "Nestle Whole Wheat Atta Organic",
+    "brand": "Nestle",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 200,
+    "compareAtPrice": 200,
+    "rating": 4.3,
+    "reviewCount": 233,
+    "description": "Nestle Whole Wheat Atta Organic is a pantry staple for baking and snacking and healthy eating, sourced and packaged by Nestle to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "nestle",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 42,
+    "featured": false,
+    "useCases": [
+      "baking",
+      "snacking",
+      "healthy eating"
+    ]
+  },
+  {
+    "id": "p159",
+    "name": "ITC Toor Dal Gold",
+    "brand": "ITC",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 100,
+    "compareAtPrice": 100,
+    "rating": 3.5,
+    "reviewCount": 193,
+    "description": "ITC Toor Dal Gold is a pantry staple for baking and daily cooking, sourced and packaged by ITC to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "itc",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 36,
+    "featured": true,
+    "useCases": [
+      "baking",
+      "daily cooking"
+    ]
+  },
+  {
+    "id": "p160",
+    "name": "Britannia Green Tea Value Pack",
+    "brand": "Britannia",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 300,
+    "rating": 4.1,
+    "reviewCount": 260,
+    "description": "Britannia Green Tea Value Pack is a pantry staple for healthy eating, sourced and packaged by Britannia to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "britannia"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 86,
+    "featured": true,
+    "useCases": [
+      "healthy eating"
+    ]
+  },
+  {
+    "id": "p161",
+    "name": "ITC Toor Dal Organic",
+    "brand": "ITC",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 1200,
+    "compareAtPrice": 1600,
+    "rating": 4.2,
+    "reviewCount": 24,
+    "description": "ITC Toor Dal Organic is a pantry staple for baking and breakfast and snacking, sourced and packaged by ITC to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "5kg Pack",
+      "Shelf Life": "12 months",
+      "Dietary Info": "Organic, Gluten-Free",
+      "Storage Instructions": "Store in a cool, dry place"
+    },
+    "tags": [
+      "groceries",
+      "itc",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 24,
+    "featured": false,
+    "useCases": [
+      "baking",
+      "breakfast",
+      "snacking"
+    ]
+  },
+  {
+    "id": "p162",
+    "name": "Nestle Masala Mix Premium",
+    "brand": "Nestle",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 200,
+    "rating": 4.4,
+    "reviewCount": 325,
+    "description": "Nestle Masala Mix Premium is a pantry staple for breakfast, sourced and packaged by Nestle to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "nestle"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 120,
+    "featured": true,
+    "useCases": [
+      "breakfast"
+    ]
+  },
+  {
+    "id": "p163",
+    "name": "Amul Green Tea Premium",
+    "brand": "Amul",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 200,
+    "compareAtPrice": 300,
+    "rating": 4.4,
+    "reviewCount": 223,
+    "description": "Amul Green Tea Premium is a pantry staple for daily cooking and baking, sourced and packaged by Amul to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "amul",
+      "deal"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 86,
+    "featured": true,
+    "useCases": [
+      "daily cooking",
+      "baking"
+    ]
+  },
+  {
+    "id": "p164",
+    "name": "Fortune Whole Wheat Atta Everyday",
+    "brand": "Fortune",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 400,
+    "rating": 4.4,
+    "reviewCount": 231,
+    "description": "Fortune Whole Wheat Atta Everyday is a pantry staple for healthy eating, sourced and packaged by Fortune to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "fortune"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 94,
+    "featured": false,
+    "useCases": [
+      "healthy eating"
+    ]
+  },
+  {
+    "id": "p165",
+    "name": "Tata Breakfast Cereal Classic",
+    "brand": "Tata",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 100,
+    "rating": 4.1,
+    "reviewCount": 472,
+    "description": "Tata Breakfast Cereal Classic is a pantry staple for healthy eating, sourced and packaged by Tata to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "tata"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 58,
+    "featured": false,
+    "useCases": [
+      "healthy eating"
+    ]
+  },
+  {
+    "id": "p166",
+    "name": "ITC Masala Mix",
+    "brand": "ITC",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 800,
+    "rating": 3.9,
+    "reviewCount": 68,
+    "description": "ITC Masala Mix is a pantry staple for baking and breakfast, sourced and packaged by ITC to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "1kg Pack",
+      "Shelf Life": "6 months",
+      "Dietary Info": "Vegetarian",
+      "Storage Instructions": "Store in an airtight container"
+    },
+    "tags": [
+      "groceries",
+      "itc"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 3,
+    "featured": false,
+    "useCases": [
+      "baking",
+      "breakfast"
+    ]
+  },
+  {
+    "id": "p167",
+    "name": "ITC Whole Wheat Atta Organic",
+    "brand": "ITC",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 700,
+    "rating": 4,
+    "reviewCount": 436,
+    "description": "ITC Whole Wheat Atta Organic is a pantry staple for healthy eating and breakfast, sourced and packaged by ITC to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "1kg Pack",
+      "Shelf Life": "6 months",
+      "Dietary Info": "Vegetarian",
+      "Storage Instructions": "Store in an airtight container"
+    },
+    "tags": [
+      "groceries",
+      "itc"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 17,
+    "featured": true,
+    "useCases": [
+      "healthy eating",
+      "breakfast"
+    ]
+  },
+  {
+    "id": "p168",
+    "name": "Fortune Masala Mix Everyday",
+    "brand": "Fortune",
+    "category": "Groceries",
+    "subcategory": "groceries",
+    "price": 100,
+    "compareAtPrice": 100,
+    "rating": 4.6,
+    "reviewCount": 33,
+    "description": "Fortune Masala Mix Everyday is a pantry staple for baking and healthy eating, sourced and packaged by Fortune to stay fresh from shelf to table.",
+    "specs": {
+      "Net Weight": "500g Pack",
+      "Shelf Life": "3 months",
+      "Dietary Info": "No Added Preservatives",
+      "Storage Instructions": "Refrigerate after opening"
+    },
+    "tags": [
+      "groceries",
+      "fortune",
+      "deal",
+      "top-rated"
+    ],
+    "images": [
+      "/products/groceries.svg"
+    ],
+    "stock": 18,
+    "featured": false,
+    "useCases": [
+      "baking",
+      "healthy eating"
     ]
   }
 ]

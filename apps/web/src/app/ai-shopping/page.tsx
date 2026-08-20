@@ -17,7 +17,8 @@ function randomTypingDelayMs() {
 const STARTERS = [
   "A laptop for coding and machine learning under 80000",
   "Good headphones for the gym under 5000",
-  "Best smartphone camera under 40000",
+  "Running shoes under 10000",
+  "A formal shirt for the office under 2000",
 ];
 
 export default function AiShoppingPage() {
