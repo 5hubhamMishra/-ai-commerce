@@ -68,11 +68,6 @@ export default function Footer() {
         <div className="text-xs text-stone-400">
           &copy; {new Date().getFullYear()} Veloura AI Commerce. All rights reserved.
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/profile" className="text-xs text-stone-400 hover:text-white transition-colors">
-            Privacy Policy
-          </Link>
-        </div>
       </div>
     </footer>
   );

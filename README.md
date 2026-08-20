@@ -14,7 +14,8 @@ map of what exists, what's next, and why decisions were made the way they were
 
 ```
 apps/
-  web/          Next.js storefront + admin UI (the original "Veloura" MVP, now server-backed)
+  web/          Next.js storefront + admin UI (the original "Veloura" MVP; still reads static
+                JSON, not yet wired to apps/api — see docs/DECISIONS.md ADR-027)
   api/          NestJS modular monolith — REST API, auth, RBAC, commerce domain logic
   mobile/       React Native (Expo) app — shares API contracts with web
 packages/

@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 import { products, categories } from "@/lib/data";
 
-const BASE_URL = "https://veloura.example.com";
+// Vercel sets this automatically to the production domain (no scheme) on every deploy —
+// falls back to the current known deployment for local builds / before a custom domain exists.
+const BASE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
 
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/", changeFrequency: "daily", priority: 1 },

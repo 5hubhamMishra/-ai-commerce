@@ -20,8 +20,12 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
+// Vercel sets this automatically to the production domain (no scheme) on every deploy —
+// falls back to the current known deployment for local builds / before a custom domain exists.
+const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://veloura.example.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Veloura — Shopping that gets you",
     template: "%s — Veloura",
