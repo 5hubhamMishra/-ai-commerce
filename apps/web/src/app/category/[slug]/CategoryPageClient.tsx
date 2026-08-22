@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Category, ListProductsResponse } from "@ai-commerce/types";
@@ -25,7 +25,7 @@ export default function CategoryPageClient({ initialCategory }: { initialCategor
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    startTransition(() => setLoading(true));
     catalogApi
       .listCategoryProducts(category.slug, { page, pageSize: PAGE_SIZE })
       .then((res) => {

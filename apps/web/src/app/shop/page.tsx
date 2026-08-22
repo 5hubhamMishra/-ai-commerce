@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { startTransition, useEffect, useRef, useState, Suspense } from "react";
 import type { Brand, Category, ListProductsResponse } from "@ai-commerce/types";
 import { catalogApi } from "@ai-commerce/api-client";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
@@ -37,7 +37,7 @@ function ShopContent() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    startTransition(() => setLoading(true));
     catalogApi
       .listProducts({
         page,

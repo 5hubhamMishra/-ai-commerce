@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, startTransition, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { SearchResponse } from "@ai-commerce/types";
 import { searchApi } from "@ai-commerce/api-client";
@@ -19,12 +19,9 @@ function SearchContent() {
   const trackEvent = useStore((s) => s.trackEvent);
 
   useEffect(() => {
-    if (!initialQuery) {
-      setResult(null);
-      return;
-    }
+    if (!initialQuery) return;
     let cancelled = false;
-    setLoading(true);
+    startTransition(() => setLoading(true));
     trackEvent("PRODUCT_SEARCHED", { query: initialQuery });
     searchApi
       .search({ q: initialQuery, pageSize: 24 })
@@ -69,7 +66,7 @@ function SearchContent() {
         />
       </form>
 
-      {understood && (
+      {initialQuery && understood && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           {understood.category && <span className="badge badge-subtle">{understood.category}</span>}
           {understood.brand && <span className="badge badge-subtle">{understood.brand}</span>}

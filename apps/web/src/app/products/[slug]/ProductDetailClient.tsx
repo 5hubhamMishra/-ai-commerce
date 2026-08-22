@@ -101,7 +101,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       groups.get(spec.group)!.push(spec);
     }
     return groups;
-  }, [product.specifications]);
+  }, [product]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

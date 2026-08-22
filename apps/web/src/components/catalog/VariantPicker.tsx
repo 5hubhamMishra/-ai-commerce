@@ -30,25 +30,29 @@ export default function VariantPicker({
 
   const [selection, setSelection] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (activeVariants.length === 1) {
+  // The single-variant case has nothing to choose — its attributes are pure derived state
+  // from `activeVariants`, not something that needs an effect to synchronize. Only a real
+  // user click (the multi-variant case) needs to go through `selection` state.
+  const effectiveSelection = useMemo(() => {
+    if (activeVariants.length === 1 && Object.keys(selection).length === 0) {
       const only = activeVariants[0];
-      const initial: Record<string, string> = {};
-      for (const attr of only.attributes) initial[attr.attributeSlug] = attr.valueSlug;
-      setSelection(initial);
+      const derived: Record<string, string> = {};
+      for (const attr of only.attributes) derived[attr.attributeSlug] = attr.valueSlug;
+      return derived;
     }
-  }, [activeVariants]);
+    return selection;
+  }, [activeVariants, selection]);
 
   const resolvedVariant = useMemo(() => {
-    if (Object.keys(selection).length === 0) return null;
+    if (Object.keys(effectiveSelection).length === 0) return null;
     return (
       activeVariants.find(
         (v) =>
-          v.attributes.length === Object.keys(selection).length &&
-          v.attributes.every((attr) => selection[attr.attributeSlug] === attr.valueSlug),
+          v.attributes.length === Object.keys(effectiveSelection).length &&
+          v.attributes.every((attr) => effectiveSelection[attr.attributeSlug] === attr.valueSlug),
       ) ?? null
     );
-  }, [activeVariants, selection]);
+  }, [activeVariants, effectiveSelection]);
 
   useEffect(() => {
     onSelect(resolvedVariant);

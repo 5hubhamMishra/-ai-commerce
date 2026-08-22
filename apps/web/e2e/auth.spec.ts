@@ -8,7 +8,7 @@ import { registerAndSignIn } from "./helpers";
 test.describe("auth", () => {
   test("registering signs the user in and personalizes the nav", async ({ page }) => {
     await registerAndSignIn(page, "Ada Lovelace");
-    await expect(page.getByRole("link", { name: /Ada/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Ada/ })).toBeVisible();
   });
 
   test("logging in with the right password redirects home and shows the account link", async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe("auth", () => {
     await page.getByRole("button", { name: "Sign in to Veloura" }).click();
 
     await expect(page).toHaveURL("/");
-    await expect(page.getByRole("link", { name: /Shopper/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Shopper/ })).toBeVisible();
   });
 
   test("logging in with a wrong password shows a real error, not a silent success", async ({ page }) => {
@@ -60,5 +60,43 @@ test.describe("auth", () => {
     await expect(
       page.getByRole("banner").getByRole("link", { name: "Sign in" }),
     ).toBeVisible();
+  });
+
+  test("the account menu surfaces every account/discover link and can sign out", async ({ page }) => {
+    await registerAndSignIn(page, "Ada Lovelace");
+    const trigger = page.getByRole("banner").getByRole("button", { name: /Ada/ });
+    await trigger.click();
+
+    const menu = page.getByRole("menu", { name: "Account" });
+    await expect(menu).toBeVisible();
+    for (const label of [
+      "My Profile",
+      "Wishlist",
+      "Shopping Cart",
+      "Your Orders",
+      "For You",
+      "AI Assistant",
+      "Compare Products",
+    ]) {
+      await expect(menu.getByRole("menuitem", { name: label })).toBeVisible();
+    }
+
+    await menu.getByRole("menuitem", { name: "Sign out" }).click();
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+  });
+
+  test("the account menu closes on Escape and on an outside click", async ({ page }) => {
+    await registerAndSignIn(page, "Ada Lovelace");
+    const trigger = page.getByRole("banner").getByRole("button", { name: /Ada/ });
+
+    await trigger.click();
+    await expect(page.getByRole("menu", { name: "Account" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu", { name: "Account" })).toBeHidden();
+
+    await trigger.click();
+    await expect(page.getByRole("menu", { name: "Account" })).toBeVisible();
+    await page.mouse.click(10, 10);
+    await expect(page.getByRole("menu", { name: "Account" })).toBeHidden();
   });
 });

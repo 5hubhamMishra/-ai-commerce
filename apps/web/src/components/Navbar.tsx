@@ -48,6 +48,58 @@ const XIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const OrdersIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
+  </svg>
+);
+
+const ChevronDownIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
+
+/** The same account links the footer's "Account"/"Discover" columns show, surfaced from
+ *  the navbar too so a signed-in shopper can reach everything from one click anywhere on
+ *  the site, not just by scrolling to the footer. */
+function AccountMenuLinks({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <>
+      <p className="px-4 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--clr-text-disabled)]">
+        Account
+      </p>
+      <Link role="menuitem" href="/profile" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        My Profile
+      </Link>
+      <Link role="menuitem" href="/wishlist" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        Wishlist
+      </Link>
+      <Link role="menuitem" href="/cart" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        Shopping Cart
+      </Link>
+      <Link role="menuitem" href="/orders" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        Your Orders
+      </Link>
+      <div className="h-px bg-[var(--clr-border)] mx-2 my-1.5" />
+      <p className="px-4 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--clr-text-disabled)]">
+        Discover
+      </p>
+      <Link role="menuitem" href="/recommendations" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        For You
+      </Link>
+      <Link role="menuitem" href="/ai-shopping" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        AI Assistant
+      </Link>
+      <Link role="menuitem" href="/compare" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        Compare Products
+      </Link>
+    </>
+  );
+}
+
 const Badge = ({ count }: { count: number }) => {
   if (count === 0) return null;
   return (
@@ -63,14 +115,17 @@ export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const accountButtonRef = useRef<HTMLButtonElement>(null);
   const searchInputId = useId();
   const mobileSearchInputId = useId();
 
   const cartCount = useStore((s) => s.serverCart?.itemCount ?? 0);
   const wishlistCount = useStore((s) => s.serverWishlist?.items.length ?? 0);
   const user = useStore((s) => s.user);
+  const logout = useStore((s) => s.logout);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,7 +135,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close the mobile drawer when navigation actually changes — adjusted
+  // Close the mobile drawer and account menu when navigation actually changes — adjusted
   // during render (React's own recommended pattern for "reset state when a
   // value changes") rather than in an effect, which would need an extra
   // render pass and synchronously trigger a cascading re-render for no
@@ -89,6 +144,7 @@ export default function Navbar() {
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setMobileOpen(false);
+    setAccountMenuOpen(false);
   }
 
   // Drawer a11y: lock background scroll, close on Escape, move focus into
@@ -112,6 +168,20 @@ export default function Navbar() {
       menuButton?.focus();
     };
   }, [mobileOpen]);
+
+  // Account dropdown: close on Escape, return focus to the trigger button — a lighter
+  // popup than the mobile drawer, so no body-scroll lock is needed here.
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setAccountMenuOpen(false);
+        accountButtonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [accountMenuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,11 +278,58 @@ export default function Navbar() {
                 <Badge count={cartCount} />
               </Link>
               
-              <Link href={user ? "/profile" : "/login"} className="hidden sm:flex items-center gap-1.5 ml-1 px-3 py-1.5 rounded-full border border-[var(--clr-border)] text-sm font-medium text-[var(--clr-text-secondary)] hover:border-[var(--clr-accent)] hover:text-[var(--clr-accent)] transition-colors">
-                <UserIcon className="h-4 w-4" />
-                {user ? user.name.split(' ')[0] : 'Sign in'}
-              </Link>
-              
+              {user ? (
+                <div className="relative hidden sm:block">
+                  <button
+                    ref={accountButtonRef}
+                    onClick={() => setAccountMenuOpen((o) => !o)}
+                    aria-haspopup="menu"
+                    aria-expanded={accountMenuOpen}
+                    aria-controls="account-menu"
+                    className="flex items-center gap-1.5 ml-1 px-3 py-1.5 rounded-full border border-[var(--clr-border)] text-sm font-medium text-[var(--clr-text-secondary)] hover:border-[var(--clr-accent)] hover:text-[var(--clr-accent)] transition-colors"
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    {user.name.split(' ')[0]}
+                    <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform duration-150 ${accountMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {accountMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setAccountMenuOpen(false)}
+                        aria-hidden="true"
+                      />
+                      <div
+                        id="account-menu"
+                        role="menu"
+                        aria-label="Account"
+                        className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] py-2 z-50 animate-fadeIn"
+                        style={{ boxShadow: 'var(--shadow-modal)' }}
+                      >
+                        <AccountMenuLinks onNavigate={() => setAccountMenuOpen(false)} />
+                        <div className="h-px bg-[var(--clr-border)] mx-2 my-1.5" />
+                        <button
+                          role="menuitem"
+                          onClick={() => {
+                            setAccountMenuOpen(false);
+                            void logout();
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-[var(--clr-error,red)] hover:bg-[var(--clr-surface-2)] transition-colors"
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <Link href="/login" className="hidden sm:flex items-center gap-1.5 ml-1 px-3 py-1.5 rounded-full border border-[var(--clr-border)] text-sm font-medium text-[var(--clr-text-secondary)] hover:border-[var(--clr-accent)] hover:text-[var(--clr-accent)] transition-colors">
+                  <UserIcon className="h-4 w-4" />
+                  Sign in
+                </Link>
+              )}
+
               <button
                 ref={menuButtonRef}
                 className="md:hidden rounded-lg p-2 hover:bg-stone-100 text-[var(--clr-text-secondary)] transition-colors"
@@ -305,6 +422,21 @@ export default function Navbar() {
                 <UserIcon className="h-5 w-5" />
                 {user ? user.name : 'Sign in'}
               </Link>
+
+              {user && (
+                <>
+                  <Link href="/orders" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)]">
+                    <OrdersIcon className="h-5 w-5" />
+                    Your Orders
+                  </Link>
+                  <button
+                    onClick={() => void logout()}
+                    className="w-full text-left rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--clr-error,red)] hover:bg-[var(--clr-surface-2)]"
+                  >
+                    Sign out
+                  </button>
+                </>
+              )}
             </div>
             
             <div className="mt-auto p-4 border-t border-[var(--clr-border)]">
