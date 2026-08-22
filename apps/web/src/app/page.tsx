@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { buildProfile, recommendForProfile } from "@/lib/recommend";
 import { popularProducts, dealsProducts, getProduct, categories } from "@/lib/data";
+import { useCategories } from "@/lib/hooks/useCategories";
 import ProductGrid from "@/components/ProductGrid";
 import Section from "@/components/Section";
 import type { Product } from "@/lib/types";
@@ -40,6 +41,7 @@ export default function Home() {
   const trending = useMemo(() => popularProducts(10), []);
 
   const topCategory = Object.entries(profile.categoryAffinity).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const realCategories = useCategories();
 
   return (
     <div>
@@ -71,7 +73,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl font-semibold" style={{ color: 'var(--clr-text-primary)' }}>Shop by category</h2>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {categories.map((c) => (
+            {realCategories.map((c) => (
               <Link
                 key={c.slug}
                 href={`/category/${c.slug}`}

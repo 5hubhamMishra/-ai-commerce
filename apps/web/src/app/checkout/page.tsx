@@ -1,27 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
-import { getProduct } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import Link from "next/link";
 import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const cart = useStore((s) => s.cart);
+  const serverCart = useStore((s) => s.serverCart);
   const placeOrder = useStore((s) => s.placeOrder);
+  const clearServerCart = useStore((s) => s.clearServerCart);
   const trackEvent = useStore((s) => s.trackEvent);
   const hydrated = useStore((s) => s.hydrated);
   const [address, setAddress] = useState("");
   const [placing, setPlacing] = useState(false);
 
-  const lines = useMemo(
-    () => cart.map((c) => ({ ...c, product: getProduct(c.productId) })).filter((l) => l.product),
-    [cart]
-  );
-  const total = lines.reduce((sum, l) => sum + (l.product?.price || 0) * l.quantity, 0);
+  const lines = serverCart?.items ?? [];
+  const total = serverCart?.subtotal ?? 0;
 
   useEffect(() => {
     if (hydrated && lines.length > 0) trackEvent("CHECKOUT_STARTED", {});
@@ -62,7 +59,17 @@ export default function CheckoutPage() {
     // Payment is simulated client-side for this demo. In production this must be verified
     // server-side against the payment provider before an order is ever confirmed.
     setTimeout(() => {
-      const order = placeOrder(address.trim());
+      const order = placeOrder(
+        address.trim(),
+        lines.map((l) => ({
+          productId: l.productId,
+          quantity: l.quantity,
+          priceAtPurchase: l.unitPrice,
+          productName: l.productName,
+          productImageUrl: l.imageUrl,
+        })),
+      );
+      void clearServerCart();
       router.push(`/orders/${order.id}`);
     }, 700);
   }
@@ -130,11 +137,11 @@ export default function CheckoutPage() {
           <h2 className="font-display text-lg font-semibold mb-4">Order Summary</h2>
           <div className="space-y-3">
             {lines.map((l) => (
-              <div key={l.productId} className="flex justify-between text-sm text-[var(--clr-text-secondary)]">
+              <div key={l.id} className="flex justify-between text-sm text-[var(--clr-text-secondary)]">
                 <span className="line-clamp-2 pr-2">
-                  {l.product!.name} <span className="font-semibold">× {l.quantity}</span>
+                  {l.productName} <span className="font-semibold">× {l.quantity}</span>
                 </span>
-                <span className="shrink-0 font-medium">{formatPrice(l.product!.price * l.quantity)}</span>
+                <span className="shrink-0 font-medium">{formatPrice(l.lineTotal)}</span>
               </div>
             ))}
           </div>

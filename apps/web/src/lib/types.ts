@@ -33,9 +33,20 @@ export type CartItem = {
   quantity: number;
 };
 
+export type OrderItem = {
+  productId: string;
+  quantity: number;
+  priceAtPurchase: number;
+  // Optional snapshot for orders sourced from the real cart — real product IDs aren't
+  // resolvable via this file's static getProduct(), so orders/[id]/page.tsx prefers these
+  // when present, falling back to a getProduct() lookup for legacy fake-catalog orders.
+  productName?: string;
+  productImageUrl?: string | null;
+};
+
 export type Order = {
   id: string;
-  items: { productId: string; quantity: number; priceAtPurchase: number }[];
+  items: OrderItem[];
   total: number;
   status: "processing" | "confirmed" | "shipped" | "delivered" | "cancelled";
   placedAt: string;

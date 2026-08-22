@@ -1,9 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { searchProducts, parseQuery } from "@/lib/search";
-import ProductGrid from "@/components/ProductGrid";
+import type { SearchResponse } from "@ai-commerce/types";
+import { searchApi } from "@ai-commerce/api-client";
+import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
+import { fromSearchResultItem } from "@/lib/catalog-mappers";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 
@@ -12,13 +14,35 @@ function SearchContent() {
   const router = useRouter();
   const initialQuery = params.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
+  const [result, setResult] = useState<SearchResponse | null>(null);
+  const [loading, setLoading] = useState(false);
   const trackEvent = useStore((s) => s.trackEvent);
 
-  const results = useMemo(() => searchProducts(initialQuery), [initialQuery]);
-  const parsed = useMemo(() => (initialQuery ? parseQuery(initialQuery) : null), [initialQuery]);
-
   useEffect(() => {
-    if (initialQuery) trackEvent("PRODUCT_SEARCHED", { query: initialQuery });
+    if (!initialQuery) {
+      setResult(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    trackEvent("PRODUCT_SEARCHED", { query: initialQuery });
+    searchApi
+      .search({ q: initialQuery, pageSize: 24 })
+      .then((res) => {
+        if (!cancelled) {
+          setResult(res);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResult(null);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
@@ -26,6 +50,9 @@ function SearchContent() {
     e.preventDefault();
     router.push(`/search?q=${encodeURIComponent(query)}`);
   }
+
+  const products = result ? result.items.map(fromSearchResultItem) : [];
+  const understood = result?.understood ?? null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -42,21 +69,21 @@ function SearchContent() {
         />
       </form>
 
-      {parsed && (
+      {understood && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
-          {parsed.category && <span className="badge badge-subtle">{parsed.category}</span>}
-          {parsed.brand && <span className="badge badge-subtle">{parsed.brand}</span>}
-          {parsed.maxPrice !== undefined && <span className="badge badge-subtle">Under ₹{parsed.maxPrice.toLocaleString("en-IN")}</span>}
+          {understood.category && <span className="badge badge-subtle">{understood.category}</span>}
+          {understood.brand && <span className="badge badge-subtle">{understood.brand}</span>}
+          {understood.maxPrice !== null && <span className="badge badge-subtle">Under ₹{understood.maxPrice.toLocaleString("en-IN")}</span>}
         </div>
       )}
 
       {initialQuery ? (
         <div className="mt-8">
           <h2 className="mb-4 text-sm text-[var(--clr-text-secondary)]">
-            {results.length} results for &ldquo;{initialQuery}&rdquo;
+            {loading ? "Searching…" : `${result?.total ?? 0} results for "${initialQuery}"`}
           </h2>
-          {results.length > 0 ? (
-            <ProductGrid products={results} />
+          {loading ? null : products.length > 0 ? (
+            <CatalogProductGrid products={products} />
           ) : (
             <div className="py-16 flex flex-col items-center text-center">
               <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="var(--clr-border-strong)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">

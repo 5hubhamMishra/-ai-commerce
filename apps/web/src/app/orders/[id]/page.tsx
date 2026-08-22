@@ -126,19 +126,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="divide-y" style={{ borderColor: "var(--clr-border)" }}>
           {order.items.map((item) => {
-            const product = getProduct(item.productId);
-            if (!product) return null;
+            // Real-cart-sourced orders carry their own name/image snapshot (real product
+            // IDs aren't resolvable via the static getProduct()); legacy fake-catalog
+            // orders fall back to looking the product up there, as before.
+            const product = item.productName ? null : getProduct(item.productId);
+            const name = item.productName ?? product?.name;
+            const imageUrl = item.productName ? item.productImageUrl : product?.images[0];
+            const brand = product?.brand;
+            if (!name) return null;
             return (
               <div key={item.productId} className="flex items-center gap-4 px-5 py-4">
                 <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden" style={{ background: "var(--clr-surface-2)" }}>
-                  <Image src={product.images[0]} alt={product.name} fill className="object-cover" />
+                  {imageUrl && <Image src={imageUrl} alt={name} fill className="object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium line-clamp-1" style={{ color: "var(--clr-text-primary)" }}>
-                    {product.name}
+                    {name}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--clr-text-disabled)" }}>
-                    {product.brand} · Qty: {item.quantity}
+                    {brand ? `${brand} · ` : ""}Qty: {item.quantity}
                   </p>
                 </div>
                 <p className="text-sm font-bold shrink-0" style={{ color: "var(--clr-text-primary)" }}>

@@ -1,31 +1,31 @@
 "use client";
 
-import { categories } from "@/lib/data";
+import type { Brand, Category } from "@ai-commerce/types";
 
-// Original interface preserved — only visual layer changed
 export type FilterState = {
   category?: string;
   brand?: string;
   maxPrice?: number;
-  sort: "relevance" | "price-asc" | "price-desc" | "rating";
+  sort: "newest" | "name_asc" | "featured";
 };
 
 export default function Filters({
   state,
   onChange,
+  categories,
   brands,
 }: {
   state: FilterState;
   onChange: (next: FilterState) => void;
-  brands: string[];
+  categories: Category[];
+  brands: Brand[];
 }) {
   const hasActive = !!(state.category || state.brand || (state.maxPrice && state.maxPrice < 200000));
 
   const sortOptions: { id: FilterState["sort"]; label: string }[] = [
-    { id: "relevance", label: "Relevance" },
-    { id: "price-asc", label: "Price ↑" },
-    { id: "price-desc", label: "Price ↓" },
-    { id: "rating", label: "Top Rated" },
+    { id: "newest", label: "Newest" },
+    { id: "name_asc", label: "Name A–Z" },
+    { id: "featured", label: "Featured" },
   ];
 
   return (
@@ -58,8 +58,8 @@ export default function Filters({
             <PillButton
               key={c.slug}
               label={c.name}
-              active={state.category === c.name}
-              onClick={() => onChange({ ...state, category: c.name })}
+              active={state.category === c.slug}
+              onClick={() => onChange({ ...state, category: c.slug })}
             />
           ))}
         </div>
@@ -78,10 +78,10 @@ export default function Filters({
           />
           {brands.map((b) => (
             <PillButton
-              key={b}
-              label={b}
-              active={state.brand === b}
-              onClick={() => onChange({ ...state, brand: b })}
+              key={b.slug}
+              label={b.name}
+              active={state.brand === b.slug}
+              onClick={() => onChange({ ...state, brand: b.slug })}
             />
           ))}
         </div>

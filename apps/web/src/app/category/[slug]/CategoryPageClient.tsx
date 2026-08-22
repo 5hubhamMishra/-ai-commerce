@@ -1,26 +1,53 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getCategory, productsInCategory } from "@/lib/data";
-import ProductGrid from "@/components/ProductGrid";
+import type { Category, ListProductsResponse } from "@ai-commerce/types";
+import { catalogApi } from "@ai-commerce/api-client";
+import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
+import { fromProductListItem } from "@/lib/catalog-mappers";
 import { useStore } from "@/lib/store";
 
-export default function CategoryPageClient({ slug }: { slug: string }) {
-  const category = getCategory(slug);
-  const trackEvent = useStore((s) => s.trackEvent);
+const PAGE_SIZE = 20;
 
-  const products = useMemo(() => (category ? productsInCategory(slug) : []), [category, slug]);
+export default function CategoryPageClient({ initialCategory }: { initialCategory: Category }) {
+  const category = initialCategory;
+  const trackEvent = useStore((s) => s.trackEvent);
+  const [page, setPage] = useState(1);
+  const [result, setResult] = useState<ListProductsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (category) trackEvent("CATEGORY_VIEWED", { category: category.name });
+    trackEvent("CATEGORY_VIEWED", { category: category.name });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  }, [category.slug]);
 
-  // The server-side page.tsx already calls notFound() for an unknown slug
-  // before this client component ever renders.
-  if (!category) return null;
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    catalogApi
+      .listCategoryProducts(category.slug, { page, pageSize: PAGE_SIZE })
+      .then((res) => {
+        if (!cancelled) {
+          setResult(res);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResult(null);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [category.slug, page]);
+
+  const products = result ? result.items.map(fromProductListItem) : [];
+  const total = result?.total ?? 0;
+  const totalPages = result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1;
 
   return (
     <>
@@ -32,16 +59,37 @@ export default function CategoryPageClient({ slug }: { slug: string }) {
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-semibold text-white mt-2">{category.name}</h1>
             <p className="mt-2 text-sm text-stone-400">
-              {products.length} products • {category.brands.slice(0, 4).join(', ')}{category.brands.length > 4 ? ' & more' : ''}
+              {loading ? "Loading…" : `${total} products`}
             </p>
           </div>
           <div className="hidden md:block relative h-36 w-48 rounded-2xl overflow-hidden opacity-80">
-            <Image src={`/products/${slug}.svg`} alt={category.name} fill className="object-cover" unoptimized />
+            <Image src={`/products/${category.slug}.svg`} alt={category.name} fill className="object-cover" unoptimized />
           </div>
         </div>
       </div>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <ProductGrid products={products} />
+        <CatalogProductGrid products={products} />
+        {totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="rounded-xl border border-[var(--clr-border)] px-4 py-2 text-sm font-medium disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-[var(--clr-text-secondary)]">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="rounded-xl border border-[var(--clr-border)] px-4 py-2 text-sm font-medium disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

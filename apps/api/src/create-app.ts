@@ -23,7 +23,7 @@ export async function createApp(
   app.use(helmet());
   app.use(cookieParser());
   app.enableCors({
-    origin: config.get<string>('webOrigin'),
+    origin: config.get<string[]>('webOrigin'),
     credentials: true,
   });
   // Health checks stay unversioned so load balancers/orchestrators don't need to track API versions.

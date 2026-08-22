@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const login = useStore((s) => s.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const name = email.split("@")[0] || "Shopper";
-    login(name.charAt(0).toUpperCase() + name.slice(1), email);
-    router.push("/");
+    setError(null);
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      router.push(params.get("redirect") || "/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -33,7 +43,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="mt-1.5 text-sm" style={{ color: "var(--clr-text-secondary)" }}>
-            Demo authentication — any email and password work.
+            Sign in to your Veloura account.
           </p>
         </div>
 
@@ -59,6 +69,7 @@ export default function LoginPage() {
                 id="login-email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -78,28 +89,29 @@ export default function LoginPage() {
                 id="login-password"
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Any password works in demo"
+                placeholder="••••••••"
                 className="input"
               />
             </div>
 
+            {error && (
+              <p role="alert" className="text-sm" style={{ color: "var(--clr-error, #dc2626)" }}>
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="w-full btn btn-accent py-3 text-sm"
+              disabled={submitting}
+              className="w-full btn btn-accent py-3 text-sm disabled:opacity-60"
               style={{ marginTop: "0.5rem" }}
             >
-              Sign in to Veloura
+              {submitting ? "Signing in…" : "Sign in to Veloura"}
             </button>
           </form>
-
-          <div
-            className="mt-5 rounded-xl p-3 text-xs text-center"
-            style={{ background: "var(--clr-accent-subtle)", color: "var(--clr-accent-text)" }}
-          >
-            This is a demo storefront. Any credentials are accepted.
-          </div>
         </div>
 
         <p className="mt-5 text-center text-sm" style={{ color: "var(--clr-text-secondary)" }}>
@@ -114,5 +126,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

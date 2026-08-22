@@ -5,12 +5,14 @@ const PORT = 3100;
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  // Several workers hammering axe-core scans against one local server concurrently caused
-  // a real timeout locally (not a real a11y regression — the same suite passes
-  // cleanly in isolation). Same class of resource contention already documented for
-  // apps/api's e2e suite — capping workers there
-  // fixed it the same way.
-  workers: process.env.CI ? undefined : 3,
+  // Serial, not parallel: several workers hammering axe-core scans against one local server
+  // concurrently caused a real timeout (not a real a11y regression — the same suite passes
+  // cleanly in isolation), and — since apps/web was wired onto the real apps/api — several
+  // specs also register a real account, which is genuinely rate-limited server-side
+  // (10/60s on POST /auth/register, an intentional control, not something to work around by
+  // weakening it). Parallel workers each registering their own account reliably burst past
+  // that limit; running serially keeps registrations spread out enough to stay under it.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   // The default 30s is occasionally too tight for the shop page's axe-core scan under

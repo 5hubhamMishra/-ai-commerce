@@ -68,8 +68,8 @@ export default function Navbar() {
   const searchInputId = useId();
   const mobileSearchInputId = useId();
 
-  const cartCount = useStore((s) => s.cart.reduce((sum, c) => sum + c.quantity, 0));
-  const wishlistCount = useStore((s) => s.wishlist.length);
+  const cartCount = useStore((s) => s.serverCart?.itemCount ?? 0);
+  const wishlistCount = useStore((s) => s.serverWishlist?.items.length ?? 0);
   const user = useStore((s) => s.user);
 
   useEffect(() => {

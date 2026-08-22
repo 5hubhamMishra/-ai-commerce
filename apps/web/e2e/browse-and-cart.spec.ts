@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { registerAndSignIn } from "./helpers";
 
 /**
- * The critical shopper journey: land on the home page, browse a category, open a product,
- * add it to the cart, review the cart, and complete the (simulated) checkout through to an
- * order confirmation. This app is a client-only demo (ADR-027 — apps/web still reads static
- * JSON, not the live API) so checkout is a local state transition, not a real payment.
+ * The critical shopper journey against the real backend: land on the home page, browse a
+ * category, open a product, add it to the real cart, review the cart, and complete the
+ * (still-simulated, ADR-027) checkout through to an order confirmation. Adding to cart
+ * requires a signed-in session — there is no guest cart in the real API.
  */
 test.describe("browse, add to cart, and checkout", () => {
   test("home page loads with real catalog content", async ({ page }) => {
@@ -28,14 +29,17 @@ test.describe("browse, add to cart, and checkout", () => {
   test("full journey: product detail -> add to cart -> checkout -> order confirmation", async ({
     page,
   }) => {
+    await registerAndSignIn(page);
+
     await page.goto("/shop");
-    const firstProductLink = page.locator('a[href^="/product/"]').first();
+    const firstProductLink = page.locator('a[href^="/products/"]').first();
     await expect(firstProductLink).toBeVisible();
     await firstProductLink.click();
-    await expect(page).toHaveURL(/\/product\//);
+    await expect(page).toHaveURL(/\/products\//);
 
     const productName = await page.getByRole("heading", { level: 1 }).textContent();
     await page.getByRole("button", { name: "Add to cart" }).first().click();
+    await expect(page.getByRole("button", { name: /Added to cart/ })).toBeVisible();
 
     await page.goto("/cart");
     await expect(page.getByRole("heading", { name: "Your cart" })).toBeVisible();
@@ -51,13 +55,21 @@ test.describe("browse, add to cart, and checkout", () => {
       .fill("221B Baker Street, Mumbai, Maharashtra, 400001");
     await page.getByRole("button", { name: /Place order/ }).click();
 
-    await expect(page).toHaveURL(/\/orders\/ORD-/, { timeout: 5000 });
+    // The old fake checkout was a pure client-side state transition (instant); this is
+    // now a real order-summary read from the live cart plus a real client-side navigation
+    // — both slower under parallel-worker load, hence the more generous timeout.
+    await expect(page).toHaveURL(/\/orders\/ORD-/, { timeout: 15000 });
     await expect(page.getByText(/Order confirmed/i)).toBeVisible();
+    if (productName) {
+      await expect(page.getByText(productName.trim(), { exact: false })).toBeVisible();
+    }
   });
 
   test("removing the only item empties the cart and shows the empty state", async ({ page }) => {
+    await registerAndSignIn(page);
+
     await page.goto("/shop");
-    await page.locator('a[href^="/product/"]').first().click();
+    await page.locator('a[href^="/products/"]').first().click();
     await page.getByRole("button", { name: "Add to cart" }).first().click();
 
     await page.goto("/cart");
@@ -72,5 +84,27 @@ test.describe("browse, add to cart, and checkout", () => {
     await page.goto("/checkout");
     await expect(page.getByText("Your cart is empty")).toBeVisible();
     await expect(page.getByText("You cannot checkout with an empty cart.")).toBeVisible();
+  });
+
+  test("a guest who tries to add to cart is sent to sign in, then back to the product", async ({
+    page,
+  }) => {
+    const { email } = await registerAndSignIn(page);
+    await page.goto("/profile");
+    await page.getByRole("button", { name: "Sign out" }).click();
+
+    await page.goto("/shop");
+    await page.locator('a[href^="/products/"]').first().click();
+    await expect(page).toHaveURL(/\/products\//);
+    const productPath = new URL(page.url()).pathname;
+
+    await page.getByRole("button", { name: "Add to cart" }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/login\\?redirect=${encodeURIComponent(productPath)}`));
+
+    await page.getByLabel("Email address").fill(email);
+    await page.getByLabel("Password").fill("Playwright123!");
+    await page.getByRole("button", { name: "Sign in to Veloura" }).click();
+
+    await expect(page).toHaveURL(productPath);
   });
 });

@@ -42,3 +42,6 @@ next-env.d.ts
 
 .vercel
 .env*
+# Committed on purpose: points NEXT_PUBLIC_API_URL at the default local apps/api — local-only
+# value, no secret, matches the root .env.development's same carve-out.
+!.env.development

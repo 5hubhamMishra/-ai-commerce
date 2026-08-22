@@ -1,20 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 
-export default function RegisterPage() {
+const MIN_PASSWORD_LENGTH = 8;
+
+function RegisterForm() {
   const router = useRouter();
-  const login = useStore((s) => s.login);
+  const params = useSearchParams();
+  const register = useStore((s) => s.register);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    login(name || "Shopper", email);
-    router.push("/");
+    setError(null);
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await register(email, password, name);
+      router.push(params.get("redirect") || "/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -32,7 +50,7 @@ export default function RegisterPage() {
             Create your account
           </h1>
           <p className="mt-1.5 text-sm" style={{ color: "var(--clr-text-secondary)" }}>
-            Demo signup — no email verification required.
+            Real orders, real cart, real recommendations.
           </p>
         </div>
 
@@ -58,6 +76,7 @@ export default function RegisterPage() {
                 id="reg-name"
                 type="text"
                 required
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Alex Sharma"
@@ -77,6 +96,7 @@ export default function RegisterPage() {
                 id="reg-email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -84,18 +104,39 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div
-              className="rounded-xl p-3 text-xs"
-              style={{ background: "var(--clr-surface-2)", color: "var(--clr-text-secondary)" }}
-            >
-              No real account is created. Your session is stored in this browser only.
+            <div>
+              <label
+                htmlFor="reg-password"
+                className="block text-sm font-semibold mb-1.5"
+                style={{ color: "var(--clr-text-primary)" }}
+              >
+                Password
+              </label>
+              <input
+                id="reg-password"
+                type="password"
+                required
+                autoComplete="new-password"
+                minLength={MIN_PASSWORD_LENGTH}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="input"
+              />
             </div>
+
+            {error && (
+              <p role="alert" className="text-sm" style={{ color: "var(--clr-error, #dc2626)" }}>
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
-              className="w-full btn btn-accent py-3 text-sm"
+              disabled={submitting}
+              className="w-full btn btn-accent py-3 text-sm disabled:opacity-60"
             >
-              Create account
+              {submitting ? "Creating account…" : "Create account"}
             </button>
           </form>
         </div>
@@ -112,5 +153,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

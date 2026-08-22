@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { categories } from "@/lib/data";
+import { useCategories } from "@/lib/hooks/useCategories";
 
 function FooterCol({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
@@ -23,6 +23,7 @@ function FooterCol({ title, links }: { title: string; links: { label: string; hr
 
 export default function Footer() {
   const user = useStore((s) => s.user);
+  const categories = useCategories();
 
   return (
     <footer className="bg-stone-950 text-stone-300 border-t border-stone-800">

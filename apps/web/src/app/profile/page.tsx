@@ -66,7 +66,7 @@ export default function ProfilePage() {
         </div>
         <div>
           {user ? (
-            <button onClick={logout} className="text-sm text-[var(--clr-error,red)] hover:underline">
+            <button onClick={() => { void logout(); }} className="text-sm text-[var(--clr-error,red)] hover:underline">
               Sign out
             </button>
           ) : (

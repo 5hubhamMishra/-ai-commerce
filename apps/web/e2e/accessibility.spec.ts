@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { registerAndSignIn } from "./helpers";
 
 /**
  * Automated accessibility regression coverage (PROMPT 14's "accessibility tests"
@@ -38,8 +39,8 @@ for (const { name, path } of pagesToScan) {
 
 test("product detail page has no critical/serious axe violations", async ({ page }) => {
   await page.goto("/shop");
-  await page.locator('a[href^="/product/"]').first().click();
-  await expect(page).toHaveURL(/\/product\//);
+  await page.locator('a[href^="/products/"]').first().click();
+  await expect(page).toHaveURL(/\/products\//);
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -56,8 +57,9 @@ test("product detail page has no critical/serious axe violations", async ({ page
 test("cart with an item and the mobile nav drawer open have no critical/serious axe violations", async ({
   page,
 }) => {
+  await registerAndSignIn(page);
   await page.goto("/shop");
-  await page.locator('a[href^="/product/"]').first().click();
+  await page.locator('a[href^="/products/"]').first().click();
   await page.getByRole("button", { name: "Add to cart" }).first().click();
   await page.goto("/cart");
 
