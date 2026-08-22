@@ -361,3 +361,87 @@ describe("server address / order actions", () => {
     await vi.waitFor(() => expect(useStore.getState().serverCart).toEqual(emptyCart));
   });
 });
+
+describe("ShopAI actions", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubShopAIFetch(handler: (body: Record<string, unknown>, callIndex: number) => { status: number; body: unknown }) {
+    let callIndex = 0;
+    return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      callIndex += 1;
+      const url = typeof input === "string" ? input : input.toString();
+      expect(new URL(url).pathname).toBe("/api/v1/shopai/message");
+      const body = init?.body ? JSON.parse(init.body as string) : {};
+      const { status, body: responseBody } = handler(body, callIndex);
+      return { ok: status >= 200 && status < 300, status, json: async () => responseBody } as Response;
+    });
+  }
+
+  it("a guest's first message generates and persists an anonymous id; the next message reuses it and the conversation id", async () => {
+    const requestBodies: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      "fetch",
+      stubShopAIFetch((body, callIndex) => {
+        requestBodies.push(body);
+        return {
+          status: 200,
+          body: { conversationId: "conv-1", message: { role: "assistant", content: `reply ${callIndex}` }, toolActivity: [] },
+        };
+      }),
+    );
+
+    const first = await useStore.getState().sendShopAIMessage("hello");
+    expect(first).toEqual({ role: "assistant", content: "reply 1" });
+    expect(requestBodies[0].conversationId).toBeUndefined();
+    const anonymousId = requestBodies[0].anonymousId;
+    expect(typeof anonymousId).toBe("string");
+    expect(useStore.getState().shopaiAnonymousId).toBe(anonymousId);
+    expect(useStore.getState().shopaiConversationId).toBe("conv-1");
+
+    await useStore.getState().sendShopAIMessage("again");
+    expect(requestBodies[1]).toEqual({ message: "again", conversationId: "conv-1", anonymousId });
+  });
+
+  it("recovers from a stale conversation id by retrying as a fresh conversation", async () => {
+    useStore.setState({ shopaiConversationId: "stale-conv", shopaiAnonymousId: "anon-1" });
+    vi.stubGlobal(
+      "fetch",
+      stubShopAIFetch((body, callIndex) => {
+        if (callIndex === 1) {
+          expect(body.conversationId).toBe("stale-conv");
+          return {
+            status: 404,
+            body: { error: { code: "CONVERSATION_NOT_FOUND", message: "Conversation not found.", requestId: "r1", details: {} } },
+          };
+        }
+        expect(body.conversationId).toBeUndefined();
+        return {
+          status: 200,
+          body: { conversationId: "conv-2", message: { role: "assistant", content: "fresh reply" }, toolActivity: [] },
+        };
+      }),
+    );
+
+    const reply = await useStore.getState().sendShopAIMessage("hi again");
+    expect(reply).toEqual({ role: "assistant", content: "fresh reply" });
+    expect(useStore.getState().shopaiConversationId).toBe("conv-2");
+  });
+
+  it("a logged-in user's messages never carry an anonymous id", async () => {
+    useStore.setState({ user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] } });
+    const requestBodies: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      "fetch",
+      stubShopAIFetch((body) => {
+        requestBodies.push(body);
+        return { status: 200, body: { conversationId: "conv-3", message: { role: "assistant", content: "hi" }, toolActivity: [] } };
+      }),
+    );
+
+    await useStore.getState().sendShopAIMessage("hello");
+    expect(requestBodies[0].anonymousId).toBeUndefined();
+    expect(useStore.getState().shopaiAnonymousId).toBeNull();
+  });
+});

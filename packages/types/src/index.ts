@@ -7,5 +7,6 @@ export * from './payments';
 export * from './roles';
 export * from './search';
 export * from './shipping';
+export * from './shopai';
 export * from './user';
 export * from './wishlist';

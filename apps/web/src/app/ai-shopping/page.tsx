@@ -1,18 +1,19 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
-import { buildProfile } from "@/lib/recommend";
-import { respond, type AssistantTurn } from "@/lib/shopai";
-import ProductCard from "@/components/ProductCard";
+import { shopaiApi } from "@ai-commerce/api-client";
 
-// A plain module-level helper, not inline Math.random() inside the
-// component body — React's purity rule flags a component/hook calling a
-// known-impure global directly, even from within an event-triggered
-// callback like this one's setTimeout.
-function randomTypingDelayMs() {
-  return 600 + Math.random() * 500;
-}
+type ChatTurn = {
+  role: "user" | "assistant";
+  content: string;
+  isError?: boolean;
+};
+
+const GREETING: ChatTurn = {
+  role: "assistant",
+  content: "Hi, I'm ShopAI. Tell me what you're shopping for — a use case, a budget, or a category — and I'll search the catalog for you.",
+};
 
 const STARTERS = [
   "A laptop for coding and machine learning under 80000",
@@ -22,37 +23,62 @@ const STARTERS = [
 ];
 
 export default function AiShoppingPage() {
-  const events = useStore((s) => s.events);
-  const trackEvent = useStore((s) => s.trackEvent);
-  const profile = useMemo(() => buildProfile(events), [events]);
-  const [history, setHistory] = useState<AssistantTurn[]>([
-    {
-      role: "assistant",
-      text: "Hi, I'm ShopAI. Tell me what you're shopping for — a use case, a budget, or a category — and I'll search the catalog for you.",
-    },
-  ]);
+  const user = useStore((s) => s.user);
+  const shopaiAnonymousId = useStore((s) => s.shopaiAnonymousId);
+  const shopaiConversationId = useStore((s) => s.shopaiConversationId);
+  const sendShopAIMessage = useStore((s) => s.sendShopAIMessage);
+  const hydrated = useStore((s) => s.hydrated);
+
+  const [history, setHistory] = useState<ChatTurn[]>([GREETING]);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
-  const [isTyping, setIsTyping] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  // Restore a previous conversation (persisted across reloads) instead of always
+  // starting over — real conversations have server-side history worth keeping.
+  useEffect(() => {
+    if (!hydrated || !shopaiConversationId) return;
+    let cancelled = false;
+    shopaiApi
+      .getConversation(shopaiConversationId, user ? undefined : (shopaiAnonymousId ?? undefined))
+      .then((conversation) => {
+        if (cancelled || conversation.messages.length === 0) return;
+        setHistory([
+          GREETING,
+          ...conversation.messages.map((m): ChatTurn => ({
+            role: m.role === "USER" ? "user" : "assistant",
+            content: m.content,
+          })),
+        ]);
+      })
+      .catch(() => {
+        // A stale/expired conversation just falls back to the greeting-only view;
+        // sendShopAIMessage() separately recovers by starting a fresh one on next send.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [history, isTyping]);
+  }, [history, sending]);
 
-  function send(text: string) {
-    if (!text.trim() || isTyping) return;
-    const userTurn: AssistantTurn = { role: "user", text };
-    trackEvent("AI_ASSISTANT_QUERY", { query: text });
-    setHistory((h) => [...h, userTurn]);
+  async function send(text: string) {
+    if (!text.trim() || sending) return;
+    setHistory((h) => [...h, { role: "user", content: text }]);
     setInput("");
-    setIsTyping(true);
-    setTimeout(() => {
-      setHistory((h) => {
-        const reply = respond(text, h, profile);
-        return [...h, reply];
-      });
-      setIsTyping(false);
-    }, randomTypingDelayMs());
+    setSending(true);
+    try {
+      const reply = await sendShopAIMessage(text);
+      setHistory((h) => [...h, { role: "assistant", content: reply.content }]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setHistory((h) => [...h, { role: "assistant", content: message, isError: true }]);
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -75,7 +101,7 @@ export default function AiShoppingPage() {
               {STARTERS.map((s) => (
                 <button
                   key={s}
-                  onClick={() => send(s)}
+                  onClick={() => void send(s)}
                   className="w-full text-left rounded-2xl border border-[var(--clr-border)] px-4 py-3 text-sm font-medium hover:border-[var(--clr-accent)] hover:text-[var(--clr-accent-text)] hover:bg-[var(--clr-accent-subtle)] transition-all duration-150 flex justify-between items-center"
                   style={{ color: 'var(--clr-text-primary)' }}
                 >
@@ -92,7 +118,7 @@ export default function AiShoppingPage() {
              turn.role === "user" ? (
                 <div key={i} className="flex justify-end">
                   <div className="max-w-[80%] rounded-2xl rounded-br-sm px-4 py-3 text-sm text-white" style={{ background: 'var(--clr-ink)' }}>
-                    <p className="whitespace-pre-line">{turn.text}</p>
+                    <p className="whitespace-pre-line">{turn.content}</p>
                   </div>
                 </div>
               ) : (
@@ -100,21 +126,22 @@ export default function AiShoppingPage() {
                   <div className="h-8 w-8 shrink-0 rounded-xl bg-stone-900 flex items-center justify-center text-amber-500 text-sm">
                     ★
                   </div>
-                  <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-[var(--clr-border)] px-4 py-3 bg-[var(--clr-surface)] shadow-sm">
-                    <p className="text-xs font-semibold mb-2" style={{ color: 'var(--clr-accent)' }}>ShopAI</p>
-                    <p className="whitespace-pre-line text-sm" style={{ color: 'var(--clr-text-primary)' }}>{turn.text}</p>
-                    {turn.products && turn.products.length > 0 && (
-                      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                        {turn.products.map((p) => (
-                          <ProductCard key={p.id} product={p} />
-                        ))}
-                      </div>
-                    )}
+                  <div
+                    className="max-w-[85%] rounded-2xl rounded-tl-sm border px-4 py-3 shadow-sm"
+                    style={{
+                      borderColor: turn.isError ? "var(--clr-error, #dc2626)" : "var(--clr-border)",
+                      background: "var(--clr-surface)",
+                    }}
+                  >
+                    <p className="text-xs font-semibold mb-2" style={{ color: turn.isError ? "var(--clr-error, #dc2626)" : "var(--clr-accent)" }}>
+                      {turn.isError ? "ShopAI — couldn't reply" : "ShopAI"}
+                    </p>
+                    <p className="whitespace-pre-line text-sm" style={{ color: 'var(--clr-text-primary)' }}>{turn.content}</p>
                   </div>
                 </div>
               )
           ))}
-          {isTyping && (
+          {sending && (
              <div className="flex gap-3">
                 <div className="h-8 w-8 shrink-0 rounded-xl bg-stone-900 flex items-center justify-center text-amber-500 text-sm">
                   ★
@@ -138,7 +165,7 @@ export default function AiShoppingPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              send(input);
+              void send(input);
             }}
             className="flex gap-2 rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] p-1.5 shadow-sm focus-within:border-[var(--clr-accent)] focus-within:shadow-[0_0_0_3px_var(--clr-accent-subtle)] transition-all duration-200"
           >
@@ -149,7 +176,7 @@ export default function AiShoppingPage() {
               className="flex-1 px-3 py-2 text-sm outline-none bg-transparent"
               style={{ color: 'var(--clr-text-primary)' }}
             />
-            <button type="submit" disabled={isTyping} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors duration-200" style={{ background: 'var(--clr-ink)' }}>
+            <button type="submit" disabled={sending} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors duration-200" style={{ background: 'var(--clr-ink)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
               <span>Send</span>
             </button>

@@ -8,16 +8,19 @@ import type {
   CreateAddressInput,
   OrderDetail,
   PublicUser,
+  ShopAIMessage,
   UpdateAddressInput,
   WishlistResponse,
 } from "@ai-commerce/types";
 import {
   addressesApi,
+  ApiError,
   authApi,
   cartApi,
   configureApiClient,
   ordersApi,
   paymentsApi,
+  shopaiApi,
   wishlistApi,
 } from "@ai-commerce/api-client";
 import type { BehaviorEvent, CartItem, EventType, Order, OrderItem } from "./types";
@@ -93,6 +96,17 @@ type StoreState = {
    *  backend already cleared it server-side as part of order creation) and returns the
    *  final order detail with its post-payment status. */
   placeServerOrder: (addressId: string, shippingMethod: "STANDARD" | "EXPRESS") => Promise<OrderDetail>;
+
+  /** A random id persisted per-browser so a logged-out visitor's ShopAI conversation has a
+   *  stable owner across messages/reloads — apps/api uses this as the sole ownership key for
+   *  anonymous callers (ignored once a real JWT is present). Generated lazily on first use. */
+  shopaiAnonymousId: string | null;
+  shopaiConversationId: string | null;
+  /** Sends a message to the real, Anthropic-backed ShopAI and returns its reply. Recovers
+   *  once from a stale/invalid `shopaiConversationId` (e.g. a guest's conversation orphaned
+   *  by signing in mid-chat, since ownership then resolves by user id, not anonymousId) by
+   *  retrying as a fresh conversation instead of surfacing a confusing 404 to the user. */
+  sendShopAIMessage: (text: string) => Promise<ShopAIMessage>;
 };
 
 export const useStore = create<StoreState>()(
@@ -322,6 +336,40 @@ export const useStore = create<StoreState>()(
         get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
         return finalOrder;
       },
+
+      shopaiAnonymousId: null,
+      shopaiConversationId: null,
+
+      sendShopAIMessage: async (text) => {
+        get().trackEvent("AI_ASSISTANT_QUERY", { query: text });
+        const isGuest = !get().user;
+        let anonymousId = get().shopaiAnonymousId;
+        if (isGuest && !anonymousId) {
+          anonymousId = crypto.randomUUID();
+          set({ shopaiAnonymousId: anonymousId });
+        }
+
+        const send = (conversationId?: string) =>
+          shopaiApi.sendMessage({
+            message: text,
+            conversationId,
+            anonymousId: isGuest ? (anonymousId ?? undefined) : undefined,
+          });
+
+        try {
+          const conversationId = get().shopaiConversationId ?? undefined;
+          const result = await send(conversationId);
+          set({ shopaiConversationId: result.conversationId });
+          return result.message;
+        } catch (err) {
+          if (err instanceof ApiError && err.code === "CONVERSATION_NOT_FOUND") {
+            const result = await send(undefined);
+            set({ shopaiConversationId: result.conversationId });
+            return result.message;
+          }
+          throw err;
+        }
+      },
     }),
     {
       name: "ai-commerce-store",
@@ -336,6 +384,8 @@ export const useStore = create<StoreState>()(
         orders: state.orders,
         user: state.user,
         personalizationEnabled: state.personalizationEnabled,
+        shopaiAnonymousId: state.shopaiAnonymousId,
+        shopaiConversationId: state.shopaiConversationId,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
