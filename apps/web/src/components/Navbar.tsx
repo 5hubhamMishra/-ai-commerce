@@ -3,7 +3,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import type { PublicUser } from "@ai-commerce/types";
 import { useStore } from "@/lib/store";
+import { hasAnyRole, ADMIN_SURFACE_ROLES } from "@/lib/roles";
 
 const SearchIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -65,7 +67,7 @@ const ChevronDownIcon = ({ className }: { className?: string }) => (
 /** The same account links the footer's "Account"/"Discover" columns show, surfaced from
  *  the navbar too so a signed-in shopper can reach everything from one click anywhere on
  *  the site, not just by scrolling to the footer. */
-function AccountMenuLinks({ onNavigate }: { onNavigate: () => void }) {
+function AccountMenuLinks({ user, onNavigate }: { user: PublicUser; onNavigate: () => void }) {
   return (
     <>
       <p className="px-4 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--clr-text-disabled)]">
@@ -96,6 +98,14 @@ function AccountMenuLinks({ onNavigate }: { onNavigate: () => void }) {
       <Link role="menuitem" href="/compare" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
         Compare Products
       </Link>
+      {hasAnyRole(user, ADMIN_SURFACE_ROLES) && (
+        <>
+          <div className="h-px bg-[var(--clr-border)] mx-2 my-1.5" />
+          <Link role="menuitem" href="/admin" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+            Admin Dashboard
+          </Link>
+        </>
+      )}
     </>
   );
 }
@@ -307,7 +317,7 @@ export default function Navbar() {
                         className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] py-2 z-50 animate-fadeIn"
                         style={{ boxShadow: 'var(--shadow-modal)' }}
                       >
-                        <AccountMenuLinks onNavigate={() => setAccountMenuOpen(false)} />
+                        <AccountMenuLinks user={user} onNavigate={() => setAccountMenuOpen(false)} />
                         <div className="h-px bg-[var(--clr-border)] mx-2 my-1.5" />
                         <button
                           role="menuitem"
@@ -429,6 +439,12 @@ export default function Navbar() {
                     <OrdersIcon className="h-5 w-5" />
                     Your Orders
                   </Link>
+                  {hasAnyRole(user, ADMIN_SURFACE_ROLES) && (
+                    <Link href="/admin" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)]">
+                      <UserIcon className="h-5 w-5" />
+                      Admin Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={() => void logout()}
                     className="w-full text-left rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--clr-error,red)] hover:bg-[var(--clr-surface-2)]"

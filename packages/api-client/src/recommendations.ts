@@ -1,4 +1,9 @@
-import type { ListRecommendationsQuery, ScoredProduct } from '@ai-commerce/types';
+import type {
+  EvaluateQuery,
+  ListRecommendationsQuery,
+  RecommendationEvaluationReport,
+  ScoredProduct,
+} from '@ai-commerce/types';
 import { request, toQueryString } from './http';
 
 export const recommendationsApi = {
@@ -19,4 +24,8 @@ export const recommendationsApi = {
     request<ScoredProduct[]>(
       `/recommendations/frequently-bought-with/${encodeURIComponent(productId)}${toQueryString(query)}`,
     ),
+
+  /** ANALYST/ADMIN/SUPER_ADMIN — coverage/engagement/offline-backtest health metrics. */
+  getAdminEvaluation: (query: EvaluateQuery = {}) =>
+    request<RecommendationEvaluationReport>(`/recommendations/admin/evaluate${toQueryString(query)}`),
 };

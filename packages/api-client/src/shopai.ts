@@ -1,4 +1,10 @@
-import type { SendShopAIMessageInput, ShopAIConversation, ShopAIResponse } from '@ai-commerce/types';
+import type {
+  AnalyticsWindowQuery,
+  SendShopAIMessageInput,
+  ShopAIAnalyticsReport,
+  ShopAIConversation,
+  ShopAIResponse,
+} from '@ai-commerce/types';
 import { request, toQueryString } from './http';
 
 export const shopaiApi = {
@@ -12,4 +18,9 @@ export const shopaiApi = {
     request<ShopAIConversation>(
       `/shopai/conversations/${encodeURIComponent(id)}${toQueryString({ anonymousId })}`,
     ),
+
+  /** ANALYST/ADMIN/SUPER_ADMIN — reads already-logged interactions, so it works (honest
+   *  zeros) even if ShopAI's own LLM calls are currently failing for an unrelated reason. */
+  getAdminAnalytics: (query: AnalyticsWindowQuery = {}) =>
+    request<ShopAIAnalyticsReport>(`/shopai/admin/analytics${toQueryString(query)}`),
 };

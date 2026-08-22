@@ -137,3 +137,26 @@ export type ListOrdersQuery = {
   page?: number;
   pageSize?: number;
 };
+
+/** The subset of `OrderStatus` an admin may set directly via `PATCH /orders/admin/:id/status`
+ *  (apps/api/src/orders/order-state-machine.ts's `ADMIN_SETTABLE_STATUSES`) — the
+ *  fulfillment happy path only; return/refund transitions are driven by their own
+ *  dedicated endpoints, not this one. */
+export type AdminSettableOrderStatus = "PROCESSING" | "PACKED" | "SHIPPED" | "OUT_FOR_DELIVERY" | "DELIVERED";
+
+/** Matches `UpdateOrderStatusDto`. `carrier`/`trackingNumber` are required by the service
+ *  (not the DTO itself) when `status === 'SHIPPED'`. */
+export type UpdateOrderStatusInput = {
+  status: AdminSettableOrderStatus;
+  note?: string;
+  carrier?: string;
+  trackingNumber?: string;
+};
+
+/** Matches `AddTrackingEventDto` — apps/api 404s with `SHIPMENT_NOT_FOUND` if the order
+ *  hasn't shipped yet (no `Shipment` row to attach the event to). */
+export type AddTrackingEventInput = {
+  status: ShipmentEventStatus;
+  location?: string;
+  description?: string;
+};

@@ -1,4 +1,11 @@
-import type { CreateOrderInput, ListOrdersQuery, ListOrdersResponse, OrderDetail } from '@ai-commerce/types';
+import type {
+  AddTrackingEventInput,
+  CreateOrderInput,
+  ListOrdersQuery,
+  ListOrdersResponse,
+  OrderDetail,
+  UpdateOrderStatusInput,
+} from '@ai-commerce/types';
 import { request, toQueryString } from './http';
 
 export const ordersApi = {
@@ -20,5 +27,25 @@ export const ordersApi = {
     request<OrderDetail>(`/orders/${encodeURIComponent(id)}/cancel`, {
       method: 'POST',
       body: { reason },
+    }),
+
+  // ---- Admin (SUPPORT_AGENT/ADMIN/SUPER_ADMIN for reads, INVENTORY_MANAGER/ADMIN/
+  // SUPER_ADMIN for the mutations below — not owner-restricted like the customer routes) ----
+
+  adminList: (query: ListOrdersQuery = {}) =>
+    request<ListOrdersResponse>(`/orders/admin${toQueryString(query)}`),
+
+  adminGet: (id: string) => request<OrderDetail>(`/orders/admin/${encodeURIComponent(id)}`),
+
+  adminUpdateStatus: (id: string, input: UpdateOrderStatusInput) =>
+    request<OrderDetail>(`/orders/admin/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      body: input,
+    }),
+
+  adminAddTrackingEvent: (id: string, input: AddTrackingEventInput) =>
+    request<OrderDetail>(`/orders/admin/${encodeURIComponent(id)}/tracking-events`, {
+      method: 'POST',
+      body: input,
     }),
 };
