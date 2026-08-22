@@ -79,6 +79,34 @@ describe("respond — answering a direct question, not just listing", () => {
     }
   });
 
+  it("answers a naturally-phrased catalog question, not just the exact patterns already known (regression)", () => {
+    // Live bug: "what are the things that are listed on the shop" fell through to the
+    // default search/recommendation branch instead of answering the question — the old
+    // detector only matched a fixed list of exact phrasings.
+    const reply = respond(
+      "what are the things that are listed on the shop",
+      [shownTurn()],
+      emptyProfile
+    );
+    expect(reply.products).toBeUndefined();
+    for (const c of categories) {
+      expect(reply.text).toContain(c.name);
+    }
+  });
+
+  it("recognizes other natural phrasings of the same catalog-overview intent", () => {
+    for (const message of [
+      "what products do you have",
+      "show me everything you have",
+      "what does the shop carry",
+      "list all products",
+    ]) {
+      const reply = respond(message, [], emptyProfile);
+      expect(reply.products, `for "${message}"`).toBeUndefined();
+      expect(reply.text, `for "${message}"`).toContain(categories[0].name);
+    }
+  });
+
   it("a bare 'tell me ...' about something unrelated to the shown product does not describe that product", () => {
     const reply = respond("tell me a joke", [shownTurn()], emptyProfile);
     expect(reply.text).not.toContain(footwearProduct.name);

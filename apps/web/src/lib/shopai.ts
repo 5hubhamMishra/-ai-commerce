@@ -167,6 +167,33 @@ function answerAboutProduct(
 const CATALOG_OVERVIEW_KEYWORDS =
   /\b((types?|kinds?|categories) of (items?|products?|things?)|what (do you|does the site) sell|what('s| is) (on|available on|listed on) (the site|this site|here)|what can i buy|(which|what) categories)\b/;
 
+/**
+ * The fixed phrasing list above is too rigid — real users don't ask in exactly those
+ * words ("what are the things that are listed on the shop" doesn't match any of them).
+ * This is a second, token-combination pass: a question/list-request word ("what",
+ * "which", "show me", "list") plus either a whole-catalog word ("everything", "things",
+ * "items", "products", "stuff", "categories") or a sell/have/carry verb paired with a
+ * store-referring word ("shop", "store", "site", "catalog", "website", "here"). Requiring
+ * the question-word keeps this from swallowing statements ("recommend a formal shirt"),
+ * and requiring the whole-catalog/verb+store combination keeps it from swallowing a
+ * per-product question ("what is the shelf life", "is it available") — those don't
+ * contain any of these generic words at all.
+ */
+function isCatalogOverviewQuestion(q: string): boolean {
+  if (CATALOG_OVERVIEW_KEYWORDS.test(q)) return true;
+
+  const isQuestionShaped = /\b(what|which|show( me)?|list)\b/.test(q);
+  if (!isQuestionShaped) return false;
+
+  const asksForEverything =
+    /\b(everything|all (the )?(things|items|products|stuff)|things|products|items|stuff|categories)\b/.test(q);
+  if (asksForEverything) return true;
+
+  const sellOrHaveVerb = /\b(sell|have|carry|stock|offer)\b/.test(q);
+  const asksAboutStore = /\b(shop|store|site|catalog|website|here)\b/.test(q);
+  return sellOrHaveVerb && asksAboutStore;
+}
+
 function catalogOverviewAnswer(): AssistantTurn {
   const names = categories.map((c) => c.name);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}` : names[0];
@@ -203,7 +230,7 @@ export function respond(
   // A general question about the catalog itself, not any one product — check this first,
   // since it's phrased like a normal question and would otherwise get misread as being
   // about whatever product happens to be on screen.
-  if (CATALOG_OVERVIEW_KEYWORDS.test(q)) return catalogOverviewAnswer();
+  if (isCatalogOverviewQuestion(q)) return catalogOverviewAnswer();
 
   // Resolve a specific product the question is actually about — by name mention first,
   // falling back to the top-ranked product from whatever was shown last (the one ShopAI
