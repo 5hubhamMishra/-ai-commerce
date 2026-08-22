@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ApiError, authApi } from '../api/client';
-import { session } from '../api/session';
+import { ApiError } from '@ai-commerce/api-client';
+import { useStore } from '../store/useStore';
 
-type Props = {
-  onAuthenticated: () => void;
-};
-
-export default function LoginScreen({ onAuthenticated }: Props) {
+export default function LoginScreen() {
+  const login = useStore((s) => s.login);
+  const register = useStore((s) => s.register);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,10 +17,10 @@ export default function LoginScreen({ onAuthenticated }: Props) {
     setError(null);
     setLoading(true);
     try {
-      const result =
-        mode === 'login' ? await authApi.login(email, password) : await authApi.register(email, password, name);
-      await session.save(result.accessToken, result.refreshToken);
-      onAuthenticated();
+      if (mode === 'login') await login(email, password);
+      else await register(email, password, name);
+      // No manual navigation — RootNavigator switches on the store's authStatus once it
+      // flips to 'authenticated'.
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {

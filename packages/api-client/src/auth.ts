@@ -28,12 +28,23 @@ export const authApi = {
       skipAuthRetry: true,
     }),
 
-  /** No args — the refresh token travels as an httpOnly cookie, sent automatically via
-   *  `credentials: 'include'`. */
-  refresh: () =>
-    request<AuthTokenResult>('/auth/refresh', { method: 'POST', skipAuthRetry: true }),
+  /** Web calls this with no args — the refresh token travels as an httpOnly cookie, sent
+   *  automatically via `credentials: 'include'`. A caller with no cookie jar (React Native)
+   *  passes its own stored refresh token instead; apps/api's `/auth/refresh` reads a
+   *  body-supplied `refreshToken` as a fallback whenever the cookie isn't present. */
+  refresh: (refreshToken?: string) =>
+    request<AuthTokenResult>('/auth/refresh', {
+      method: 'POST',
+      body: refreshToken ? { refreshToken } : undefined,
+      skipAuthRetry: true,
+    }),
 
-  logout: () => request<void>('/auth/logout', { method: 'POST', skipAuthRetry: true }),
+  logout: (refreshToken?: string) =>
+    request<void>('/auth/logout', {
+      method: 'POST',
+      body: refreshToken ? { refreshToken } : undefined,
+      skipAuthRetry: true,
+    }),
 
   me: () => request<PublicUser>('/users/me'),
 };

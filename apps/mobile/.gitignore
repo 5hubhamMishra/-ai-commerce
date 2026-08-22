@@ -32,6 +32,9 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env*
+# value, no secret, matches the root .env.development's same carve-out.
+!.env.development
 
 # typescript
 *.tsbuildinfo

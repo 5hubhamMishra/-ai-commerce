@@ -144,4 +144,70 @@ describe("api-client http", () => {
     await expect(request("/cart")).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     expect(onAuthExpiredCalls).toBe(1);
   });
+
+  it("uses a configured custom refresh function instead of the default cookie-based one", async () => {
+    let cartAttempt = 0;
+    let refreshFnCalls = 0;
+    configureApiClient({
+      getAccessToken: () => accessToken,
+      setAccessToken: (t) => {
+        accessToken = t;
+      },
+      onAuthExpired: () => {
+        onAuthExpiredCalls++;
+      },
+      refresh: async () => {
+        refreshFnCalls++;
+        accessToken = "mobile-refreshed-token";
+        return accessToken;
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const path = pathOf(input);
+        // The custom refresh function above never calls fetch itself — if anything hits
+        // /auth/refresh, the default (unwanted) implementation ran instead.
+        if (path.endsWith("/auth/refresh")) throw new Error("default refresh should not run");
+        if (path.endsWith("/cart")) {
+          cartAttempt++;
+          if (cartAttempt === 1) {
+            return jsonResponse(401, {
+              error: { code: "UNAUTHORIZED", message: "Expired.", requestId: "req-7", details: {} },
+            });
+          }
+          return jsonResponse(200, { id: "cart-1" });
+        }
+        throw new Error(`unexpected path ${path}`);
+      }),
+    );
+
+    const result = await request("/cart");
+
+    expect(result).toEqual({ id: "cart-1" });
+    expect(refreshFnCalls).toBe(1);
+    expect(accessToken).toBe("mobile-refreshed-token");
+  });
+
+  it("sends requests to a configured custom apiBaseUrl instead of the default", async () => {
+    configureApiClient({
+      getAccessToken: () => accessToken,
+      setAccessToken: (t) => {
+        accessToken = t;
+      },
+      onAuthExpired: () => {
+        onAuthExpiredCalls++;
+      },
+      apiBaseUrl: "https://mobile-api.example.com/api/v1",
+    });
+    const fetchMock = vi.fn(async () => jsonResponse(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await request("/health");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://mobile-api.example.com/api/v1/health",
+      expect.anything(),
+    );
+  });
 });

@@ -1,6 +1,6 @@
 import type { ApiError as ApiErrorBody } from '@ai-commerce/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
 export class ApiError extends Error {
   code: string;
@@ -22,6 +22,17 @@ export type ApiClientConfig = {
   getAccessToken: () => string | null;
   setAccessToken: (token: string | null) => void;
   onAuthExpired: () => void;
+  /** Optional. Omitted (web's default) uses the httpOnly-cookie-based `POST /auth/refresh`
+   *  below, with no body. A caller with no cookie jar (React Native) supplies its own
+   *  function instead — e.g. reading a refresh token from secure storage and posting it in
+   *  the body. Must call `setAccessToken` itself (and persist any rotated refresh token —
+   *  apps/api revokes a refresh token on use, so failing to persist the new one breaks the
+   *  *next* refresh) and resolve `null` on failure rather than throw. */
+  refresh?: () => Promise<string | null>;
+  /** Optional. Omitted (web's default) uses `NEXT_PUBLIC_API_URL` / the localhost fallback
+   *  below. A caller on a different bundler (e.g. Expo's `EXPO_PUBLIC_API_URL`) supplies its
+   *  own base URL instead. */
+  apiBaseUrl?: string;
 };
 
 // Defaults to a token-less, no-op config so public (`@Public()`) endpoints work out of the
@@ -62,8 +73,9 @@ export type RequestOptions = {
 
 async function rawRequest<T>(path: string, options: RequestOptions): Promise<T> {
   const token = clientConfig.getAccessToken();
+  const apiUrl = clientConfig.apiBaseUrl ?? DEFAULT_API_URL;
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${apiUrl}${path}`, {
     method: options.method ?? 'GET',
     credentials: 'include',
     headers: {
@@ -85,23 +97,28 @@ async function rawRequest<T>(path: string, options: RequestOptions): Promise<T> 
   return (await res.json()) as T;
 }
 
+/** Web's default: the refresh token travels as an httpOnly cookie, sent automatically via
+ *  `credentials: 'include'` — no body needed. */
+async function defaultRefresh(): Promise<string | null> {
+  const result = await rawRequest<{ accessToken: string; refreshToken: string }>(
+    '/auth/refresh',
+    { method: 'POST', skipAuthRetry: true },
+  );
+  clientConfig.setAccessToken(result.accessToken);
+  return result.accessToken;
+}
+
 // De-duplicated refresh: concurrent 401s share one in-flight refresh rather than each firing
 // their own. apps/api's refresh rotation revokes the presented refresh token unconditionally
 // and treats a second, already-revoked presentation as theft (revoking the whole session
-// chain) — two independent concurrent refreshes off the same cookie would trigger exactly
-// that and force-logout the user.
+// chain) — two independent concurrent refreshes off the same cookie/stored-token would
+// trigger exactly that and force-logout the user. This guard wraps whichever refresh
+// implementation is configured (default or custom), so it protects both the same way.
 let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
-    refreshPromise = rawRequest<{ accessToken: string; refreshToken: string }>(
-      '/auth/refresh',
-      { method: 'POST', skipAuthRetry: true },
-    )
-      .then((result) => {
-        clientConfig.setAccessToken(result.accessToken);
-        return result.accessToken;
-      })
+    refreshPromise = (clientConfig.refresh ?? defaultRefresh)()
       .catch(() => null)
       .finally(() => {
         refreshPromise = null;
