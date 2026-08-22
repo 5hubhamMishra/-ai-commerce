@@ -39,8 +39,8 @@ type AsyncStatus = "idle" | "loading" | "error";
 let sessionId: string | null = null;
 
 type StoreState = {
-  // ---- Legacy, fake-catalog-backed state (untouched — still powers
-  // recommend.ts/shopai.ts/admin.ts and the fabricated checkout/order flow) ----
+  // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
+  // flow it powers has no live UI path anymore, but store.test.ts still exercises it) ----
   cart: CartItem[];
   wishlist: string[];
   recentlyViewed: string[];

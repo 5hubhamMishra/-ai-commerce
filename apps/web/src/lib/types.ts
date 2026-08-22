@@ -17,17 +17,6 @@ export type Product = {
   useCases?: string[];
 };
 
-export type Review = {
-  id: string;
-  productId: string;
-  author: string;
-  rating: number;
-  title: string;
-  body: string;
-  date: string;
-  verified: boolean;
-};
-
 export type CartItem = {
   productId: string;
   quantity: number;
@@ -79,13 +68,3 @@ export type BehaviorEvent = {
   metadata?: Record<string, unknown>;
 };
 
-export type CustomerProfile = {
-  categoryAffinity: Record<string, number>;
-  brandAffinity: Record<string, number>;
-  priceRangeMin: number;
-  priceRangeMax: number;
-  segment: string;
-  lifecycleStage: string;
-  intentConfidence: number;
-  currentIntent: string | null;
-};

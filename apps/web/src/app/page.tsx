@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
+import type { Category, ProductListItem } from "@ai-commerce/types";
+import { catalogApi } from "@ai-commerce/api-client";
 import { useStore } from "@/lib/store";
-import { dealsProducts, categories } from "@/lib/data";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useRecommendations } from "@/lib/hooks/useRecommendations";
 import { useProductIndex } from "@/lib/hooks/useProductIndex";
 import { fromProductListItem } from "@/lib/catalog-mappers";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
-import ProductGrid from "@/components/ProductGrid";
 import Section from "@/components/Section";
 import { SkeletonBlock } from "@/components/Skeleton";
 
@@ -52,7 +52,23 @@ export default function Home() {
       .map(fromProductListItem);
   }, [recentlyViewedReal, productIndex]);
 
-  const deals = useMemo(() => dealsProducts(10), []);
+  const [featured, setFeatured] = useState<ProductListItem[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    startTransition(() => setFeatured(null));
+    catalogApi
+      .listProducts({ featured: true, pageSize: 10 })
+      .then((res) => {
+        if (!cancelled) setFeatured(res.items);
+      })
+      .catch(() => {
+        if (!cancelled) setFeatured([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const featuredCards = useMemo(() => featured?.map(fromProductListItem) ?? null, [featured]);
 
   const realCategories = useCategories();
 
@@ -64,7 +80,7 @@ export default function Home() {
 
   return (
     <div>
-      <Hero topCategory={hasHistory ? topCategoryName : undefined} />
+      <Hero topCategory={hasHistory ? topCategoryName : undefined} categories={realCategories} />
 
       {hydrated && recentCards && recentCards.length > 0 && (
         <Section title="Continue shopping" subtitle="Pick up where you left off" variant="scroll">
@@ -80,8 +96,8 @@ export default function Home() {
         {recommendedCards ? <CatalogProductGrid products={recommendedCards} reasons={reasons} /> : <SkeletonBlock className="h-64 w-full" />}
       </Section>
 
-      <Section title="Today's deals" subtitle="Limited-time price drops" href="/shop">
-        <ProductGrid products={deals} />
+      <Section title="Featured" subtitle="Handpicked from across the catalog" href="/shop">
+        {featuredCards ? <CatalogProductGrid products={featuredCards} /> : <SkeletonBlock className="h-64 w-full" />}
       </Section>
 
       <Section title="Trending now" subtitle="Highly rated, frequently bought">
@@ -113,7 +129,7 @@ export default function Home() {
   );
 }
 
-function Hero({ topCategory }: { topCategory?: string }) {
+function Hero({ topCategory, categories }: { topCategory?: string; categories: Category[] }) {
   return (
     <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0c0a09 0%, #1c1917 60%, #292524 100%)' }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 50% at 30% 50%, rgba(180,83,9,0.18) 0%, transparent 70%)' }} />
