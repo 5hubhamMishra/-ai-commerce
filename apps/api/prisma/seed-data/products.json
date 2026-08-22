@@ -25,7 +25,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-1.jpg"
     ],
     "stock": 22,
     "featured": false,
@@ -58,7 +58,7 @@
       "apple"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-2.jpg"
     ],
     "stock": 57,
     "featured": false,
@@ -92,7 +92,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-3.jpg"
     ],
     "stock": 50,
     "featured": false,
@@ -123,7 +123,7 @@
       "acer"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-4.jpg"
     ],
     "stock": 37,
     "featured": false,
@@ -155,7 +155,7 @@
       "apple"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-5.jpg"
     ],
     "stock": 12,
     "featured": false,
@@ -188,7 +188,7 @@
       "deal"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-6.jpg"
     ],
     "stock": 59,
     "featured": false,
@@ -221,7 +221,7 @@
       "hp"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-1.jpg"
     ],
     "stock": 47,
     "featured": false,
@@ -253,7 +253,7 @@
       "apple"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-2.jpg"
     ],
     "stock": 103,
     "featured": true,
@@ -285,7 +285,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-3.jpg"
     ],
     "stock": 74,
     "featured": false,
@@ -319,7 +319,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-4.jpg"
     ],
     "stock": 82,
     "featured": false,
@@ -352,7 +352,7 @@
       "deal"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-5.jpg"
     ],
     "stock": 85,
     "featured": false,
@@ -386,7 +386,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-6.jpg"
     ],
     "stock": 78,
     "featured": true,
@@ -419,7 +419,7 @@
       "deal"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-1.jpg"
     ],
     "stock": 61,
     "featured": true,
@@ -452,7 +452,7 @@
       "deal"
     ],
     "images": [
-      "/products/laptops.svg"
+      "/products/items/laptops-2.jpg"
     ],
     "stock": 99,
     "featured": false,
@@ -482,7 +482,7 @@
       "sony"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-1.jpg"
     ],
     "stock": 28,
     "featured": false,
@@ -515,7 +515,7 @@
       "deal"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-2.jpg"
     ],
     "stock": 34,
     "featured": false,
@@ -550,7 +550,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-3.jpg"
     ],
     "stock": 5,
     "featured": false,
@@ -580,7 +580,7 @@
       "sennheiser"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-4.jpg"
     ],
     "stock": 115,
     "featured": false,
@@ -611,7 +611,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-5.jpg"
     ],
     "stock": 80,
     "featured": false,
@@ -642,7 +642,7 @@
       "apple"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-6.jpg"
     ],
     "stock": 28,
     "featured": true,
@@ -675,7 +675,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-1.jpg"
     ],
     "stock": 109,
     "featured": false,
@@ -709,7 +709,7 @@
       "deal"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-2.jpg"
     ],
     "stock": 96,
     "featured": false,
@@ -741,7 +741,7 @@
       "deal"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-3.jpg"
     ],
     "stock": 74,
     "featured": false,
@@ -775,7 +775,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-4.jpg"
     ],
     "stock": 42,
     "featured": true,
@@ -809,7 +809,7 @@
       "deal"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-5.jpg"
     ],
     "stock": 120,
     "featured": false,
@@ -843,7 +843,7 @@
       "deal"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-6.jpg"
     ],
     "stock": 116,
     "featured": false,
@@ -875,7 +875,7 @@
       "boat"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-1.jpg"
     ],
     "stock": 76,
     "featured": false,
@@ -907,7 +907,7 @@
       "apple"
     ],
     "images": [
-      "/products/headphones.svg"
+      "/products/items/headphones-2.jpg"
     ],
     "stock": 50,
     "featured": true,
@@ -939,7 +939,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-1.jpg"
     ],
     "stock": 53,
     "featured": false,
@@ -973,7 +973,7 @@
       "deal"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-2.jpg"
     ],
     "stock": 9,
     "featured": true,
@@ -1007,7 +1007,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-3.jpg"
     ],
     "stock": 5,
     "featured": false,
@@ -1042,7 +1042,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-4.jpg"
     ],
     "stock": 85,
     "featured": false,
@@ -1077,7 +1077,7 @@
       "deal"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-5.jpg"
     ],
     "stock": 94,
     "featured": false,
@@ -1109,7 +1109,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-6.jpg"
     ],
     "stock": 111,
     "featured": false,
@@ -1144,7 +1144,7 @@
       "deal"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-1.jpg"
     ],
     "stock": 23,
     "featured": false,
@@ -1176,7 +1176,7 @@
       "apple"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-2.jpg"
     ],
     "stock": 63,
     "featured": false,
@@ -1208,7 +1208,7 @@
       "xiaomi"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-3.jpg"
     ],
     "stock": 39,
     "featured": false,
@@ -1243,7 +1243,7 @@
       "deal"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-4.jpg"
     ],
     "stock": 63,
     "featured": false,
@@ -1276,7 +1276,7 @@
       "apple"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-5.jpg"
     ],
     "stock": 42,
     "featured": false,
@@ -1309,7 +1309,7 @@
       "vivo"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-6.jpg"
     ],
     "stock": 102,
     "featured": false,
@@ -1345,7 +1345,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-1.jpg"
     ],
     "stock": 37,
     "featured": true,
@@ -1379,7 +1379,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/smartphones.svg"
+      "/products/items/smartphones-2.jpg"
     ],
     "stock": 40,
     "featured": false,
@@ -1409,7 +1409,7 @@
       "steelseries"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-1.jpg"
     ],
     "stock": 17,
     "featured": false,
@@ -1441,7 +1441,7 @@
       "deal"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-2.jpg"
     ],
     "stock": 47,
     "featured": false,
@@ -1475,7 +1475,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-3.jpg"
     ],
     "stock": 118,
     "featured": false,
@@ -1505,7 +1505,7 @@
       "logitech"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-4.jpg"
     ],
     "stock": 120,
     "featured": true,
@@ -1539,7 +1539,7 @@
       "deal"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-5.jpg"
     ],
     "stock": 44,
     "featured": false,
@@ -1574,7 +1574,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-6.jpg"
     ],
     "stock": 89,
     "featured": false,
@@ -1608,7 +1608,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-1.jpg"
     ],
     "stock": 13,
     "featured": false,
@@ -1641,7 +1641,7 @@
       "deal"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-2.jpg"
     ],
     "stock": 112,
     "featured": false,
@@ -1673,7 +1673,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-3.jpg"
     ],
     "stock": 42,
     "featured": false,
@@ -1704,7 +1704,7 @@
       "razer"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-4.jpg"
     ],
     "stock": 28,
     "featured": false,
@@ -1737,7 +1737,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-5.jpg"
     ],
     "stock": 0,
     "featured": false,
@@ -1771,7 +1771,7 @@
       "deal"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-6.jpg"
     ],
     "stock": 92,
     "featured": false,
@@ -1804,7 +1804,7 @@
       "deal"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-1.jpg"
     ],
     "stock": 65,
     "featured": false,
@@ -1835,7 +1835,7 @@
       "asus-rog"
     ],
     "images": [
-      "/products/gaming.svg"
+      "/products/items/gaming-2.jpg"
     ],
     "stock": 44,
     "featured": true,
@@ -1866,7 +1866,7 @@
       "noise"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-1.jpg"
     ],
     "stock": 93,
     "featured": false,
@@ -1899,7 +1899,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-2.jpg"
     ],
     "stock": 18,
     "featured": false,
@@ -1933,7 +1933,7 @@
       "deal"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-3.jpg"
     ],
     "stock": 24,
     "featured": false,
@@ -1963,7 +1963,7 @@
       "garmin"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-4.jpg"
     ],
     "stock": 98,
     "featured": false,
@@ -1995,7 +1995,7 @@
       "deal"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-5.jpg"
     ],
     "stock": 22,
     "featured": false,
@@ -2025,7 +2025,7 @@
       "apple"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-6.jpg"
     ],
     "stock": 57,
     "featured": false,
@@ -2057,7 +2057,7 @@
       "deal"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-1.jpg"
     ],
     "stock": 31,
     "featured": true,
@@ -2089,7 +2089,7 @@
       "boat"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-2.jpg"
     ],
     "stock": 70,
     "featured": false,
@@ -2124,7 +2124,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-3.jpg"
     ],
     "stock": 102,
     "featured": false,
@@ -2156,7 +2156,7 @@
       "fitbit"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-4.jpg"
     ],
     "stock": 119,
     "featured": false,
@@ -2186,7 +2186,7 @@
       "boat"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-5.jpg"
     ],
     "stock": 81,
     "featured": false,
@@ -2220,7 +2220,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-6.jpg"
     ],
     "stock": 0,
     "featured": false,
@@ -2252,7 +2252,7 @@
       "noise"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-1.jpg"
     ],
     "stock": 69,
     "featured": false,
@@ -2283,7 +2283,7 @@
       "boat"
     ],
     "images": [
-      "/products/wearables.svg"
+      "/products/items/wearables-2.jpg"
     ],
     "stock": 89,
     "featured": false,
@@ -2317,7 +2317,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-1.jpg"
     ],
     "stock": 12,
     "featured": false,
@@ -2351,7 +2351,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-2.jpg"
     ],
     "stock": 41,
     "featured": false,
@@ -2383,7 +2383,7 @@
       "deal"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-3.jpg"
     ],
     "stock": 89,
     "featured": false,
@@ -2416,7 +2416,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-4.jpg"
     ],
     "stock": 80,
     "featured": false,
@@ -2447,7 +2447,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-5.jpg"
     ],
     "stock": 113,
     "featured": true,
@@ -2479,7 +2479,7 @@
       "deal"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-6.jpg"
     ],
     "stock": 80,
     "featured": false,
@@ -2512,7 +2512,7 @@
       "deal"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-1.jpg"
     ],
     "stock": 110,
     "featured": true,
@@ -2545,7 +2545,7 @@
       "deal"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-2.jpg"
     ],
     "stock": 60,
     "featured": true,
@@ -2578,7 +2578,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-3.jpg"
     ],
     "stock": 66,
     "featured": false,
@@ -2610,7 +2610,7 @@
       "deal"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-4.jpg"
     ],
     "stock": 22,
     "featured": false,
@@ -2644,7 +2644,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-5.jpg"
     ],
     "stock": 54,
     "featured": false,
@@ -2677,7 +2677,7 @@
       "deal"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-6.jpg"
     ],
     "stock": 114,
     "featured": false,
@@ -2708,7 +2708,7 @@
       "dji"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-1.jpg"
     ],
     "stock": 90,
     "featured": false,
@@ -2739,7 +2739,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/cameras.svg"
+      "/products/items/cameras-2.jpg"
     ],
     "stock": 9,
     "featured": false,
@@ -2769,7 +2769,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-1.jpg"
     ],
     "stock": 2,
     "featured": true,
@@ -2802,7 +2802,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-2.jpg"
     ],
     "stock": 78,
     "featured": false,
@@ -2833,7 +2833,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-3.jpg"
     ],
     "stock": 90,
     "featured": true,
@@ -2864,7 +2864,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-4.jpg"
     ],
     "stock": 15,
     "featured": true,
@@ -2895,7 +2895,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-5.jpg"
     ],
     "stock": 31,
     "featured": false,
@@ -2928,7 +2928,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-6.jpg"
     ],
     "stock": 92,
     "featured": true,
@@ -2959,7 +2959,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-1.jpg"
     ],
     "stock": 30,
     "featured": false,
@@ -2990,7 +2990,7 @@
       "jbl"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-2.jpg"
     ],
     "stock": 22,
     "featured": false,
@@ -3023,7 +3023,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-3.jpg"
     ],
     "stock": 119,
     "featured": false,
@@ -3054,7 +3054,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-4.jpg"
     ],
     "stock": 57,
     "featured": false,
@@ -3087,7 +3087,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-5.jpg"
     ],
     "stock": 93,
     "featured": false,
@@ -3120,7 +3120,7 @@
       "deal"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-6.jpg"
     ],
     "stock": 118,
     "featured": false,
@@ -3149,7 +3149,7 @@
       "amazon"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-1.jpg"
     ],
     "stock": 3,
     "featured": false,
@@ -3179,7 +3179,7 @@
       "amazon"
     ],
     "images": [
-      "/products/home-audio.svg"
+      "/products/items/home-audio-2.jpg"
     ],
     "stock": 103,
     "featured": true,
@@ -3211,7 +3211,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-1.jpg"
     ],
     "stock": 113,
     "featured": true,
@@ -3241,7 +3241,7 @@
       "sandisk"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-2.jpg"
     ],
     "stock": 118,
     "featured": false,
@@ -3271,7 +3271,7 @@
       "belkin"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-3.jpg"
     ],
     "stock": 21,
     "featured": false,
@@ -3303,7 +3303,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-4.jpg"
     ],
     "stock": 23,
     "featured": false,
@@ -3335,7 +3335,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-5.jpg"
     ],
     "stock": 52,
     "featured": false,
@@ -3365,7 +3365,7 @@
       "spigen"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-6.jpg"
     ],
     "stock": 67,
     "featured": false,
@@ -3395,7 +3395,7 @@
       "boat"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-1.jpg"
     ],
     "stock": 35,
     "featured": false,
@@ -3426,7 +3426,7 @@
       "sandisk"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-2.jpg"
     ],
     "stock": 21,
     "featured": false,
@@ -3458,7 +3458,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-3.jpg"
     ],
     "stock": 61,
     "featured": false,
@@ -3489,7 +3489,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-4.jpg"
     ],
     "stock": 72,
     "featured": false,
@@ -3520,7 +3520,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-5.jpg"
     ],
     "stock": 49,
     "featured": false,
@@ -3553,7 +3553,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-6.jpg"
     ],
     "stock": 84,
     "featured": false,
@@ -3586,7 +3586,7 @@
       "top-rated"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-1.jpg"
     ],
     "stock": 120,
     "featured": false,
@@ -3618,7 +3618,7 @@
       "deal"
     ],
     "images": [
-      "/products/accessories.svg"
+      "/products/items/accessories-2.jpg"
     ],
     "stock": 113,
     "featured": false,
