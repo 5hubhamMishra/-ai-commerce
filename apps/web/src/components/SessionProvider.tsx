@@ -25,6 +25,7 @@ export default function SessionProvider() {
         useStore.setState({ user: me, authStatus: "authenticated" });
         void useStore.getState().fetchServerCart();
         void useStore.getState().fetchServerWishlist();
+        void useStore.getState().fetchBehavioralProfile();
       } catch {
         if (cancelled) return;
         useStore.getState().clearSession();

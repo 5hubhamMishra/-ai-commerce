@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ProductDetail, ProductVariant } from "@ai-commerce/types";
 import { formatPrice } from "@/lib/format";
 import { useStore } from "@/lib/store";
+import { useRecommendations } from "@/lib/hooks/useRecommendations";
+import { fromProductListItem } from "@/lib/catalog-mappers";
+import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import VariantPicker from "@/components/catalog/VariantPicker";
 
 export default function ProductDetailClient({ initialProduct }: { initialProduct: ProductDetail }) {
@@ -14,10 +17,19 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const router = useRouter();
   const authStatus = useStore((s) => s.authStatus);
   const addServerCartItem = useStore((s) => s.addServerCartItem);
+  const trackRealEvent = useStore((s) => s.trackRealEvent);
   const inWishlist = useStore(
     (s) => s.serverWishlist?.items.some((i) => i.productId === product.id) ?? false,
   );
   const toggleWishlist = useStore((s) => s.toggleServerWishlistItem);
+
+  useEffect(() => {
+    trackRealEvent("PRODUCT_VIEWED", product.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  const similar = useRecommendations("similar", { productId: product.id, limit: 6 });
+  const frequentlyBoughtWith = useRecommendations("frequentlyBoughtWith", { productId: product.id, limit: 3 });
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
@@ -305,6 +317,24 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           )}
         </div>
       </div>
+
+      {frequentlyBoughtWith && frequentlyBoughtWith.length > 0 && (
+        <div className="mt-12">
+          <h2 className="font-display text-xl font-semibold mb-4" style={{ color: "var(--clr-text-primary)" }}>
+            Frequently bought together
+          </h2>
+          <CatalogProductGrid products={frequentlyBoughtWith.map((r) => fromProductListItem(r.product))} />
+        </div>
+      )}
+
+      {similar && similar.length > 0 && (
+        <div className="mt-12">
+          <h2 className="font-display text-xl font-semibold mb-4" style={{ color: "var(--clr-text-primary)" }}>
+            Similar products
+          </h2>
+          <CatalogProductGrid products={similar.map((r) => fromProductListItem(r.product))} />
+        </div>
+      )}
 
       {inStock && (
         <div className="fixed bottom-0 inset-x-0 z-30 p-4 bg-white/95 backdrop-blur border-t border-[var(--clr-border)] flex items-center justify-between gap-3 lg:hidden">

@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Address,
+  BehavioralEventType,
+  BehavioralProfileView,
   CartResponse,
   CreateAddressInput,
   OrderDetail,
@@ -13,11 +15,13 @@ import type {
   WishlistResponse,
 } from "@ai-commerce/types";
 import {
+  activityApi,
   addressesApi,
   ApiError,
   authApi,
   cartApi,
   configureApiClient,
+  eventsApi,
   ordersApi,
   paymentsApi,
   shopaiApi,
@@ -28,6 +32,11 @@ import { getProduct } from "./data";
 
 export type AuthStatus = "idle" | "checking" | "authenticated" | "unauthenticated";
 type AsyncStatus = "idle" | "loading" | "error";
+
+/** One id per browser tab-session (module-scope, not persisted — a reload starts a new
+ *  session, matching typical analytics session semantics), generated lazily on first real
+ *  event so a page that never tracks anything never pays for it. */
+let sessionId: string | null = null;
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — still powers
@@ -56,7 +65,9 @@ type StoreState = {
   placeOrder: (address: string, items?: OrderItem[]) => Order;
 
   setPersonalization: (enabled: boolean) => void;
-  clearActivity: () => void;
+  /** Clears local activity always; additionally calls the real `DELETE /users/me/activity`
+   *  when signed in, since that's the actual privacy-relevant data once events are real. */
+  clearActivity: () => Promise<void>;
   setHydrated: () => void;
 
   // ---- Real session/catalog state (new) ----
@@ -97,16 +108,35 @@ type StoreState = {
    *  final order detail with its post-payment status. */
   placeServerOrder: (addressId: string, shippingMethod: "STANDARD" | "EXPRESS") => Promise<OrderDetail>;
 
-  /** A random id persisted per-browser so a logged-out visitor's ShopAI conversation has a
-   *  stable owner across messages/reloads — apps/api uses this as the sole ownership key for
-   *  anonymous callers (ignored once a real JWT is present). Generated lazily on first use. */
-  shopaiAnonymousId: string | null;
+  /** A random id persisted per-browser, generated lazily on first use — apps/api's sole
+   *  ownership key for a logged-out caller's ShopAI conversation and behavioral events
+   *  (ignored for ShopAI once a real JWT is present; events always carry it regardless of
+   *  auth status, since it also drives session upsert/identity-linking server-side). */
+  anonymousId: string | null;
+  /** Returns the persisted anonymous id, generating and persisting one first if absent. */
+  ensureAnonymousId: () => string;
   shopaiConversationId: string | null;
   /** Sends a message to the real, Anthropic-backed ShopAI and returns its reply. Recovers
    *  once from a stale/invalid `shopaiConversationId` (e.g. a guest's conversation orphaned
    *  by signing in mid-chat, since ownership then resolves by user id, not anonymousId) by
    *  retrying as a fresh conversation instead of surfacing a confusing 404 to the user. */
   sendShopAIMessage: (text: string) => Promise<ShopAIMessage>;
+
+  /** Fires a real event at apps/api's behavioral pipeline — separate from the legacy local
+   *  `trackEvent`, and only ever called from surfaces already operating on real backend ids
+   *  (real cart/wishlist/orders/catalog), never the legacy fake-catalog surfaces, so a fake
+   *  id never pollutes real affinity/recommendation data. Fire-and-forget: a failed request
+   *  never surfaces to the caller, matching how apps/api treats its own impression logging. */
+  trackRealEvent: (eventType: BehavioralEventType, entityId?: string, metadata?: Record<string, unknown>) => void;
+
+  behavioralProfile: BehavioralProfileView | null;
+  behavioralProfileStatus: AsyncStatus;
+  fetchBehavioralProfile: () => Promise<void>;
+
+  /** Real-catalog product ids, most-recent-first — the real-data equivalent of the legacy
+   *  `recentlyViewed`, maintained by `trackRealEvent` itself on every `PRODUCT_VIEWED` so
+   *  every real-PDP caller gets this for free without a separate call. */
+  recentlyViewedReal: string[];
 };
 
 export const useStore = create<StoreState>()(
@@ -192,7 +222,12 @@ export const useStore = create<StoreState>()(
       },
 
       setPersonalization: (enabled) => set({ personalizationEnabled: enabled }),
-      clearActivity: () => set({ events: [], recentlyViewed: [] }),
+      clearActivity: async () => {
+        set({ events: [], recentlyViewed: [] });
+        if (get().user) {
+          await activityApi.clear().catch(() => undefined);
+        }
+      },
       setHydrated: () => set({ hydrated: true }),
 
       // ---- Real session/catalog state ----
@@ -207,6 +242,7 @@ export const useStore = create<StoreState>()(
         set({ user: me });
         void get().fetchServerCart();
         void get().fetchServerWishlist();
+        void get().fetchBehavioralProfile();
       },
 
       register: async (email, password, name) => {
@@ -216,6 +252,7 @@ export const useStore = create<StoreState>()(
         set({ user: me });
         void get().fetchServerCart();
         void get().fetchServerWishlist();
+        void get().fetchBehavioralProfile();
       },
 
       logout: async () => {
@@ -230,6 +267,7 @@ export const useStore = create<StoreState>()(
           authStatus: "unauthenticated",
           serverCart: null,
           serverWishlist: null,
+          behavioralProfile: null,
         }),
 
       serverCart: null,
@@ -248,6 +286,8 @@ export const useStore = create<StoreState>()(
       addServerCartItem: async (variantId, quantity) => {
         const cart = await cartApi.addItem(variantId, quantity);
         set({ serverCart: cart });
+        const productId = cart.items.find((i) => i.variantId === variantId)?.productId;
+        get().trackRealEvent("PRODUCT_ADDED_TO_CART", productId, { variantId, quantity });
       },
 
       updateServerCartItem: async (itemId, quantity) => {
@@ -256,8 +296,10 @@ export const useStore = create<StoreState>()(
       },
 
       removeServerCartItem: async (itemId) => {
+        const productId = get().serverCart?.items.find((i) => i.id === itemId)?.productId;
         const cart = await cartApi.removeItem(itemId);
         set({ serverCart: cart });
+        get().trackRealEvent("PRODUCT_REMOVED_FROM_CART", productId);
       },
 
       clearServerCart: async () => {
@@ -285,6 +327,7 @@ export const useStore = create<StoreState>()(
           ? await wishlistApi.remove(productId)
           : await wishlistApi.add(productId);
         set({ serverWishlist: wishlist });
+        get().trackRealEvent(isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED", productId);
       },
 
       serverAddresses: null,
@@ -334,26 +377,23 @@ export const useStore = create<StoreState>()(
         const finalOrder = await ordersApi.get(created.id);
         void get().fetchServerCart();
         get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
+        get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
         return finalOrder;
       },
 
-      shopaiAnonymousId: null,
+      anonymousId: null,
       shopaiConversationId: null,
 
       sendShopAIMessage: async (text) => {
         get().trackEvent("AI_ASSISTANT_QUERY", { query: text });
         const isGuest = !get().user;
-        let anonymousId = get().shopaiAnonymousId;
-        if (isGuest && !anonymousId) {
-          anonymousId = crypto.randomUUID();
-          set({ shopaiAnonymousId: anonymousId });
-        }
+        const anonymousId = isGuest ? get().ensureAnonymousId() : null;
 
         const send = (conversationId?: string) =>
           shopaiApi.sendMessage({
             message: text,
             conversationId,
-            anonymousId: isGuest ? (anonymousId ?? undefined) : undefined,
+            anonymousId: anonymousId ?? undefined,
           });
 
         try {
@@ -370,6 +410,58 @@ export const useStore = create<StoreState>()(
           throw err;
         }
       },
+
+      ensureAnonymousId: () => {
+        const existing = get().anonymousId;
+        if (existing) return existing;
+        const created = crypto.randomUUID();
+        set({ anonymousId: created });
+        return created;
+      },
+
+      trackRealEvent: (eventType, entityId, metadata) => {
+        if (!get().personalizationEnabled) return;
+        if (eventType === "PRODUCT_VIEWED" && entityId) {
+          set((state) => ({
+            recentlyViewedReal: [entityId, ...state.recentlyViewedReal.filter((id) => id !== entityId)].slice(0, 20),
+          }));
+        }
+        const anonymousId = get().ensureAnonymousId();
+        if (!sessionId) sessionId = crypto.randomUUID();
+        void eventsApi
+          .track([
+            {
+              eventId: crypto.randomUUID(),
+              eventType,
+              anonymousId,
+              sessionId,
+              source: "WEB",
+              entityId,
+              metadata,
+              occurredAt: new Date().toISOString(),
+            },
+          ])
+          .catch(() => undefined);
+      },
+
+      behavioralProfile: null,
+      behavioralProfileStatus: "idle",
+
+      fetchBehavioralProfile: async () => {
+        if (!get().user) {
+          set({ behavioralProfile: null, behavioralProfileStatus: "idle" });
+          return;
+        }
+        set({ behavioralProfileStatus: "loading" });
+        try {
+          const { profile } = await activityApi.getBehavioralProfile();
+          set({ behavioralProfile: profile, behavioralProfileStatus: "idle" });
+        } catch {
+          set({ behavioralProfileStatus: "error" });
+        }
+      },
+
+      recentlyViewedReal: [],
     }),
     {
       name: "ai-commerce-store",
@@ -384,8 +476,9 @@ export const useStore = create<StoreState>()(
         orders: state.orders,
         user: state.user,
         personalizationEnabled: state.personalizationEnabled,
-        shopaiAnonymousId: state.shopaiAnonymousId,
+        anonymousId: state.anonymousId,
         shopaiConversationId: state.shopaiConversationId,
+        recentlyViewedReal: state.recentlyViewedReal,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();

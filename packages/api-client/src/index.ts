@@ -9,3 +9,6 @@ export * from './shipping';
 export * from './orders';
 export * from './payments';
 export * from './shopai';
+export * from './events';
+export * from './recommendations';
+export * from './activity';

@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
-import { buildProfile } from "@/lib/recommend";
+import { useCategories } from "@/lib/hooks/useCategories";
+import { useBrands } from "@/lib/hooks/useBrands";
+import { LIFECYCLE_LABELS, SEGMENT_LABELS, rankAffinity } from "@/lib/behavioral-profile";
 import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
 
 export default function ProfilePage() {
@@ -15,10 +17,25 @@ export default function ProfilePage() {
   const setPersonalization = useStore((s) => s.setPersonalization);
   const clearActivity = useStore((s) => s.clearActivity);
   const hydrated = useStore((s) => s.hydrated);
+  const behavioralProfile = useStore((s) => s.behavioralProfile);
+  const behavioralProfileStatus = useStore((s) => s.behavioralProfileStatus);
 
-  const profile = useMemo(() => buildProfile(events), [events]);
-  const topCategories = Object.entries(profile.categoryAffinity).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const topBrands = Object.entries(profile.brandAffinity).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const categories = useCategories();
+  const brands = useBrands();
+
+  const topCategories = useMemo(() => {
+    if (!behavioralProfile) return [];
+    return rankAffinity(behavioralProfile.categoryAffinity)
+      .slice(0, 5)
+      .map(([id, score]) => [categories.find((c) => c.id === id)?.name ?? id, score] as const);
+  }, [behavioralProfile, categories]);
+
+  const topBrands = useMemo(() => {
+    if (!behavioralProfile) return [];
+    return rankAffinity(behavioralProfile.brandAffinity)
+      .slice(0, 5)
+      .map(([id, score]) => [brands.find((b) => b.id === id)?.name ?? id, score] as const);
+  }, [behavioralProfile, brands]);
 
   if (!hydrated) {
     return (
@@ -40,7 +57,7 @@ export default function ProfilePage() {
   }
 
   function exportData() {
-    const data = { user, events, profile };
+    const data = { user, events, behavioralProfile };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -79,40 +96,53 @@ export default function ProfilePage() {
 
       <div className="mt-4 rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] p-6">
         <h2 className="font-display text-lg font-semibold">Shopping Profile</h2>
-        <div className="flex gap-2 mt-2 flex-wrap">
-          <span className="badge badge-subtle">Segment: {profile.segment}</span>
-          <span className="badge badge-subtle">Stage: {profile.lifecycleStage}</span>
-        </div>
-        <div className="mt-5 grid grid-cols-2 gap-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--clr-text-disabled)' }}>Top interests</p>
-            <div className="mt-2 space-y-3">
-              {topCategories.length === 0 && <p className="text-sm text-[var(--clr-text-secondary)]">Not enough activity yet</p>}
-              {topCategories.map(([cat, score]) => (
-                <div key={cat}>
-                  <p className="text-sm font-medium">{cat}</p>
-                  <div className="mt-0.5 h-1 rounded-full bg-stone-100 overflow-hidden w-full">
-                    <div className="h-1 rounded-full bg-amber-400" style={{ width: `${(score * 100).toFixed(0)}%` }} />
-                  </div>
-                </div>
-              ))}
+
+        {!user ? (
+          <p className="mt-3 text-sm text-[var(--clr-text-secondary)]">
+            Sign in to build a real shopping profile from your browsing, cart, and order activity.
+          </p>
+        ) : behavioralProfileStatus === "loading" && !behavioralProfile ? (
+          <SkeletonBlock className="mt-3 h-16 w-full" />
+        ) : !behavioralProfile || behavioralProfile.eventCount === 0 ? (
+          <p className="mt-3 text-sm text-[var(--clr-text-secondary)]">Not enough activity yet — browse a bit and check back.</p>
+        ) : (
+          <>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <span className="badge badge-subtle">Segment: {SEGMENT_LABELS[behavioralProfile.segment]}</span>
+              <span className="badge badge-subtle">Stage: {LIFECYCLE_LABELS[behavioralProfile.lifecycleStage]}</span>
             </div>
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--clr-text-disabled)' }}>Preferred brands</p>
-            <div className="mt-2 space-y-3">
-              {topBrands.length === 0 && <p className="text-sm text-[var(--clr-text-secondary)]">Not enough activity yet</p>}
-              {topBrands.map(([b, score]) => (
-                <div key={b}>
-                  <p className="text-sm font-medium">{b}</p>
-                  <div className="mt-0.5 h-1 rounded-full bg-stone-100 overflow-hidden w-full">
-                    <div className="h-1 rounded-full bg-amber-400" style={{ width: `${(score * 100).toFixed(0)}%` }} />
-                  </div>
+            <div className="mt-5 grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--clr-text-disabled)' }}>Top interests</p>
+                <div className="mt-2 space-y-3">
+                  {topCategories.length === 0 && <p className="text-sm text-[var(--clr-text-secondary)]">Not enough activity yet</p>}
+                  {topCategories.map(([cat, score]) => (
+                    <div key={cat}>
+                      <p className="text-sm font-medium">{cat}</p>
+                      <div className="mt-0.5 h-1 rounded-full bg-stone-100 overflow-hidden w-full">
+                        <div className="h-1 rounded-full bg-amber-400" style={{ width: `${(score * 100).toFixed(0)}%` }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--clr-text-disabled)' }}>Preferred brands</p>
+                <div className="mt-2 space-y-3">
+                  {topBrands.length === 0 && <p className="text-sm text-[var(--clr-text-secondary)]">Not enough activity yet</p>}
+                  {topBrands.map(([b, score]) => (
+                    <div key={b}>
+                      <p className="text-sm font-medium">{b}</p>
+                      <div className="mt-0.5 h-1 rounded-full bg-stone-100 overflow-hidden w-full">
+                        <div className="h-1 rounded-full bg-amber-400" style={{ width: `${(score * 100).toFixed(0)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       <div className="mt-4 rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] p-6">
@@ -141,14 +171,16 @@ export default function ProfilePage() {
             Export my data
           </button>
           <button
-            onClick={() => confirm("Clear all browsing activity? This can't be undone.") && clearActivity()}
+            onClick={() => { if (confirm("Clear all browsing activity? This can't be undone.")) void clearActivity(); }}
             className="btn text-xs px-3 py-2 rounded-xl border border-[var(--clr-border)] text-[var(--clr-error,red)] hover:bg-red-50 font-medium"
           >
             Delete activity history
           </button>
         </div>
         <p className="mt-3 text-xs text-[var(--clr-text-disabled)]">
-          {events.length} activity events stored locally on this device. Nothing is sent to a server in this demo.
+          {user
+            ? `${events.length} events stored locally on this device; your real activity history lives on the server and is erased by "Delete activity history".`
+            : `${events.length} activity events stored locally on this device — sign in to build a real, server-side shopping profile.`}
         </p>
       </div>
     </div>

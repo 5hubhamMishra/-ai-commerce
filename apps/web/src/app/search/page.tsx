@@ -17,12 +17,14 @@ function SearchContent() {
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const trackEvent = useStore((s) => s.trackEvent);
+  const trackRealEvent = useStore((s) => s.trackRealEvent);
 
   useEffect(() => {
     if (!initialQuery) return;
     let cancelled = false;
     startTransition(() => setLoading(true));
     trackEvent("PRODUCT_SEARCHED", { query: initialQuery });
+    trackRealEvent("PRODUCT_SEARCHED", undefined, { query: initialQuery });
     searchApi
       .search({ q: initialQuery, pageSize: 24 })
       .then((res) => {

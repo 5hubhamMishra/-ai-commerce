@@ -22,13 +22,22 @@ export type CatalogCardProduct = {
   available: boolean;
 };
 
-export default function CatalogProductCard({ product }: { product: CatalogCardProduct }) {
+export default function CatalogProductCard({
+  product,
+  reason,
+}: {
+  product: CatalogCardProduct;
+  /** A short "why this" string from a recommendation source — rendered as a small badge,
+   *  same treatment as the legacy ProductCard's own `reason` prop. */
+  reason?: string;
+}) {
   const router = useRouter();
   const authStatus = useStore((s) => s.authStatus);
   const inWishlist = useStore(
     (s) => s.serverWishlist?.items.some((i) => i.productId === product.id) ?? false,
   );
   const toggleWishlist = useStore((s) => s.toggleServerWishlistItem);
+  const trackRealEvent = useStore((s) => s.trackRealEvent);
   const [heartAnimating, setHeartAnimating] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -105,7 +114,11 @@ export default function CatalogProductCard({ product }: { product: CatalogCardPr
         </svg>
       </button>
 
-      <Link href={`/products/${product.slug}`} className="flex-1 flex flex-col">
+      <Link
+        href={`/products/${product.slug}`}
+        className="flex-1 flex flex-col"
+        onClick={() => trackRealEvent("PRODUCT_CLICKED", product.id)}
+      >
         <div className="relative aspect-square overflow-hidden bg-stone-50">
           {product.imageUrl ? (
             <Image
@@ -144,6 +157,17 @@ export default function CatalogProductCard({ product }: { product: CatalogCardPr
           )}
         </div>
       </Link>
+
+      {reason && (
+        <div className="px-3 pb-3">
+          <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-[var(--clr-accent-subtle)]">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="var(--clr-accent)" className="flex-shrink-0">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <span className="text-[10px] font-medium line-clamp-1 text-[var(--clr-accent-text)]">{reason}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

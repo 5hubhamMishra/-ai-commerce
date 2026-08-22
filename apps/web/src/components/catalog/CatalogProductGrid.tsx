@@ -1,6 +1,12 @@
 import CatalogProductCard, { type CatalogCardProduct } from "./CatalogProductCard";
 
-export default function CatalogProductGrid({ products }: { products: CatalogCardProduct[] }) {
+export default function CatalogProductGrid({
+  products,
+  reasons,
+}: {
+  products: CatalogCardProduct[];
+  reasons?: Record<string, string>;
+}) {
   if (!products || products.length === 0) {
     return (
       <div className="py-20 px-8 flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--clr-border)] mt-2">
@@ -29,7 +35,7 @@ export default function CatalogProductGrid({ products }: { products: CatalogCard
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {products.map((product) => (
-        <CatalogProductCard key={product.id} product={product} />
+        <CatalogProductCard key={product.id} product={product} reason={reasons?.[product.id]} />
       ))}
     </div>
   );

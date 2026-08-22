@@ -104,6 +104,7 @@ export default function CheckoutPage() {
   const createServerAddress = useStore((s) => s.createServerAddress);
   const placeServerOrder = useStore((s) => s.placeServerOrder);
   const trackEvent = useStore((s) => s.trackEvent);
+  const trackRealEvent = useStore((s) => s.trackRealEvent);
   const hydrated = useStore((s) => s.hydrated);
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -122,7 +123,10 @@ export default function CheckoutPage() {
   const subtotal = serverCart?.subtotal ?? 0;
 
   useEffect(() => {
-    if (hydrated && lines.length > 0) trackEvent("CHECKOUT_STARTED", {});
+    if (hydrated && lines.length > 0) {
+      trackEvent("CHECKOUT_STARTED", {});
+      trackRealEvent("CHECKOUT_STARTED");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 

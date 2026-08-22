@@ -397,7 +397,7 @@ describe("ShopAI actions", () => {
     expect(requestBodies[0].conversationId).toBeUndefined();
     const anonymousId = requestBodies[0].anonymousId;
     expect(typeof anonymousId).toBe("string");
-    expect(useStore.getState().shopaiAnonymousId).toBe(anonymousId);
+    expect(useStore.getState().anonymousId).toBe(anonymousId);
     expect(useStore.getState().shopaiConversationId).toBe("conv-1");
 
     await useStore.getState().sendShopAIMessage("again");
@@ -405,7 +405,7 @@ describe("ShopAI actions", () => {
   });
 
   it("recovers from a stale conversation id by retrying as a fresh conversation", async () => {
-    useStore.setState({ shopaiConversationId: "stale-conv", shopaiAnonymousId: "anon-1" });
+    useStore.setState({ shopaiConversationId: "stale-conv", anonymousId: "anon-1" });
     vi.stubGlobal(
       "fetch",
       stubShopAIFetch((body, callIndex) => {
@@ -442,6 +442,98 @@ describe("ShopAI actions", () => {
 
     await useStore.getState().sendShopAIMessage("hello");
     expect(requestBodies[0].anonymousId).toBeUndefined();
-    expect(useStore.getState().shopaiAnonymousId).toBeNull();
+    expect(useStore.getState().anonymousId).toBeNull();
+  });
+});
+
+describe("real event tracking and behavioral profile", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("trackRealEvent posts a single well-formed event and generates an anonymous id on first use", async () => {
+    const tracked = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input.toString();
+        expect(new URL(url).pathname).toBe("/api/v1/events");
+        const body = JSON.parse(init!.body as string);
+        tracked(body);
+        return { ok: true, status: 202, json: async () => ({ accepted: body.events.length }) } as Response;
+      }),
+    );
+
+    useStore.getState().trackRealEvent("PRODUCT_ADDED_TO_CART", "p1", { variantId: "v1" });
+    await vi.waitFor(() => expect(tracked).toHaveBeenCalledTimes(1));
+
+    const [{ events }] = tracked.mock.calls[0];
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ eventType: "PRODUCT_ADDED_TO_CART", entityId: "p1", metadata: { variantId: "v1" } });
+    expect(typeof events[0].eventId).toBe("string");
+    expect(typeof events[0].anonymousId).toBe("string");
+    expect(typeof events[0].sessionId).toBe("string");
+    expect(events[0].source).toBe("WEB");
+    expect(useStore.getState().anonymousId).toBe(events[0].anonymousId);
+  });
+
+  it("does not fire a real event when personalization is disabled", async () => {
+    useStore.setState({ personalizationEnabled: false });
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    useStore.getState().trackRealEvent("PRODUCT_VIEWED", "p1");
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("a PRODUCT_VIEWED event also updates the real recently-viewed list, most-recent-first and deduplicated", () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 202, json: async () => ({ accepted: 1 }) }) as Response));
+
+    useStore.getState().trackRealEvent("PRODUCT_VIEWED", "p1");
+    useStore.getState().trackRealEvent("PRODUCT_VIEWED", "p2");
+    useStore.getState().trackRealEvent("PRODUCT_VIEWED", "p1");
+
+    expect(useStore.getState().recentlyViewedReal).toEqual(["p1", "p2"]);
+  });
+
+  it("fetchBehavioralProfile loads the real profile for a signed-in user and stays null for a guest", async () => {
+    const profile = {
+      categoryAffinity: { viewed: { "cat-1": 3 }, addedToCart: {}, purchased: {} },
+      brandAffinity: { viewed: {} },
+      priceRange: { min: 100, max: 500 },
+      eventCount: 3,
+      orderCount: 0,
+      segment: "browser" as const,
+      lifecycleStage: "prospect" as const,
+      firstSeenAt: "2026-01-01T00:00:00.000Z",
+      lastEventAt: "2026-01-02T00:00:00.000Z",
+    };
+    vi.stubGlobal("fetch", mockFetch({ "GET /api/v1/users/me/behavioral-profile": { body: { profile } } }));
+
+    await useStore.getState().fetchBehavioralProfile();
+    expect(useStore.getState().behavioralProfile).toBeNull(); // no user signed in
+
+    useStore.setState({ user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] } });
+    await useStore.getState().fetchBehavioralProfile();
+    expect(useStore.getState().behavioralProfile).toEqual(profile);
+  });
+
+  it("clearActivity always clears local state, and also calls the real delete endpoint when signed in", async () => {
+    useStore.setState({ events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }], recentlyViewed: ["p1"] });
+    const deleteSpy = vi.fn(async (..._args: [RequestInfo | URL, RequestInit?]) => ({ ok: true, status: 204, json: async () => undefined }) as Response);
+    vi.stubGlobal("fetch", deleteSpy);
+
+    await useStore.getState().clearActivity();
+    expect(useStore.getState().events).toEqual([]);
+    expect(useStore.getState().recentlyViewed).toEqual([]);
+    expect(deleteSpy).not.toHaveBeenCalled(); // guest — nothing real to delete
+
+    useStore.setState({ user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] } });
+    await useStore.getState().clearActivity();
+    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    const [url, init] = deleteSpy.mock.calls[0];
+    expect(new URL(url as string).pathname).toBe("/api/v1/users/me/activity");
+    expect(init?.method).toBe("DELETE");
   });
 });

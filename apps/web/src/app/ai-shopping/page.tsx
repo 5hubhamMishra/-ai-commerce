@@ -24,7 +24,7 @@ const STARTERS = [
 
 export default function AiShoppingPage() {
   const user = useStore((s) => s.user);
-  const shopaiAnonymousId = useStore((s) => s.shopaiAnonymousId);
+  const anonymousId = useStore((s) => s.anonymousId);
   const shopaiConversationId = useStore((s) => s.shopaiConversationId);
   const sendShopAIMessage = useStore((s) => s.sendShopAIMessage);
   const hydrated = useStore((s) => s.hydrated);
@@ -40,7 +40,7 @@ export default function AiShoppingPage() {
     if (!hydrated || !shopaiConversationId) return;
     let cancelled = false;
     shopaiApi
-      .getConversation(shopaiConversationId, user ? undefined : (shopaiAnonymousId ?? undefined))
+      .getConversation(shopaiConversationId, user ? undefined : (anonymousId ?? undefined))
       .then((conversation) => {
         if (cancelled || conversation.messages.length === 0) return;
         setHistory([

@@ -14,12 +14,14 @@ const PAGE_SIZE = 20;
 export default function CategoryPageClient({ initialCategory }: { initialCategory: Category }) {
   const category = initialCategory;
   const trackEvent = useStore((s) => s.trackEvent);
+  const trackRealEvent = useStore((s) => s.trackRealEvent);
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<ListProductsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     trackEvent("CATEGORY_VIEWED", { category: category.name });
+    trackRealEvent("CATEGORY_VIEWED", category.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category.slug]);
 

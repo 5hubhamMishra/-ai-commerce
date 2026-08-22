@@ -4,52 +4,71 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { buildProfile, recommendForProfile } from "@/lib/recommend";
-import { popularProducts, dealsProducts, getProduct, categories } from "@/lib/data";
+import { dealsProducts, categories } from "@/lib/data";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useRecommendations } from "@/lib/hooks/useRecommendations";
+import { useProductIndex } from "@/lib/hooks/useProductIndex";
+import { fromProductListItem } from "@/lib/catalog-mappers";
+import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import ProductGrid from "@/components/ProductGrid";
 import Section from "@/components/Section";
-import type { Product } from "@/lib/types";
+import { SkeletonBlock } from "@/components/Skeleton";
 
 export default function Home() {
   const hydrated = useStore((s) => s.hydrated);
   const events = useStore((s) => s.events);
-  const recentlyViewed = useStore((s) => s.recentlyViewed);
+  const user = useStore((s) => s.user);
+  const anonymousId = useStore((s) => s.anonymousId);
+  const behavioralProfile = useStore((s) => s.behavioralProfile);
+  const recentlyViewedReal = useStore((s) => s.recentlyViewedReal);
   const personalizationEnabled = useStore((s) => s.personalizationEnabled);
 
-  const profile = useMemo(() => buildProfile(events), [events]);
-  const hasHistory = events.length >= 3 && personalizationEnabled;
+  // A real signed-in user's history lives server-side (behavioralProfile.eventCount);
+  // an anonymous visitor only has this browser's local event count as a proxy.
+  const hasHistory =
+    personalizationEnabled && (user ? (behavioralProfile?.eventCount ?? 0) > 0 : events.length >= 3);
 
-  const recommendedScored = useMemo(() => {
-    if (!hasHistory) return null;
-    return recommendForProfile(profile, events, 10);
-  }, [hasHistory, profile, events]);
+  const recommended = useRecommendations("personalized", { limit: 10, anonymousId: anonymousId ?? undefined });
+  const trending = useRecommendations("trending", { limit: 10 });
+  const productIndex = useProductIndex();
 
-  const recommended = recommendedScored ? recommendedScored.map((s) => s.product) : popularProducts(10);
+  const recommendedCards = useMemo(
+    () => recommended?.map((r) => fromProductListItem(r.product)) ?? null,
+    [recommended],
+  );
   const reasons = useMemo(() => {
     const map: Record<string, string> = {};
-    recommendedScored?.forEach((s) => (map[s.product.id] = s.reasons[0]));
+    recommended?.forEach((r) => (map[r.product.id] = r.reasons[0]));
     return map;
-  }, [recommendedScored]);
+  }, [recommended]);
+  const trendingCards = useMemo(() => trending?.map((r) => fromProductListItem(r.product)) ?? null, [trending]);
 
-  const recentProducts = useMemo(
-    () => recentlyViewed.map((id) => getProduct(id)).filter((p): p is Product => Boolean(p)).slice(0, 10),
-    [recentlyViewed]
-  );
+  const recentCards = useMemo(() => {
+    if (!productIndex) return null;
+    return recentlyViewedReal
+      .map((id) => productIndex.get(id))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      .slice(0, 10)
+      .map(fromProductListItem);
+  }, [recentlyViewedReal, productIndex]);
 
   const deals = useMemo(() => dealsProducts(10), []);
-  const trending = useMemo(() => popularProducts(10), []);
 
-  const topCategory = Object.entries(profile.categoryAffinity).sort((a, b) => b[1] - a[1])[0]?.[0];
   const realCategories = useCategories();
+
+  const topCategoryName = useMemo(() => {
+    if (!behavioralProfile) return undefined;
+    const topId = Object.entries(behavioralProfile.categoryAffinity.viewed).sort((a, b) => b[1] - a[1])[0]?.[0];
+    return topId ? realCategories.find((c) => c.id === topId)?.name : undefined;
+  }, [behavioralProfile, realCategories]);
 
   return (
     <div>
-      <Hero topCategory={hasHistory ? topCategory : undefined} />
+      <Hero topCategory={hasHistory ? topCategoryName : undefined} />
 
-      {hydrated && recentProducts.length > 0 && (
+      {hydrated && recentCards && recentCards.length > 0 && (
         <Section title="Continue shopping" subtitle="Pick up where you left off" variant="scroll">
-          <ProductGrid products={recentProducts} variant="scroll" />
+          <CatalogProductGrid products={recentCards} />
         </Section>
       )}
 
@@ -58,15 +77,15 @@ export default function Home() {
         subtitle={hasHistory ? "Based on what you've browsed and saved" : "Loved by shoppers across the store"}
         href="/recommendations"
       >
-        <ProductGrid products={recommended} reasons={reasons} />
+        {recommendedCards ? <CatalogProductGrid products={recommendedCards} reasons={reasons} /> : <SkeletonBlock className="h-64 w-full" />}
       </Section>
 
-      <Section title="Today's deals" subtitle="Limited-time price drops" href="/shop?deals=1">
+      <Section title="Today's deals" subtitle="Limited-time price drops" href="/shop">
         <ProductGrid products={deals} />
       </Section>
 
       <Section title="Trending now" subtitle="Highly rated, frequently bought">
-        <ProductGrid products={trending} />
+        {trendingCards ? <CatalogProductGrid products={trendingCards} /> : <SkeletonBlock className="h-64 w-full" />}
       </Section>
 
       <section className="w-full py-14" style={{ background: 'var(--clr-surface-2)' }}>

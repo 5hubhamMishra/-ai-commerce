@@ -2,31 +2,31 @@
 
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { buildProfile, recommendForProfile } from "@/lib/recommend";
-import { popularProducts } from "@/lib/data";
-import ProductGrid from "@/components/ProductGrid";
+import { useRecommendations } from "@/lib/hooks/useRecommendations";
+import { fromProductListItem } from "@/lib/catalog-mappers";
+import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import { ListPageSkeleton } from "@/components/Skeleton";
 
 export default function RecommendationsPage() {
   const hydrated = useStore((s) => s.hydrated);
   const events = useStore((s) => s.events);
+  const user = useStore((s) => s.user);
+  const anonymousId = useStore((s) => s.anonymousId);
+  const behavioralProfile = useStore((s) => s.behavioralProfile);
   const personalizationEnabled = useStore((s) => s.personalizationEnabled);
-  const profile = useMemo(() => buildProfile(events), [events]);
-  const hasHistory = events.length >= 3 && personalizationEnabled;
 
-  const scored = useMemo(() => {
-    if (!hasHistory) return null;
-    return recommendForProfile(profile, events, 24);
-  }, [hasHistory, profile, events]);
+  const hasHistory =
+    personalizationEnabled && (user ? (behavioralProfile?.eventCount ?? 0) > 0 : events.length >= 3);
 
-  const products = scored ? scored.map((s) => s.product) : popularProducts(24);
+  const recommended = useRecommendations("personalized", { limit: 24, anonymousId: anonymousId ?? undefined });
+  const products = useMemo(() => recommended?.map((r) => fromProductListItem(r.product)) ?? null, [recommended]);
   const reasons = useMemo(() => {
     const map: Record<string, string> = {};
-    scored?.forEach((s) => (map[s.product.id] = s.reasons[0]));
+    recommended?.forEach((r) => (map[r.product.id] = r.reasons[0]));
     return map;
-  }, [scored]);
+  }, [recommended]);
 
-  if (!hydrated) return <ListPageSkeleton cards={10} />;
+  if (!hydrated || !products) return <ListPageSkeleton cards={10} />;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
@@ -40,7 +40,7 @@ export default function RecommendationsPage() {
       </div>
       <p className="mt-1 text-sm text-[var(--clr-text-secondary)]">
         {hasHistory
-          ? "Ranked using your recent browsing, wishlist, and cart activity."
+          ? "Ranked using your real browsing, wishlist, cart, and order activity."
           : "Popular picks — recommendations get more personal as you browse and save products."}
       </p>
 
@@ -69,7 +69,7 @@ export default function RecommendationsPage() {
       )}
 
       <div className="mt-6">
-        <ProductGrid products={products} reasons={reasons} />
+        <CatalogProductGrid products={products} reasons={reasons} />
       </div>
     </div>
   );

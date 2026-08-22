@@ -20,6 +20,7 @@ function FilterIcon(props: React.SVGProps<SVGSVGElement>) {
 
 function ShopContent() {
   const trackEvent = useStore((s) => s.trackEvent);
+  const trackRealEvent = useStore((s) => s.trackRealEvent);
   const [state, setState] = useState<FilterState>({ sort: "newest" });
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<ListProductsResponse | null>(null);
@@ -86,6 +87,7 @@ function ShopContent() {
     setState(next);
     setPage(1);
     trackEvent("FILTER_USED", { category: next.category, brand: next.brand, metadata: { sort: next.sort } });
+    trackRealEvent("FILTER_USED", undefined, { category: next.category, brand: next.brand, sort: next.sort });
   }
 
   const products = result ? result.items.map(fromProductListItem) : [];
