@@ -2,8 +2,24 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartResponse, PublicUser, WishlistResponse } from "@ai-commerce/types";
-import { authApi, cartApi, configureApiClient, wishlistApi } from "@ai-commerce/api-client";
+import type {
+  Address,
+  CartResponse,
+  CreateAddressInput,
+  OrderDetail,
+  PublicUser,
+  UpdateAddressInput,
+  WishlistResponse,
+} from "@ai-commerce/types";
+import {
+  addressesApi,
+  authApi,
+  cartApi,
+  configureApiClient,
+  ordersApi,
+  paymentsApi,
+  wishlistApi,
+} from "@ai-commerce/api-client";
 import type { BehaviorEvent, CartItem, EventType, Order, OrderItem } from "./types";
 import { getProduct } from "./data";
 
@@ -64,6 +80,19 @@ type StoreState = {
   serverWishlistStatus: AsyncStatus;
   fetchServerWishlist: () => Promise<void>;
   toggleServerWishlistItem: (productId: string) => Promise<void>;
+
+  serverAddresses: Address[] | null;
+  serverAddressesStatus: AsyncStatus;
+  fetchServerAddresses: () => Promise<void>;
+  createServerAddress: (input: CreateAddressInput) => Promise<Address>;
+  updateServerAddress: (id: string, input: UpdateAddressInput) => Promise<Address>;
+  removeServerAddress: (id: string) => Promise<void>;
+
+  /** Orchestrates the real checkout chain apps/api requires as three separate calls
+   *  (create order -> create payment -> confirm payment), then re-fetches the cart (the
+   *  backend already cleared it server-side as part of order creation) and returns the
+   *  final order detail with its post-payment status. */
+  placeServerOrder: (addressId: string, shippingMethod: "STANDARD" | "EXPRESS") => Promise<OrderDetail>;
 };
 
 export const useStore = create<StoreState>()(
@@ -242,6 +271,56 @@ export const useStore = create<StoreState>()(
           ? await wishlistApi.remove(productId)
           : await wishlistApi.add(productId);
         set({ serverWishlist: wishlist });
+      },
+
+      serverAddresses: null,
+      serverAddressesStatus: "idle",
+
+      fetchServerAddresses: async () => {
+        set({ serverAddressesStatus: "loading" });
+        try {
+          const addresses = await addressesApi.list();
+          set({ serverAddresses: addresses, serverAddressesStatus: "idle" });
+        } catch {
+          set({ serverAddressesStatus: "error" });
+        }
+      },
+
+      createServerAddress: async (input) => {
+        const address = await addressesApi.create(input);
+        set((state) => ({
+          serverAddresses: address.isDefault
+            ? [address, ...(state.serverAddresses ?? []).map((a) => ({ ...a, isDefault: false }))]
+            : [...(state.serverAddresses ?? []), address],
+        }));
+        return address;
+      },
+
+      updateServerAddress: async (id, input) => {
+        const address = await addressesApi.update(id, input);
+        set((state) => ({
+          serverAddresses: (state.serverAddresses ?? []).map((a) =>
+            a.id === id ? address : address.isDefault ? { ...a, isDefault: false } : a,
+          ),
+        }));
+        return address;
+      },
+
+      removeServerAddress: async (id) => {
+        await addressesApi.remove(id);
+        set((state) => ({
+          serverAddresses: (state.serverAddresses ?? []).filter((a) => a.id !== id),
+        }));
+      },
+
+      placeServerOrder: async (addressId, shippingMethod) => {
+        const created = await ordersApi.create({ addressId, shippingMethod });
+        const payment = await paymentsApi.create(created.id);
+        await paymentsApi.confirm(payment.paymentId);
+        const finalOrder = await ordersApi.get(created.id);
+        void get().fetchServerCart();
+        get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
+        return finalOrder;
       },
     }),
     {

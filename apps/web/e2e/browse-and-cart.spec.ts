@@ -50,16 +50,25 @@ test.describe("browse, add to cart, and checkout", () => {
     await page.getByRole("link", { name: "Checkout" }).click();
     await expect(page).toHaveURL(/\/checkout/);
 
-    await page
-      .getByLabel("Shipping address")
-      .fill("221B Baker Street, Mumbai, Maharashtra, 400001");
+    // A fresh test account has no saved addresses, so the add-address form shows by
+    // default — fill it and save, which folds it into the (now real) selectable list.
+    await page.getByPlaceholder("House no, building, street").fill("221B Baker Street");
+    await page.getByPlaceholder("City").fill("Mumbai");
+    await page.getByPlaceholder("State").fill("Maharashtra");
+    await page.getByPlaceholder("PIN code").fill("400001");
+    await page.getByRole("button", { name: "Save address" }).click();
+
+    // Saving the address triggers a real shipping-quote fetch; the first method is
+    // auto-selected once quotes arrive, so "Place order" becomes enabled on its own.
+    await expect(page.getByRole("button", { name: /Place order/ })).toBeEnabled({ timeout: 10000 });
     await page.getByRole("button", { name: /Place order/ }).click();
 
     // The old fake checkout was a pure client-side state transition (instant); this is
-    // now a real order-summary read from the live cart plus a real client-side navigation
-    // — both slower under parallel-worker load, hence the more generous timeout.
-    await expect(page).toHaveURL(/\/orders\/ORD-/, { timeout: 15000 });
-    await expect(page.getByText(/Order confirmed/i)).toBeVisible();
+    // now a real order round-trip (create order -> create payment -> confirm payment)
+    // plus a real client-side navigation — both slower under parallel-worker load, hence
+    // the more generous timeout. Real order ids are UUIDs, not the old fake "ORD-" prefix.
+    await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}/, { timeout: 15000 });
+    await expect(page.getByText(/Order confirmed/i).first()).toBeVisible();
     if (productName) {
       await expect(page.getByText(productName.trim(), { exact: false })).toBeVisible();
     }

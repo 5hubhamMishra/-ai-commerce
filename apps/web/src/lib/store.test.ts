@@ -265,3 +265,99 @@ describe("server cart / wishlist actions", () => {
     expect(useStore.getState().serverWishlist).toEqual({ items: [] });
   });
 });
+
+describe("server address / order actions", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const address = {
+    id: "addr-1",
+    userId: "u1",
+    label: "Home",
+    line1: "221B Baker Street",
+    line2: null,
+    city: "Mumbai",
+    state: "Maharashtra",
+    postalCode: "400001",
+    country: "India",
+    isDefault: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  it("createServerAddress stores the address the API returns and marks it as the sole default", async () => {
+    vi.stubGlobal("fetch", mockFetch({ "POST /api/v1/addresses": { status: 201, body: address } }));
+
+    const created = await useStore.getState().createServerAddress({
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+      isDefault: true,
+    });
+
+    expect(created).toEqual(address);
+    expect(useStore.getState().serverAddresses).toEqual([address]);
+  });
+
+  it("a newly created default address demotes any previously-default address in local state", async () => {
+    const oldDefault = { ...address, id: "addr-old" };
+    useStore.setState({ serverAddresses: [oldDefault] });
+    const newDefault = { ...address, id: "addr-new" };
+    vi.stubGlobal("fetch", mockFetch({ "POST /api/v1/addresses": { status: 201, body: newDefault } }));
+
+    await useStore.getState().createServerAddress({
+      line1: newDefault.line1,
+      city: newDefault.city,
+      state: newDefault.state,
+      postalCode: newDefault.postalCode,
+      country: newDefault.country,
+      isDefault: true,
+    });
+
+    expect(useStore.getState().serverAddresses).toEqual([
+      newDefault,
+      { ...oldDefault, isDefault: false },
+    ]);
+  });
+
+  it("removeServerAddress drops it from local state", async () => {
+    useStore.setState({ serverAddresses: [address] });
+    vi.stubGlobal("fetch", mockFetch({ "DELETE /api/v1/addresses/addr-1": { status: 204 } }));
+
+    await useStore.getState().removeServerAddress("addr-1");
+
+    expect(useStore.getState().serverAddresses).toEqual([]);
+  });
+
+  it("placeServerOrder orchestrates create-order -> create-payment -> confirm-payment, then re-fetches the cart and returns the confirmed order", async () => {
+    const pendingOrder = { id: "ord-1", status: "PENDING_PAYMENT", total: 500 };
+    const confirmedOrder = { id: "ord-1", status: "CONFIRMED", total: 500 };
+    const emptyCart = { id: "cart-1", items: [], itemCount: 0, subtotal: 0, currency: "INR", hasUnavailableItems: false };
+
+    vi.stubGlobal(
+      "fetch",
+      mockFetch({
+        "POST /api/v1/orders": { status: 201, body: pendingOrder },
+        "POST /api/v1/payments": {
+          status: 201,
+          body: { paymentId: "pay-1", orderId: "ord-1", providerRef: "dev_1", clientSecret: null, amount: 500, currency: "INR", status: "PENDING" },
+        },
+        "POST /api/v1/payments/pay-1/confirm": {
+          status: 201,
+          body: { paymentId: "pay-1", orderId: "ord-1", status: "SUCCEEDED", amount: 500, currency: "INR", failureReason: null },
+        },
+        "GET /api/v1/orders/ord-1": { body: confirmedOrder },
+        "GET /api/v1/cart": { body: emptyCart },
+      }),
+    );
+
+    const result = await useStore.getState().placeServerOrder("addr-1", "STANDARD");
+
+    expect(result).toEqual(confirmedOrder);
+    // fetchServerCart() is fired but not awaited by placeServerOrder — wait for it to settle.
+    await vi.waitFor(() => expect(useStore.getState().serverCart).toEqual(emptyCart));
+  });
+});

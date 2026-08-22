@@ -4,3 +4,7 @@ export * from './catalog';
 export * from './search';
 export * from './cart';
 export * from './wishlist';
+export * from './addresses';
+export * from './shipping';
+export * from './orders';
+export * from './payments';
