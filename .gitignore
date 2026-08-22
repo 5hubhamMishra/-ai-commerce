@@ -61,3 +61,6 @@ apps/api/prisma/migrations/dev.db
 
 # docker volumes (if ever created locally)
 infrastructure/docker/.data/
+
+.vercel
+.env*
