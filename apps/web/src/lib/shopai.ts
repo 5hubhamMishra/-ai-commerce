@@ -342,7 +342,19 @@ export function respond(
   // Default: treat as a new product search using the same query understanding as Smart
   // Search, but actually answer with a real recommendation instead of just a list.
   const parsed = parseQuery(message);
-  const results = searchProducts(message, 8);
+  let results = searchProducts(message, 8);
+
+  // searchProducts treats a stated budget as a ranking signal, not a hard filter — a
+  // near-budget item can still outrank a worse in-budget one, which is reasonable for
+  // general browsing (see search.ts/search.test.ts) but wrong for a direct "recommend
+  // X under ₹N" request: showing an item that blows past a budget the user explicitly
+  // stated isn't an imperfect ranking, it's answering a question they didn't ask. Only
+  // fall back to the unfiltered set if literally nothing fits, so a genuine "nothing in
+  // budget" case still shows the closest options instead of an empty list.
+  if (parsed.maxPrice !== undefined) {
+    const withinBudget = results.filter((p) => p.price <= parsed.maxPrice!);
+    if (withinBudget.length > 0) results = withinBudget;
+  }
 
   if (results.length === 0) {
     return {

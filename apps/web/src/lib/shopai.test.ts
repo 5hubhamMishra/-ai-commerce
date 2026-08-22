@@ -143,4 +143,20 @@ describe("respond — search fallback gives a real recommendation, not a generic
     // The old generic phrasing this replaced — must not regress back to it.
     expect(reply.text).not.toMatch(/^here's what matches best/i);
   });
+
+  it("every shown product respects a stated budget, not just the top pick (regression)", () => {
+    // Live bug: "give me the recommendation for the running shoes under 5000" showed the
+    // Reebok Classic Runner SE 2 at ₹8,500 in the "rest of what matched" row — the top
+    // pick respected the budget, the rest of the list didn't.
+    const reply = respond("give me the recommendation for the running shoes under 5000", [], emptyProfile);
+    expect(reply.products?.length).toBeGreaterThan(0);
+    for (const p of reply.products!) {
+      expect(p.price, `${p.name} at ${p.price}`).toBeLessThanOrEqual(5000);
+    }
+  });
+
+  it("falls back to the closest options, not an empty result, when nothing at all fits the budget", () => {
+    const reply = respond("recommend a laptop under 1", [], emptyProfile);
+    expect(reply.products?.length).toBeGreaterThan(0);
+  });
 });
