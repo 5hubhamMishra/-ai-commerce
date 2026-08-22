@@ -5,9 +5,8 @@ checkout, a rule-based recommendation engine, and a conversational shopping assi
 (ShopAI) that only ever shows real catalog products. Built with Next.js (App Router),
 TypeScript, Tailwind CSS, and Zustand.
 
-This is a working MVP scoped down from a much larger platform specification (see
-`docs/ARCHITECTURE.md` and `docs/SCOPE_NOTES.md`) — it runs entirely client-side with no
-external database, so it's free to host and has nothing to configure.
+This is a working MVP scoped down from a much larger platform specification — it runs entirely
+client-side with no external database, so it's free to host and has nothing to configure.
 
 ## What's implemented
 
@@ -40,9 +39,7 @@ instance, a cloud host with billing, a payment provider) that only you can provi
 MVP keeps the same product behavior and the same algorithmic approach (rule-based +
 content-based + collaborative-style signals, hybrid search, explainable ranking) but runs
 it client-side against seeded data, so it deploys as a static/serverless site for free with
-zero configuration. See `docs/SCOPE_NOTES.md` for the mapping from spec section to what's
-implemented, simplified, or deferred, and `docs/NEXT_STEPS.md` for how to grow this into the
-full architecture.
+zero configuration.
 
 ## Run locally
 

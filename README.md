@@ -4,32 +4,30 @@ An AI-native e-commerce + marketplace platform. Personalized discovery, hybrid r
 semantic search, and a conversational shopping assistant (ShopAI) built on top of a real,
 production-shaped commerce foundation — catalog, cart, checkout, orders, payments, returns.
 
-This repository was built incrementally, phase by phase. See
-[`docs/DECISIONS.md`](docs/DECISIONS.md) for the full architecture decision log — the map of
-what exists, what's next, and why decisions were made the way they were.
+This repository was built incrementally, phase by phase.
 
 ## Structure
 
 ```
 apps/
-  web/          Next.js storefront + admin UI (the original "Veloura" MVP; still reads static
-                JSON, not yet wired to apps/api — see docs/DECISIONS.md ADR-027)
+  web/          Next.js storefront + admin UI. Auth, catalog browsing, and cart/wishlist call
+                the real apps/api; recommendations, ShopAI, checkout, and admin still read
+                static JSON, not yet wired up.
   api/          NestJS modular monolith — REST API, auth, RBAC, commerce domain logic
   mobile/       React Native (Expo) app — shares API contracts with web
 packages/
   types/        Shared TypeScript types (domain models, DTOs)
   config/       Shared runtime configuration helpers
   validation/   Shared request/response validation schemas
+  api-client/   Shared fetch client used by apps/web to call apps/api
 infrastructure/
   docker/       Local development container definitions
-docs/           Architecture, database, API, events, AI, security, deployment docs
 ```
 
 ## Local development
 
 Prerequisites: Node.js 22+, npm 10+. Postgres and Redis run via Docker Compose (Docker Desktop
-required) — see `docs/DEVELOPMENT.md` for the exact steps and for a no-Docker alternative using a
-free managed Postgres/Redis instance.
+required — a no-Docker alternative using a free managed Postgres/Redis instance also works).
 
 ```bash
 npm install
@@ -39,5 +37,4 @@ npm run dev:api                 # NestJS API on http://localhost:4000
 npm run dev:web                 # Next.js app on http://localhost:3000
 ```
 
-See `docs/DEVELOPMENT.md` for the full setup guide, and `apps/web/README.md` for storefront-specific
-notes carried over from the original MVP build.
+See `apps/web/README.md` for storefront-specific notes carried over from the original MVP build.

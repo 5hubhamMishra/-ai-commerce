@@ -64,3 +64,8 @@ infrastructure/docker/.data/
 
 .vercel
 .env*
+
+# Kept locally as real project documentation, but not published on GitHub — some of it
+# (security review, threat model, architecture/decision internals) isn't something to
+# broadcast on a public repo.
+/docs/
