@@ -8,6 +8,7 @@ import type {
   BehavioralProfileView,
   CartResponse,
   CreateAddressInput,
+  ExportDataResponse,
   OrderDetail,
   PublicUser,
   ShopAIMessage,
@@ -25,6 +26,7 @@ import {
   ordersApi,
   paymentsApi,
   shopaiApi,
+  usersApi,
   wishlistApi,
 } from "@ai-commerce/api-client";
 import type { BehaviorEvent, CartItem, EventType, Order, OrderItem } from "./types";
@@ -81,6 +83,15 @@ type StoreState = {
   /** Sync — clears session state without a network call (used after a failed
    *  refresh, or internally by logout()). */
   clearSession: () => void;
+
+  /** Real GET /users/me/export (spec PRIVACY: "data export") — returns the response for the
+   *  caller to turn into a download; not stored in state, it's a one-off action, not session
+   *  data to keep around. */
+  exportMyData: () => Promise<ExportDataResponse>;
+  /** Real DELETE /users/me (spec PRIVACY: "account deletion") — requires the caller's current
+   *  password. Clears local session state on success; the account itself is anonymized and
+   *  retained server-side, not hard-deleted (see DECISIONS.md ADR-041). */
+  deleteAccount: (password: string) => Promise<void>;
 
   serverCart: CartResponse | null;
   serverCartStatus: AsyncStatus;
@@ -276,6 +287,13 @@ export const useStore = create<StoreState>()(
           serverWishlist: null,
           behavioralProfile: null,
         }),
+
+      exportMyData: () => usersApi.exportData(),
+
+      deleteAccount: async (password) => {
+        await usersApi.deleteAccount({ password });
+        get().clearSession();
+      },
 
       serverCart: null,
       serverCartStatus: "idle",

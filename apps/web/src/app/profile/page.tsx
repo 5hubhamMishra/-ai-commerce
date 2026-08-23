@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { LIFECYCLE_LABELS, SEGMENT_LABELS, rankAffinity } from "@/lib/behavioral-profile";
 import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
+import { ApiError } from "@ai-commerce/api-client";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -19,6 +20,14 @@ export default function ProfilePage() {
   const hydrated = useStore((s) => s.hydrated);
   const behavioralProfile = useStore((s) => s.behavioralProfile);
   const behavioralProfileStatus = useStore((s) => s.behavioralProfileStatus);
+  const exportMyData = useStore((s) => s.exportMyData);
+  const deleteAccount = useStore((s) => s.deleteAccount);
+
+  const [exportStatus, setExportStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "loading">("idle");
 
   const categories = useCategories();
   const brands = useBrands();
@@ -56,15 +65,38 @@ export default function ProfilePage() {
     );
   }
 
-  function exportData() {
-    const data = { user, events, behavioralProfile };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "veloura-my-data.json";
-    a.click();
-    URL.revokeObjectURL(url);
+  async function exportData() {
+    if (!user) return;
+    setExportStatus("loading");
+    try {
+      const data = await exportMyData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "veloura-my-data.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportStatus("idle");
+    } catch {
+      setExportStatus("error");
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteError(null);
+    setDeleteStatus("loading");
+    try {
+      await deleteAccount(deletePassword);
+      router.push("/");
+    } catch (err) {
+      setDeleteStatus("idle");
+      setDeleteError(
+        err instanceof ApiError && err.status === 401
+          ? "Incorrect password."
+          : "Something went wrong. Please try again.",
+      );
+    }
   }
 
   const initial = user?.name ? user.name.charAt(0).toUpperCase() : "G";
@@ -167,8 +199,12 @@ export default function ProfilePage() {
           </button>
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
-          <button onClick={exportData} className="btn btn-ghost text-xs px-3 py-2 border border-transparent">
-            Export my data
+          <button
+            onClick={exportData}
+            disabled={!user || exportStatus === "loading"}
+            className="btn btn-ghost text-xs px-3 py-2 border border-transparent disabled:opacity-50"
+          >
+            {exportStatus === "loading" ? "Preparing export…" : "Export my data"}
           </button>
           <button
             onClick={() => { if (confirm("Clear all browsing activity? This can't be undone.")) void clearActivity(); }}
@@ -176,13 +212,75 @@ export default function ProfilePage() {
           >
             Delete activity history
           </button>
+          {user && (
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="btn text-xs px-3 py-2 rounded-xl border border-[var(--clr-error,red)] text-[var(--clr-error,red)] hover:bg-red-50 font-medium"
+            >
+              Delete account
+            </button>
+          )}
         </div>
         <p className="mt-3 text-xs text-[var(--clr-text-disabled)]">
           {user
-            ? `${events.length} events stored locally on this device; your real activity history lives on the server and is erased by "Delete activity history".`
-            : `${events.length} activity events stored locally on this device — sign in to build a real, server-side shopping profile.`}
+            ? `Export downloads everything the server holds about your account — profile, addresses, orders, activity, and more. "Delete account" erases your personal data and permanently deactivates sign-in; ${events.length} extra events are also stored locally on this device.`
+            : `${events.length} activity events stored locally on this device — sign in to build a real, server-side shopping profile and access data export/account deletion.`}
         </p>
+        {exportStatus === "error" && (
+          <p className="mt-2 text-xs text-[var(--clr-error,red)]">Couldn&apos;t prepare your export. Please try again.</p>
+        )}
       </div>
+
+      {showDeleteDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Delete account"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => { if (deleteStatus !== "loading") setShowDeleteDialog(false); }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-display text-lg font-semibold">Delete your account?</h2>
+            <p className="mt-2 text-sm text-[var(--clr-text-secondary)]">
+              This permanently erases your profile details, addresses, cart, wishlist, activity
+              history, and ShopAI conversations, and signs you out everywhere. Past orders are kept
+              as a financial record but are no longer linked to your real identity. This can&apos;t be
+              undone.
+            </p>
+            <label htmlFor="delete-account-password" className="mt-4 block text-xs font-medium text-[var(--clr-text-secondary)]">
+              Confirm your password
+            </label>
+            <input
+              id="delete-account-password"
+              type="password"
+              autoFocus
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-[var(--clr-border)] px-3 py-2 text-sm"
+            />
+            {deleteError && <p className="mt-2 text-xs text-[var(--clr-error,red)]">{deleteError}</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => { setShowDeleteDialog(false); setDeletePassword(""); setDeleteError(null); }}
+                disabled={deleteStatus === "loading"}
+                className="btn btn-ghost text-xs px-3 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteStatus === "loading" || deletePassword.length === 0}
+                className="btn text-xs px-4 py-2 rounded-xl bg-[var(--clr-error,red)] text-white font-medium disabled:opacity-50"
+              >
+                {deleteStatus === "loading" ? "Deleting…" : "Permanently delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
