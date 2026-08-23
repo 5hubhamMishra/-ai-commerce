@@ -59,8 +59,23 @@ type StoreState = {
 
   /** Mirrors apps/web's placeServerOrder (create -> payment create -> payment confirm ->
    *  refetch final order), minus the analytics calls web fires around it — mobile has no
-   *  event-tracking infrastructure and this phase doesn't introduce one. */
+   *  event-tracking infrastructure and this phase doesn't introduce one. Used for the
+   *  simulated dev-adapter path only; the real-payment path uses finalizeOrder below,
+   *  since a Razorpay confirmation needs a widget interaction in between order/payment
+   *  creation and confirm that a single store action can't drive itself. */
   placeOrder: (addressId: string, shippingMethod: 'STANDARD' | 'EXPRESS') => Promise<OrderDetail>;
+
+  /** Mirrors apps/web's finalizeServerOrder: confirms an already-created payment (the screen
+   *  owns order/payment *creation* itself for this path, since opening the Razorpay widget has
+   *  to happen between create and confirm), then refetches the cart (apps/api already cleared
+   *  it server-side as part of order creation) and returns the final order detail. Throws if
+   *  the confirm outcome isn't SUCCEEDED — a real provider can legitimately return a failed
+   *  confirmation as an ordinary response (tampered/expired signature). */
+  finalizeOrder: (
+    orderId: string,
+    paymentId: string,
+    confirmPayload?: { razorpayPaymentId?: string; razorpaySignature?: string },
+  ) => Promise<OrderDetail>;
 
   shopaiConversationId: string | null;
   /** Mirrors apps/web's sendShopAIMessage, minus the guest/anonymousId path — every screen that
@@ -209,6 +224,16 @@ export const useStore = create<StoreState>((set, get) => ({
     await paymentsApi.confirm(payment.paymentId);
     const finalOrder = await ordersApi.get(created.id);
     void get().fetchCart(); // apps/api already clears the cart server-side as part of order creation
+    return finalOrder;
+  },
+
+  finalizeOrder: async (orderId, paymentId, confirmPayload) => {
+    const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
+    if (confirmed.status !== 'SUCCEEDED') {
+      throw new Error(confirmed.failureReason ?? 'Payment was not successful. Please try again.');
+    }
+    const finalOrder = await ordersApi.get(orderId);
+    void get().fetchCart();
     return finalOrder;
   },
 

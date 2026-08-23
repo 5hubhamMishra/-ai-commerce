@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { Address, ShippingMethodQuote } from '@ai-commerce/types';
-import { shippingApi } from '@ai-commerce/api-client';
+import type { Address, CreatePaymentResponse, ShippingMethodQuote } from '@ai-commerce/types';
+import { ordersApi, paymentsApi, shippingApi } from '@ai-commerce/api-client';
 import { useStore } from '../store/useStore';
 import { formatPrice } from '../lib/format';
+import RazorpayCheckout, { type RazorpaySuccessResult } from '../components/RazorpayCheckout';
 import type { CartStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Checkout'>;
+
+// Unset in every dev/test/CI environment (including this app's own Jest suite) — the
+// simulated, instant-confirm `placeOrder` path stays byte-for-byte unchanged there. Set only
+// alongside the backend's PAYMENT_PROVIDER=razorpay/RAZORPAY_KEY_ID (same Razorpay dashboard
+// credential pair), which is what actually opens the real Checkout widget — see apps/web's
+// identical NEXT_PUBLIC_RAZORPAY_KEY_ID gate in src/app/checkout/page.tsx.
+const RAZORPAY_KEY_ID = process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID;
 
 type NewAddressFields = {
   label: string;
@@ -36,6 +44,7 @@ export default function CheckoutScreen({ navigation }: Props) {
   const fetchAddresses = useStore((s) => s.fetchAddresses);
   const createAddress = useStore((s) => s.createAddress);
   const placeOrder = useStore((s) => s.placeOrder);
+  const finalizeOrder = useStore((s) => s.finalizeOrder);
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
@@ -48,6 +57,11 @@ export default function CheckoutScreen({ navigation }: Props) {
 
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Kept across retries (e.g. the shopper dismisses the Razorpay widget without paying) so a
+  // retry only re-runs the payment-intent step, never mints a second order — mirrors apps/web.
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [pendingPayment, setPendingPayment] = useState<CreatePaymentResponse | null>(null);
 
   useEffect(() => {
     void fetchAddresses();
@@ -129,12 +143,42 @@ export default function CheckoutScreen({ navigation }: Props) {
     setError(null);
     setPlacing(true);
     try {
-      const order = await placeOrder(effectiveAddressId, selectedMethod as 'STANDARD' | 'EXPRESS');
-      navigation.replace('OrderDetail', { id: order.id });
+      if (!RAZORPAY_KEY_ID) {
+        // Simulated path — unchanged from before, no widget.
+        const order = await placeOrder(effectiveAddressId, selectedMethod as 'STANDARD' | 'EXPRESS');
+        navigation.replace('OrderDetail', { id: order.id });
+        return;
+      }
+
+      const currentOrderId =
+        orderId ??
+        (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as 'STANDARD' | 'EXPRESS' })).id;
+      setOrderId(currentOrderId);
+      const payment = await paymentsApi.create(currentOrderId);
+      setPendingPayment(payment);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't place your order. Please try again.");
       setPlacing(false);
     }
+  }
+
+  async function onRazorpaySuccess(result: RazorpaySuccessResult) {
+    if (!orderId || !pendingPayment) return;
+    try {
+      const order = await finalizeOrder(orderId, pendingPayment.paymentId, result);
+      setPendingPayment(null);
+      navigation.replace('OrderDetail', { id: order.id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't confirm your payment. Please try again.");
+      setPendingPayment(null);
+      setPlacing(false);
+    }
+  }
+
+  function onRazorpayDismiss() {
+    setPendingPayment(null);
+    setError("Payment was not completed. You can try again — your order hasn't been lost.");
+    setPlacing(false);
   }
 
   const canSubmit = !showAddForm && !!effectiveAddressId && !!selectedMethod && !placing;
@@ -229,11 +273,22 @@ export default function CheckoutScreen({ navigation }: Props) {
 
       <Text style={styles.sectionTitle}>Payment method</Text>
       <View style={styles.paymentPanel}>
-        <Text style={styles.paymentTitle}>Simulated payment</Text>
-        <Text style={styles.paymentDisclaimer}>
-          This places a real order against the store&apos;s backend, but payment settlement itself is simulated
-          — no card details are collected and no real charge occurs.
-        </Text>
+        {RAZORPAY_KEY_ID ? (
+          <>
+            <Text style={styles.paymentTitle}>Secure payment via Razorpay</Text>
+            <Text style={styles.paymentDisclaimer}>
+              You&apos;ll be asked to complete payment in a secure Razorpay window before your order is confirmed.
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.paymentTitle}>Simulated payment</Text>
+            <Text style={styles.paymentDisclaimer}>
+              This places a real order against the store&apos;s backend, but payment settlement itself is simulated
+              — no card details are collected and no real charge occurs.
+            </Text>
+          </>
+        )}
       </View>
 
       <View style={styles.summary}>
@@ -277,6 +332,18 @@ export default function CheckoutScreen({ navigation }: Props) {
       >
         <Text style={styles.submitButtonText}>{placing ? 'Placing order…' : `Place order — ${formatPrice(total)}`}</Text>
       </Pressable>
+
+      {RAZORPAY_KEY_ID && pendingPayment && (
+        <RazorpayCheckout
+          visible
+          keyId={RAZORPAY_KEY_ID}
+          orderId={pendingPayment.providerRef}
+          amount={pendingPayment.amount}
+          currency={pendingPayment.currency}
+          onSuccess={(result) => void onRazorpaySuccess(result)}
+          onDismiss={onRazorpayDismiss}
+        />
+      )}
     </ScrollView>
   );
 }

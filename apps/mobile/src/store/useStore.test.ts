@@ -331,6 +331,40 @@ describe('placeOrder', () => {
   });
 });
 
+describe('finalizeOrder', () => {
+  it('confirms the payment with the given payload, then refetches the order and cart', async () => {
+    const confirmedOrder = { id: 'ord-1', status: 'CONFIRMED', total: 500 };
+    (paymentsApi.confirm as jest.Mock).mockResolvedValue({ status: 'SUCCEEDED' });
+    (ordersApi.get as jest.Mock).mockResolvedValue(confirmedOrder);
+    (cartApi.getCart as jest.Mock).mockResolvedValue(emptyCart);
+
+    const result = await useStore
+      .getState()
+      .finalizeOrder('ord-1', 'pay-1', { razorpayPaymentId: 'rzp-pay-1', razorpaySignature: 'sig-1' });
+
+    expect(paymentsApi.confirm).toHaveBeenCalledWith('pay-1', {
+      razorpayPaymentId: 'rzp-pay-1',
+      razorpaySignature: 'sig-1',
+    });
+    expect(ordersApi.get).toHaveBeenCalledWith('ord-1');
+    expect(result).toEqual(confirmedOrder);
+
+    await waitFor(() => expect(useStore.getState().cart).toEqual(emptyCart));
+  });
+
+  it('throws the real failure reason when the provider reports the payment did not succeed', async () => {
+    (paymentsApi.confirm as jest.Mock).mockResolvedValue({
+      status: 'FAILED',
+      failureReason: 'Razorpay payment signature verification failed.',
+    });
+
+    await expect(useStore.getState().finalizeOrder('ord-1', 'pay-1', {})).rejects.toThrow(
+      'Razorpay payment signature verification failed.',
+    );
+    expect(ordersApi.get).not.toHaveBeenCalled();
+  });
+});
+
 describe('sendShopAIMessage', () => {
   it('sends no conversationId on the first message, then reuses the returned id on the next', async () => {
     (shopaiApi.sendMessage as jest.Mock)
