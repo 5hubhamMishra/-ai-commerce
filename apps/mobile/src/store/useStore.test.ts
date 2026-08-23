@@ -1,18 +1,23 @@
 import { waitFor } from '@testing-library/react-native';
 import type { PublicUser } from '@ai-commerce/types';
-import { addressesApi, authApi, cartApi, ordersApi, paymentsApi, wishlistApi } from '@ai-commerce/api-client';
+import { ApiError, addressesApi, authApi, cartApi, ordersApi, paymentsApi, shopaiApi, wishlistApi } from '@ai-commerce/api-client';
 import { session } from '../api/session';
 import { mobileRefresh, setAccessToken } from '../api/apiClient';
 import { useStore } from './useStore';
 
-jest.mock('@ai-commerce/api-client', () => ({
-  authApi: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), me: jest.fn() },
-  cartApi: { getCart: jest.fn(), addItem: jest.fn(), updateItem: jest.fn(), removeItem: jest.fn() },
-  wishlistApi: { list: jest.fn(), add: jest.fn(), remove: jest.fn() },
-  addressesApi: { list: jest.fn(), create: jest.fn() },
-  ordersApi: { create: jest.fn(), get: jest.fn() },
-  paymentsApi: { create: jest.fn(), confirm: jest.fn() },
-}));
+jest.mock('@ai-commerce/api-client', () => {
+  const actual = jest.requireActual('@ai-commerce/api-client');
+  return {
+    ApiError: actual.ApiError,
+    authApi: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), me: jest.fn() },
+    cartApi: { getCart: jest.fn(), addItem: jest.fn(), updateItem: jest.fn(), removeItem: jest.fn() },
+    wishlistApi: { list: jest.fn(), add: jest.fn(), remove: jest.fn() },
+    addressesApi: { list: jest.fn(), create: jest.fn() },
+    ordersApi: { create: jest.fn(), get: jest.fn() },
+    paymentsApi: { create: jest.fn(), confirm: jest.fn() },
+    shopaiApi: { sendMessage: jest.fn(), getConversation: jest.fn() },
+  };
+});
 jest.mock('../api/session', () => ({
   session: { save: jest.fn(), getRefreshToken: jest.fn(), clear: jest.fn() },
 }));
@@ -39,7 +44,15 @@ const initialState = useStore.getState();
 beforeEach(() => {
   jest.clearAllMocks();
   useStore.setState(
-    { ...initialState, user: null, authStatus: 'idle', cart: null, wishlist: null, addresses: null },
+    {
+      ...initialState,
+      user: null,
+      authStatus: 'idle',
+      cart: null,
+      wishlist: null,
+      addresses: null,
+      shopaiConversationId: null,
+    },
     true,
   );
 });
@@ -93,6 +106,7 @@ describe('auth actions', () => {
       cart: emptyCart,
       wishlist: emptyWishlist,
       addresses: [],
+      shopaiConversationId: 'conv-1',
     });
     (session.getRefreshToken as jest.Mock).mockResolvedValue('r1');
     (authApi.logout as jest.Mock).mockResolvedValue(undefined);
@@ -107,6 +121,7 @@ describe('auth actions', () => {
     expect(useStore.getState().cart).toBeNull();
     expect(useStore.getState().wishlist).toBeNull();
     expect(useStore.getState().addresses).toBeNull();
+    expect(useStore.getState().shopaiConversationId).toBeNull();
   });
 
   it('logout still clears local session state even if the server call fails', async () => {
@@ -313,5 +328,60 @@ describe('placeOrder', () => {
 
     await expect(useStore.getState().placeOrder('addr-1', 'STANDARD')).rejects.toThrow('Insufficient stock.');
     expect(paymentsApi.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendShopAIMessage', () => {
+  it('sends no conversationId on the first message, then reuses the returned id on the next', async () => {
+    (shopaiApi.sendMessage as jest.Mock)
+      .mockResolvedValueOnce({
+        conversationId: 'conv-1',
+        message: { role: 'assistant', content: 'reply 1' },
+        toolActivity: [],
+      })
+      .mockResolvedValueOnce({
+        conversationId: 'conv-1',
+        message: { role: 'assistant', content: 'reply 2' },
+        toolActivity: [],
+      });
+
+    const first = await useStore.getState().sendShopAIMessage('hello');
+    expect(first).toEqual({ role: 'assistant', content: 'reply 1' });
+    expect(shopaiApi.sendMessage).toHaveBeenNthCalledWith(1, { message: 'hello', conversationId: undefined });
+    expect(useStore.getState().shopaiConversationId).toBe('conv-1');
+
+    await useStore.getState().sendShopAIMessage('again');
+    expect(shopaiApi.sendMessage).toHaveBeenNthCalledWith(2, { message: 'again', conversationId: 'conv-1' });
+    // Neither call ever carries an anonymousId field — mobile has no guest path to give one to.
+    expect(shopaiApi.sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ anonymousId: expect.anything() }));
+  });
+
+  it('recovers from a stale conversation id by retrying as a fresh conversation', async () => {
+    useStore.setState({ shopaiConversationId: 'stale-conv' });
+    (shopaiApi.sendMessage as jest.Mock)
+      .mockRejectedValueOnce(
+        new ApiError(404, {
+          error: { code: 'CONVERSATION_NOT_FOUND', message: 'Conversation not found.', requestId: 'r1', details: {} },
+        }),
+      )
+      .mockResolvedValueOnce({
+        conversationId: 'conv-2',
+        message: { role: 'assistant', content: 'fresh reply' },
+        toolActivity: [],
+      });
+
+    const reply = await useStore.getState().sendShopAIMessage('hi again');
+
+    expect(reply).toEqual({ role: 'assistant', content: 'fresh reply' });
+    expect(shopaiApi.sendMessage).toHaveBeenNthCalledWith(1, { message: 'hi again', conversationId: 'stale-conv' });
+    expect(shopaiApi.sendMessage).toHaveBeenNthCalledWith(2, { message: 'hi again', conversationId: undefined });
+    expect(useStore.getState().shopaiConversationId).toBe('conv-2');
+  });
+
+  it('propagates a non-CONVERSATION_NOT_FOUND error without retrying', async () => {
+    (shopaiApi.sendMessage as jest.Mock).mockRejectedValueOnce(new Error('Rate limit exceeded.'));
+
+    await expect(useStore.getState().sendShopAIMessage('hello')).rejects.toThrow('Rate limit exceeded.');
+    expect(shopaiApi.sendMessage).toHaveBeenCalledTimes(1);
   });
 });

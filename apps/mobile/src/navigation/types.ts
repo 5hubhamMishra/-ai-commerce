@@ -31,8 +31,13 @@ export type AccountStackParamList = OrderStackParamList & {
   OrderList: undefined;
 };
 
+export type ShopAIStackParamList = {
+  ShopAIHome: undefined;
+};
+
 export type MainTabParamList = {
   Shop: undefined;
+  ShopAI: undefined;
   Cart: undefined;
   Wishlist: undefined;
   Account: undefined;

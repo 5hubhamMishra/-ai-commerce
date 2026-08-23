@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ShopStack from './ShopStack';
+import ShopAIStack from './ShopAIStack';
 import CartStack from './CartStack';
 import WishlistStack from './WishlistStack';
 import AccountStack from './AccountStack';
@@ -11,6 +12,7 @@ export default function MainTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Shop" component={ShopStack} />
+      <Tab.Screen name="ShopAI" component={ShopAIStack} />
       <Tab.Screen name="Cart" component={CartStack} />
       <Tab.Screen name="Wishlist" component={WishlistStack} />
       <Tab.Screen name="Account" component={AccountStack} />

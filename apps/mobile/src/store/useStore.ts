@@ -5,9 +5,19 @@ import type {
   CreateAddressInput,
   OrderDetail,
   PublicUser,
+  ShopAIMessage,
   WishlistResponse,
 } from '@ai-commerce/types';
-import { addressesApi, authApi, cartApi, ordersApi, paymentsApi, wishlistApi } from '@ai-commerce/api-client';
+import {
+  ApiError,
+  addressesApi,
+  authApi,
+  cartApi,
+  ordersApi,
+  paymentsApi,
+  shopaiApi,
+  wishlistApi,
+} from '@ai-commerce/api-client';
 import { session } from '../api/session';
 import { configureMobileApiClient, mobileRefresh, setAccessToken } from '../api/apiClient';
 
@@ -51,6 +61,13 @@ type StoreState = {
    *  refetch final order), minus the analytics calls web fires around it — mobile has no
    *  event-tracking infrastructure and this phase doesn't introduce one. */
   placeOrder: (addressId: string, shippingMethod: 'STANDARD' | 'EXPRESS') => Promise<OrderDetail>;
+
+  shopaiConversationId: string | null;
+  /** Mirrors apps/web's sendShopAIMessage, minus the guest/anonymousId path — every screen that
+   *  can reach this action is already behind RootNavigator's authenticated gate, so there is no
+   *  logged-out caller on mobile to give an anonymous id to — and minus the analytics call web
+   *  fires around it, for the same reason as placeOrder above. */
+  sendShopAIMessage: (text: string) => Promise<ShopAIMessage>;
 };
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -86,7 +103,14 @@ export const useStore = create<StoreState>((set, get) => ({
 
   clearSession: () => {
     setAccessToken(null);
-    set({ user: null, authStatus: 'unauthenticated', cart: null, wishlist: null, addresses: null });
+    set({
+      user: null,
+      authStatus: 'unauthenticated',
+      cart: null,
+      wishlist: null,
+      addresses: null,
+      shopaiConversationId: null,
+    });
   },
 
   restoreSession: async () => {
@@ -186,6 +210,25 @@ export const useStore = create<StoreState>((set, get) => ({
     const finalOrder = await ordersApi.get(created.id);
     void get().fetchCart(); // apps/api already clears the cart server-side as part of order creation
     return finalOrder;
+  },
+
+  shopaiConversationId: null,
+
+  sendShopAIMessage: async (text) => {
+    const send = (conversationId?: string) => shopaiApi.sendMessage({ message: text, conversationId });
+    try {
+      const conversationId = get().shopaiConversationId ?? undefined;
+      const result = await send(conversationId);
+      set({ shopaiConversationId: result.conversationId });
+      return result.message;
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'CONVERSATION_NOT_FOUND') {
+        const result = await send(undefined);
+        set({ shopaiConversationId: result.conversationId });
+        return result.message;
+      }
+      throw err;
+    }
   },
 }));
 
