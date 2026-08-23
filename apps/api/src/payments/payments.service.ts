@@ -237,9 +237,15 @@ export class PaymentsService {
 
     await this.applyConfirmationResult(payment, null, {
       success: envelope.event === 'payment.captured',
-      raw: { razorpayPaymentId: paymentEntity.id, razorpayOrderId: paymentEntity.order_id, source: 'webhook' },
+      raw: {
+        razorpayPaymentId: paymentEntity.id,
+        razorpayOrderId: paymentEntity.order_id,
+        source: 'webhook',
+      },
       failureReason:
-        envelope.event === 'payment.captured' ? undefined : `Razorpay event: ${envelope.event}`,
+        envelope.event === 'payment.captured'
+          ? undefined
+          : `Razorpay event: ${envelope.event}`,
     });
     return { received: true };
   }

@@ -56,7 +56,9 @@ describe('Privacy (e2e)', () => {
       })
       .expect(201);
 
-    const product = await prisma.product.findFirst({ where: { status: 'ACTIVE' } });
+    const product = await prisma.product.findFirst({
+      where: { status: 'ACTIVE' },
+    });
     if (product) {
       await request(app.getHttpServer())
         .post('/api/v1/wishlist/items')

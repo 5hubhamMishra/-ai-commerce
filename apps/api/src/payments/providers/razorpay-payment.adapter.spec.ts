@@ -72,14 +72,21 @@ describe('RazorpayPaymentAdapter', () => {
       const adapter = new RazorpayPaymentAdapter(configWith({}));
 
       await expect(
-        adapter.createIntent({ orderId: 'ord-1', amount: 499, currency: 'INR', idempotencyKey: 'idem-1' }),
+        adapter.createIntent({
+          orderId: 'ord-1',
+          amount: 499,
+          currency: 'INR',
+          idempotencyKey: 'idem-1',
+        }),
       ).rejects.toThrow('RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET must be set');
     });
   });
 
   describe('confirmPayment', () => {
     function signaturePayload(orderId: string, paymentId: string) {
-      return createHmac('sha256', KEY_SECRET).update(`${orderId}|${paymentId}`).digest('hex');
+      return createHmac('sha256', KEY_SECRET)
+        .update(`${orderId}|${paymentId}`)
+        .digest('hex');
     }
 
     it('succeeds when the signature is valid', async () => {
@@ -88,11 +95,17 @@ describe('RazorpayPaymentAdapter', () => {
 
       const result = await adapter.confirmPayment({
         providerRef: 'order_abc123',
-        payload: { razorpayPaymentId: 'pay_xyz789', razorpaySignature: signature },
+        payload: {
+          razorpayPaymentId: 'pay_xyz789',
+          razorpaySignature: signature,
+        },
       });
 
       expect(result.success).toBe(true);
-      expect(result.raw).toEqual({ razorpayPaymentId: 'pay_xyz789', razorpayOrderId: 'order_abc123' });
+      expect(result.raw).toEqual({
+        razorpayPaymentId: 'pay_xyz789',
+        razorpayOrderId: 'order_abc123',
+      });
     });
 
     it('fails when the signature does not match', async () => {
@@ -100,11 +113,16 @@ describe('RazorpayPaymentAdapter', () => {
 
       const result = await adapter.confirmPayment({
         providerRef: 'order_abc123',
-        payload: { razorpayPaymentId: 'pay_xyz789', razorpaySignature: 'tampered' },
+        payload: {
+          razorpayPaymentId: 'pay_xyz789',
+          razorpaySignature: 'tampered',
+        },
       });
 
       expect(result.success).toBe(false);
-      expect(result.failureReason).toBe('Razorpay payment signature verification failed.');
+      expect(result.failureReason).toBe(
+        'Razorpay payment signature verification failed.',
+      );
     });
 
     it('fails when the signature was computed for a different payment id', async () => {
@@ -113,7 +131,10 @@ describe('RazorpayPaymentAdapter', () => {
 
       const result = await adapter.confirmPayment({
         providerRef: 'order_abc123',
-        payload: { razorpayPaymentId: 'pay_different', razorpaySignature: signature },
+        payload: {
+          razorpayPaymentId: 'pay_different',
+          razorpaySignature: signature,
+        },
       });
 
       expect(result.success).toBe(false);
@@ -122,10 +143,14 @@ describe('RazorpayPaymentAdapter', () => {
     it('fails closed when razorpayPaymentId/razorpaySignature are missing, never throws', async () => {
       const adapter = new RazorpayPaymentAdapter(fullConfig());
 
-      const result = await adapter.confirmPayment({ providerRef: 'order_abc123' });
+      const result = await adapter.confirmPayment({
+        providerRef: 'order_abc123',
+      });
 
       expect(result.success).toBe(false);
-      expect(result.failureReason).toBe('Missing Razorpay payment verification fields.');
+      expect(result.failureReason).toBe(
+        'Missing Razorpay payment verification fields.',
+      );
     });
 
     it('never trusts a client-supplied simulateFailure-style field — only the signature matters', async () => {
@@ -147,7 +172,10 @@ describe('RazorpayPaymentAdapter', () => {
 
   describe('refund', () => {
     it('converts the amount to paise and treats providerRef as a payment id', async () => {
-      mockPaymentsRefund.mockResolvedValue({ id: 'rfnd_1', status: 'processed' });
+      mockPaymentsRefund.mockResolvedValue({
+        id: 'rfnd_1',
+        status: 'processed',
+      });
       const adapter = new RazorpayPaymentAdapter(fullConfig());
 
       const result = await adapter.refund({
@@ -186,21 +214,27 @@ describe('RazorpayPaymentAdapter', () => {
 
     it('accepts a signature computed with the configured webhook secret', () => {
       const adapter = new RazorpayPaymentAdapter(fullConfig());
-      const signature = createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex');
+      const signature = createHmac('sha256', WEBHOOK_SECRET)
+        .update(payload)
+        .digest('hex');
 
       expect(adapter.verifyWebhookSignature(payload, signature)).toBe(true);
     });
 
     it('rejects a signature computed with the wrong secret', () => {
       const adapter = new RazorpayPaymentAdapter(fullConfig());
-      const signature = createHmac('sha256', 'wrong-secret').update(payload).digest('hex');
+      const signature = createHmac('sha256', 'wrong-secret')
+        .update(payload)
+        .digest('hex');
 
       expect(adapter.verifyWebhookSignature(payload, signature)).toBe(false);
     });
 
     it('rejects a tampered payload even with an otherwise-valid signature', () => {
       const adapter = new RazorpayPaymentAdapter(fullConfig());
-      const signature = createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex');
+      const signature = createHmac('sha256', WEBHOOK_SECRET)
+        .update(payload)
+        .digest('hex');
 
       const tampered = JSON.stringify({ event: 'payment.failed' });
       expect(adapter.verifyWebhookSignature(tampered, signature)).toBe(false);
@@ -212,8 +246,12 @@ describe('RazorpayPaymentAdapter', () => {
     });
 
     it('fails closed (rejects everything) when no webhook secret is configured', () => {
-      const adapter = new RazorpayPaymentAdapter(fullConfig({ 'payments.webhookSecret': undefined }));
-      const signature = createHmac('sha256', 'whatever').update(payload).digest('hex');
+      const adapter = new RazorpayPaymentAdapter(
+        fullConfig({ 'payments.webhookSecret': undefined }),
+      );
+      const signature = createHmac('sha256', 'whatever')
+        .update(payload)
+        .digest('hex');
 
       expect(adapter.verifyWebhookSignature(payload, signature)).toBe(false);
     });

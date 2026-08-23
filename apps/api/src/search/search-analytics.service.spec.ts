@@ -20,11 +20,7 @@ describe('SearchAnalyticsService', () => {
     service = module.get(SearchAnalyticsService);
   });
 
-  const row = (
-    query: string,
-    resultCount: number,
-    daysAgo: number,
-  ) => ({
+  const row = (query: string, resultCount: number, daysAgo: number) => ({
     query,
     resultCount,
     usedSemantic: false,
@@ -51,7 +47,7 @@ describe('SearchAnalyticsService', () => {
   // database happened to return rows in — silently dropping the newest,
   // most actionable queries in favor of stale ones from weeks earlier.
   it('breaks ties in favor of the most recently seen query, not scan order', async () => {
-    const rows = [];
+    const rows: ReturnType<typeof row>[] = [];
     // One more single-occurrence query than the top-N limit allows, oldest first —
     // if ties were broken by scan/insertion order, the newest one below would be
     // the one single query pushed out of the top N.
@@ -82,6 +78,8 @@ describe('SearchAnalyticsService', () => {
     // traffic (spec comment: "how much search traffic is there at all" matters
     // too) — only the *ranked query lists* exclude the empty-query rows.
     expect(report.totalSearches).toBe(4);
-    expect(report.topZeroResultQueries).toEqual([{ query: 'headphones', count: 2 }]);
+    expect(report.topZeroResultQueries).toEqual([
+      { query: 'headphones', count: 2 },
+    ]);
   });
 });

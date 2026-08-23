@@ -3,7 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Prisma, Role } from '@prisma/client';
+import type { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { AuditService } from '../audit/audit.service';
@@ -143,7 +143,10 @@ export class UsersService {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.cart.findUnique({ where: { userId }, include: { items: true } }),
+      this.prisma.cart.findUnique({
+        where: { userId },
+        include: { items: true },
+      }),
       this.prisma.wishlistItem.findMany({ where: { userId } }),
       this.prisma.behavioralEvent.findMany({
         where: { userId },
@@ -263,7 +266,7 @@ export class UsersService {
         data: {
           phone: null,
           dateOfBirth: null,
-          notificationPreferences: {} as Prisma.InputJsonValue,
+          notificationPreferences: {},
         },
       }),
       this.prisma.refreshToken.updateMany({

@@ -55,14 +55,26 @@ describe('UsersService', () => {
         findUnique: jest.fn().mockResolvedValue(null),
         deleteMany: jest.fn(),
       },
-      wishlistItem: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn() },
-      behavioralEvent: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn() },
+      wishlistItem: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+      },
+      behavioralEvent: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+      },
       customerProfile: {
         findUnique: jest.fn().mockResolvedValue(null),
         deleteMany: jest.fn(),
       },
-      notification: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn() },
-      shopAIConversation: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn() },
+      notification: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+      },
+      shopAIConversation: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+      },
       shopAIInteractionLog: { updateMany: jest.fn() },
       recommendationImpression: { updateMany: jest.fn() },
       searchQueryLog: { updateMany: jest.fn() },
@@ -183,18 +195,18 @@ describe('UsersService', () => {
 
     it('throws NotFoundException for a missing or already-deleted user', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
-      await expect(
-        service.deleteAccount('u1', 'pw'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.deleteAccount('u1', 'pw')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
 
       prisma.user.findUnique.mockResolvedValue({
         ...row,
         passwordHash: realPasswordHash,
         deletedAt: new Date(),
       });
-      await expect(
-        service.deleteAccount('u1', 'pw'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.deleteAccount('u1', 'pw')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('throws UnauthorizedException on a wrong password without touching any data', async () => {

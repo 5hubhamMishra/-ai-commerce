@@ -74,7 +74,12 @@ export class SearchAnalyticsService {
     const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
     const rows = await this.prisma.searchQueryLog.findMany({
       where: { createdAt: { gte: since } },
-      select: { query: true, resultCount: true, usedSemantic: true, createdAt: true },
+      select: {
+        query: true,
+        resultCount: true,
+        usedSemantic: true,
+        createdAt: true,
+      },
     });
 
     const total = rows.length;
@@ -88,7 +93,10 @@ export class SearchAnalyticsService {
     // order. That silently drops the newest (most actionable) queries in favor
     // of however the database happened to return older ones first.
     const queryCounts = new Map<string, { count: number; lastSeenAt: Date }>();
-    const zeroResultQueryCounts = new Map<string, { count: number; lastSeenAt: Date }>();
+    const zeroResultQueryCounts = new Map<
+      string,
+      { count: number; lastSeenAt: Date }
+    >();
     const bump = (
       counts: Map<string, { count: number; lastSeenAt: Date }>,
       query: string,
@@ -97,7 +105,10 @@ export class SearchAnalyticsService {
       const existing = counts.get(query);
       counts.set(query, {
         count: (existing?.count ?? 0) + 1,
-        lastSeenAt: existing && existing.lastSeenAt > occurredAt ? existing.lastSeenAt : occurredAt,
+        lastSeenAt:
+          existing && existing.lastSeenAt > occurredAt
+            ? existing.lastSeenAt
+            : occurredAt,
       });
     };
     for (const row of rows) {

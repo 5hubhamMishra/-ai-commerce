@@ -23,8 +23,13 @@ import { PaymentsService } from './payments.service';
         config: ConfigService,
         dev: DevelopmentPaymentAdapter,
         razorpay: RazorpayPaymentAdapter,
-      ) => (config.get<string>('payments.provider') === 'razorpay' ? razorpay : dev),
-      inject: [ConfigService, DevelopmentPaymentAdapter, RazorpayPaymentAdapter],
+      ) =>
+        config.get<string>('payments.provider') === 'razorpay' ? razorpay : dev,
+      inject: [
+        ConfigService,
+        DevelopmentPaymentAdapter,
+        RazorpayPaymentAdapter,
+      ],
     },
     PaymentsService,
   ],

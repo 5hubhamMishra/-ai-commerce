@@ -60,20 +60,25 @@ export class RazorpayPaymentAdapter implements PaymentProvider {
     };
   }
 
-  async confirmPayment(input: ConfirmPaymentInput): Promise<ConfirmPaymentResult> {
+  confirmPayment(input: ConfirmPaymentInput): Promise<ConfirmPaymentResult> {
     const razorpayPaymentId = input.payload?.razorpayPaymentId;
     const razorpaySignature = input.payload?.razorpaySignature;
-    if (typeof razorpayPaymentId !== 'string' || typeof razorpaySignature !== 'string') {
-      return {
+    if (
+      typeof razorpayPaymentId !== 'string' ||
+      typeof razorpaySignature !== 'string'
+    ) {
+      return Promise.resolve({
         success: false,
         raw: {},
         failureReason: 'Missing Razorpay payment verification fields.',
-      };
+      });
     }
 
     const keySecret = this.config.get<string>('payments.razorpay.keySecret');
     if (!keySecret) {
-      throw new Error('RAZORPAY_KEY_SECRET must be set to use the Razorpay payment provider.');
+      throw new Error(
+        'RAZORPAY_KEY_SECRET must be set to use the Razorpay payment provider.',
+      );
     }
 
     // A valid signature is cryptographic proof Razorpay itself certified this exact
@@ -85,17 +90,17 @@ export class RazorpayPaymentAdapter implements PaymentProvider {
       keySecret,
     );
     if (!verified) {
-      return {
+      return Promise.resolve({
         success: false,
         raw: { razorpayPaymentId, razorpayOrderId: input.providerRef },
         failureReason: 'Razorpay payment signature verification failed.',
-      };
+      });
     }
 
-    return {
+    return Promise.resolve({
       success: true,
       raw: { razorpayPaymentId, razorpayOrderId: input.providerRef },
-    };
+    });
   }
 
   async refund(input: RefundInput): Promise<RefundResult> {
@@ -110,11 +115,15 @@ export class RazorpayPaymentAdapter implements PaymentProvider {
       success: refund.status !== 'failed',
       providerRefundRef: refund.id,
       raw: refund as unknown as Record<string, unknown>,
-      failureReason: refund.status === 'failed' ? 'Razorpay refund failed.' : undefined,
+      failureReason:
+        refund.status === 'failed' ? 'Razorpay refund failed.' : undefined,
     };
   }
 
-  verifyWebhookSignature(payload: string, signature: string | undefined): boolean {
+  verifyWebhookSignature(
+    payload: string,
+    signature: string | undefined,
+  ): boolean {
     const secret = this.getWebhookSecret();
     if (!secret || !signature) return false;
     return Razorpay.validateWebhookSignature(payload, signature, secret);
