@@ -2,6 +2,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { catalogApi } from '@ai-commerce/api-client';
 import ShopHomeScreen from './ShopHomeScreen';
 import { useStore } from '../store/useStore';
+import { useRecommendations } from '../lib/useRecommendations';
 
 // The first test in this file pays the one-time cost of compiling/mounting the FlatList +
 // navigation stack; give it headroom above Jest's 5s default rather than risk flakiness on
@@ -13,6 +14,9 @@ jest.mock('@ai-commerce/api-client', () => ({
 }));
 jest.mock('../store/useStore', () => ({
   useStore: jest.fn(),
+}));
+jest.mock('../lib/useRecommendations', () => ({
+  useRecommendations: jest.fn(),
 }));
 
 const navigate = jest.fn();
@@ -34,12 +38,20 @@ const product = {
   inStock: true,
 };
 
+const recommendedProduct = {
+  ...product,
+  id: 'p2',
+  slug: 'wool-hat',
+  name: 'Wool Hat',
+};
+
 describe('ShopHomeScreen', () => {
   beforeEach(() => {
     (useStore as unknown as jest.Mock).mockImplementation((selector: (state: unknown) => unknown) =>
       selector({ wishlist: null, toggleWishlistItem: jest.fn() }),
     );
     (catalogApi.listCategories as jest.Mock).mockResolvedValue([]);
+    (useRecommendations as jest.Mock).mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -91,6 +103,38 @@ describe('ShopHomeScreen', () => {
 
     await waitFor(() =>
       expect(catalogApi.listProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'scarf', page: 1 })),
+    );
+  });
+
+  it('renders a "Recommended for you" rail on the default browse view', async () => {
+    (catalogApi.listProducts as jest.Mock).mockResolvedValue({ items: [product], total: 1, page: 1, pageSize: 20 });
+    (useRecommendations as jest.Mock).mockReturnValue([{ product: recommendedProduct, score: 0.8, reasons: [] }]);
+
+    const { findByText } = await render(<ShopHomeScreen navigation={navigation} route={{} as never} />);
+
+    expect(await findByText('Recommended for you')).toBeTruthy();
+    expect(await findByText('Wool Hat')).toBeTruthy();
+  });
+
+  it('navigates to product detail when a recommended rail item is pressed', async () => {
+    (catalogApi.listProducts as jest.Mock).mockResolvedValue({ items: [product], total: 1, page: 1, pageSize: 20 });
+    (useRecommendations as jest.Mock).mockReturnValue([{ product: recommendedProduct, score: 0.8, reasons: [] }]);
+
+    const { findByText } = await render(<ShopHomeScreen navigation={navigation} route={{} as never} />);
+    await fireEvent.press(await findByText('Wool Hat'));
+
+    expect(navigate).toHaveBeenCalledWith('ProductDetail', { slug: 'wool-hat' });
+  });
+
+  it('disables the recommendations hook (rail hidden) once a search filter is applied', async () => {
+    (catalogApi.listProducts as jest.Mock).mockResolvedValue({ items: [product], total: 1, page: 1, pageSize: 20 });
+
+    const { getByLabelText } = await render(<ShopHomeScreen navigation={navigation} route={{} as never} />);
+    await fireEvent.changeText(getByLabelText('Search products'), 'scarf');
+    await fireEvent(getByLabelText('Search products'), 'submitEditing');
+
+    await waitFor(() =>
+      expect(useRecommendations).toHaveBeenLastCalledWith('personalized', expect.objectContaining({ enabled: false })),
     );
   });
 });

@@ -12,13 +12,15 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ProductDetail, ProductSpecification, ProductVariant } from '@ai-commerce/types';
 import { catalogApi } from '@ai-commerce/api-client';
 import VariantPicker from '../components/VariantPicker';
+import RecommendationRail from '../components/RecommendationRail';
 import { useStore } from '../store/useStore';
 import { formatPrice, resolveImageUrl } from '../lib/format';
+import { useRecommendations } from '../lib/useRecommendations';
 import type { ProductStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<ProductStackParamList, 'ProductDetail'>;
 
-export default function ProductDetailScreen({ route }: Props) {
+export default function ProductDetailScreen({ navigation, route }: Props) {
   const { slug } = route.params;
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
@@ -30,6 +32,9 @@ export default function ProductDetailScreen({ route }: Props) {
     (s) => s.wishlist?.items.some((i) => i.productId === product?.id) ?? false,
   );
   const toggleWishlistItem = useStore((s) => s.toggleWishlistItem);
+
+  const frequentlyBoughtWith = useRecommendations('frequentlyBoughtWith', { productId: product?.id, limit: 3 });
+  const similar = useRecommendations('similar', { productId: product?.id, limit: 6 });
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
@@ -255,6 +260,22 @@ export default function ProductDetailScreen({ route }: Props) {
             </View>
           ))}
         </View>
+      )}
+
+      {frequentlyBoughtWith && (
+        <RecommendationRail
+          title="Frequently bought together"
+          products={frequentlyBoughtWith.map((r) => r.product)}
+          onPressProduct={(p) => navigation.push('ProductDetail', { slug: p.slug })}
+        />
+      )}
+
+      {similar && (
+        <RecommendationRail
+          title="Similar products"
+          products={similar.map((r) => r.product)}
+          onPressProduct={(p) => navigation.push('ProductDetail', { slug: p.slug })}
+        />
       )}
     </ScrollView>
   );

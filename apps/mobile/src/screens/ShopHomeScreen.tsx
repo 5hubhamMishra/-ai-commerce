@@ -12,6 +12,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Category, ProductListItem, ProductSort } from '@ai-commerce/types';
 import { catalogApi } from '@ai-commerce/api-client';
 import ProductCard from '../components/ProductCard';
+import RecommendationRail from '../components/RecommendationRail';
+import { useRecommendations } from '../lib/useRecommendations';
 import type { ShopStackParamList } from '../navigation/types';
 
 const PAGE_SIZE = 20;
@@ -78,6 +80,11 @@ export default function ShopHomeScreen({ navigation }: Props) {
     setPage(1);
   }
 
+  // Only shown on the default, unfiltered browse view — "recommended for you" is semantically
+  // nonsensical layered on top of a search/category result set, and the screen has no
+  // scrollable wrapper above the grid to tuck it away in otherwise.
+  const recommended = useRecommendations('personalized', { limit: 10, enabled: !search && !categorySlug });
+
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
@@ -92,6 +99,14 @@ export default function ShopHomeScreen({ navigation }: Props) {
           accessibilityLabel="Search products"
         />
       </View>
+
+      {recommended && (
+        <RecommendationRail
+          title="Recommended for you"
+          products={recommended.map((r) => r.product)}
+          onPressProduct={(p) => navigation.navigate('ProductDetail', { slug: p.slug })}
+        />
+      )}
 
       <FlatList
         horizontal
