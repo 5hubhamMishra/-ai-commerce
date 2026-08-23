@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "buildCommand": "npx prisma migrate deploy && npm run build",
+  "buildCommand": "npx prisma migrate deploy && npx prisma generate && npm run build",
   "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/cron/:path*", "destination": "/api/cron/:path*" },
