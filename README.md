@@ -10,11 +10,13 @@ This repository was built incrementally, phase by phase.
 
 ```
 apps/
-  web/          Next.js storefront + admin UI. Auth, catalog browsing, and cart/wishlist call
-                the real apps/api; recommendations, ShopAI, checkout, and admin still read
-                static JSON, not yet wired up.
+  web/          Next.js storefront + admin UI, fully wired to the real apps/api: auth, catalog,
+                cart/wishlist, checkout/payments, recommendations, ShopAI, and the admin
+                dashboard all call the live backend. Product reviews are the one exception —
+                apps/api has no reviews model yet.
   api/          NestJS modular monolith — REST API, auth, RBAC, commerce domain logic
-  mobile/       React Native (Expo) app — shares API contracts with web
+  mobile/       React Native (Expo) app — catalog, cart, wishlist, checkout, ShopAI, and
+                recommendations, all calling the real apps/api via the same API contracts as web
 packages/
   types/        Shared TypeScript types (domain models, DTOs)
   config/       Shared runtime configuration helpers
