@@ -45,6 +45,14 @@ class EnvironmentVariables {
   @IsString()
   @MinLength(1, { message: 'ANTHROPIC_API_KEY is required for ShopAI' })
   ANTHROPIC_API_KEY!: string;
+
+  // Not required — unset means every dev/test/e2e environment stays on the dev payment
+  // adapter with zero env changes. Only format-checked when present; a selected 'razorpay'
+  // with missing RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET fails closed at first use (matching the
+  // webhook secret's own precedent), not at boot.
+  @IsOptional()
+  @IsIn(['development', 'razorpay'])
+  PAYMENT_PROVIDER?: string;
 }
 
 /**

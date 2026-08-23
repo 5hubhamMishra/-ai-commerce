@@ -3,11 +3,18 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Script from "next/script";
 import type { Address, ShippingMethodQuote } from "@ai-commerce/types";
-import { shippingApi } from "@ai-commerce/api-client";
+import { ordersApi, paymentsApi, shippingApi } from "@ai-commerce/api-client";
 import { useStore } from "@/lib/store";
 import { formatPrice } from "@/lib/format";
 import { SkeletonBlock, SkeletonText } from "@/components/Skeleton";
+
+// Unset in every dev/test/CI environment (including this app's own Playwright suite) — the
+// simulated, instant-confirm path stays byte-for-byte unchanged there. Set only alongside the
+// backend's PAYMENT_PROVIDER=razorpay/RAZORPAY_KEY_ID (same Razorpay dashboard credential
+// pair), which is what actually opens the real Checkout widget.
+const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
 type NewAddressFields = {
   label: string;
@@ -102,7 +109,7 @@ export default function CheckoutPage() {
   const addressesStatus = useStore((s) => s.serverAddressesStatus);
   const fetchServerAddresses = useStore((s) => s.fetchServerAddresses);
   const createServerAddress = useStore((s) => s.createServerAddress);
-  const placeServerOrder = useStore((s) => s.placeServerOrder);
+  const finalizeServerOrder = useStore((s) => s.finalizeServerOrder);
   const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const hydrated = useStore((s) => s.hydrated);
@@ -118,6 +125,11 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Kept across retries (e.g. the user dismisses the Razorpay widget without paying) so a
+  // retry only re-runs the payment-intent step, never mints a second order.
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [razorpayReady, setRazorpayReady] = useState(false);
 
   const lines = serverCart?.items ?? [];
   const subtotal = serverCart?.subtotal ?? 0;
@@ -245,18 +257,65 @@ export default function CheckoutPage() {
     setError(null);
     setPlacing(true);
     try {
-      const order = await placeServerOrder(effectiveAddressId, selectedMethod as "STANDARD" | "EXPRESS");
-      router.push(`/orders/${order.id}`);
+      const currentOrderId =
+        orderId ?? (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as "STANDARD" | "EXPRESS" })).id;
+      setOrderId(currentOrderId);
+
+      const payment = await paymentsApi.create(currentOrderId);
+
+      if (!RAZORPAY_KEY_ID) {
+        // Simulated path — unchanged from before, no widget.
+        const order = await finalizeServerOrder(currentOrderId, payment.paymentId);
+        router.push(`/orders/${order.id}`);
+        return;
+      }
+
+      const razorpay = new window.Razorpay!({
+        key: RAZORPAY_KEY_ID,
+        order_id: payment.providerRef,
+        amount: Math.round(payment.amount * 100),
+        currency: payment.currency,
+        name: "Veloura",
+        handler: (response) => {
+          void (async () => {
+            try {
+              const order = await finalizeServerOrder(currentOrderId, payment.paymentId, {
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+              router.push(`/orders/${order.id}`);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Couldn't confirm your payment. Please try again.");
+              setPlacing(false);
+            }
+          })();
+        },
+        modal: {
+          ondismiss: () => {
+            setError("Payment was not completed. You can try again — your order hasn't been lost.");
+            setPlacing(false);
+          },
+        },
+      });
+      razorpay.open();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't place your order. Please try again.");
       setPlacing(false);
     }
   }
 
-  const canSubmit = !showAddForm && !!effectiveAddressId && !!selectedMethod && !placing;
+  const canSubmit = !showAddForm && !!effectiveAddressId && !!selectedMethod && !placing && (!RAZORPAY_KEY_ID || razorpayReady);
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 lg:px-8 pb-16">
+      {RAZORPAY_KEY_ID && (
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+          onLoad={() => setRazorpayReady(true)}
+        />
+      )}
+
       <div className="flex items-center gap-2 text-xs font-semibold mb-8">
         <span className="badge badge-success">1 Cart</span>
         <span style={{ color: 'var(--clr-border-strong)' }}>›</span>
@@ -372,10 +431,21 @@ export default function CheckoutPage() {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
               <div>
-                <p className="text-sm font-semibold text-[var(--clr-text-primary)]">Simulated payment</p>
-                <p className="text-xs text-[var(--clr-text-secondary)] mt-1">
-                  This places a real order against the store&apos;s backend, but payment settlement itself is simulated — no card details are collected and no real charge occurs.
-                </p>
+                {RAZORPAY_KEY_ID ? (
+                  <>
+                    <p className="text-sm font-semibold text-[var(--clr-text-primary)]">Secure payment via Razorpay</p>
+                    <p className="text-xs text-[var(--clr-text-secondary)] mt-1">
+                      You&apos;ll be asked to complete payment in a secure Razorpay window before your order is confirmed.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-[var(--clr-text-primary)]">Simulated payment</p>
+                    <p className="text-xs text-[var(--clr-text-secondary)] mt-1">
+                      This places a real order against the store&apos;s backend, but payment settlement itself is simulated — no card details are collected and no real charge occurs.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>

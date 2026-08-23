@@ -119,7 +119,7 @@ export class RefundsService {
     }
 
     const result = await this.requestProviderRefund(
-      payment.providerRef!,
+      payment.providerPaymentRef ?? payment.providerRef!,
       dto.amount,
       payment.currency,
       dto.reason,

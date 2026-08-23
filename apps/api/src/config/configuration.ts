@@ -36,11 +36,19 @@ export default () => ({
     ),
   },
   payments: {
-    // Verifies the (development-simulated, or eventually real Razorpay/Stripe) provider
-    // webhook's HMAC signature. Unset means "reject every webhook" (fail closed) — never
-    // "accept every webhook", so a misconfigured deployment can't silently accept forged
-    // payment-succeeded events.
+    // Verifies the (development-simulated, or real Razorpay) provider webhook's HMAC
+    // signature. Unset means "reject every webhook" (fail closed) — never "accept every
+    // webhook", so a misconfigured deployment can't silently accept forged payment-succeeded
+    // events. Shared across whichever provider is active, not one secret per provider.
     webhookSecret: process.env.PAYMENT_SECRET,
+    // 'development' | 'razorpay' — selects which PaymentProvider payments.module.ts binds.
+    // Defaults to 'development' so every existing dev/test/e2e environment (including the
+    // whole e2e suite) is unaffected without needing any env changes.
+    provider: process.env.PAYMENT_PROVIDER ?? 'development',
+    razorpay: {
+      keyId: process.env.RAZORPAY_KEY_ID,
+      keySecret: process.env.RAZORPAY_KEY_SECRET,
+    },
   },
   marketplace: {
     // Spec: "Marketplace functionality may be disabled initially through

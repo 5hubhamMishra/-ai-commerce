@@ -9,13 +9,14 @@ export const paymentsApi = {
       headers: { 'Idempotency-Key': crypto.randomUUID() },
     }),
 
-  /** `simulateFailure` only has any effect against the dev payment adapter (a real provider
-   *  ignores client-supplied outcome fields entirely) — omitted here since apps/web always
-   *  wants a real confirm attempt, never a forced failure. */
-  confirm: (paymentId: string) =>
+  /** `payload` carries whatever a real provider's client-side widget handed back for
+   *  server-side verification (Razorpay Checkout's razorpayPaymentId/razorpaySignature) — the
+   *  adapter is what actually trusts or distrusts these, never the DTO itself. Omit for the
+   *  simulated dev-adapter path, which ignores client-supplied outcome fields entirely. */
+  confirm: (paymentId: string, payload?: { razorpayPaymentId?: string; razorpaySignature?: string }) =>
     request<ConfirmPaymentResponse>(`/payments/${encodeURIComponent(paymentId)}/confirm`, {
       method: 'POST',
-      body: {},
+      body: payload ?? {},
       headers: { 'Idempotency-Key': crypto.randomUUID() },
     }),
 };

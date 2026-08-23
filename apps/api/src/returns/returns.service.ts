@@ -391,7 +391,7 @@ export class ReturnsService {
       );
       const payment = await this.findSucceededPayment(existing.orderId);
       const result = await this.refundsService.requestProviderRefund(
-        payment.providerRef!,
+        payment.providerPaymentRef ?? payment.providerRef!,
         amount,
         payment.currency,
         'Return completed',

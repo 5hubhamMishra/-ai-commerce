@@ -15,9 +15,13 @@ import { AppModule } from './app.module';
 export async function createApp(
   httpAdapter?: AbstractHttpAdapter,
 ): Promise<INestApplication> {
+  // rawBody: true — the real Razorpay webhook route needs the literal raw request bytes to
+  // verify its HMAC signature against (a re-serialized JSON.stringify of the parsed body can
+  // mismatch on key order/whitespace even for a genuine, unmodified payload). Populates
+  // req.rawBody alongside the normal parsed body; no other behavior change.
   const app = httpAdapter
-    ? await NestFactory.create(AppModule, httpAdapter)
-    : await NestFactory.create(AppModule);
+    ? await NestFactory.create(AppModule, httpAdapter, { rawBody: true })
+    : await NestFactory.create(AppModule, { rawBody: true });
   const config = app.get(ConfigService);
 
   app.use(helmet());

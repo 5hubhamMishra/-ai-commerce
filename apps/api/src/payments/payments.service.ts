@@ -15,6 +15,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import type { CreatePaymentDto } from './dto/create-payment.dto';
 import type { PaymentWebhookDto } from './dto/payment-webhook.dto';
+import type { RazorpayWebhookEnvelope } from './dto/razorpay-webhook-envelope';
 import { PAYMENT_PROVIDER } from './providers/payment-provider.interface';
 import type {
   ConfirmPaymentResult,
@@ -155,7 +156,11 @@ export class PaymentsService {
 
     const confirmResult = await this.provider.confirmPayment({
       providerRef: payment.providerRef!,
-      payload: { simulateFailure: dto.simulateFailure },
+      payload: {
+        simulateFailure: dto.simulateFailure,
+        razorpayPaymentId: dto.razorpayPaymentId,
+        razorpaySignature: dto.razorpaySignature,
+      },
     });
 
     const updated = await this.applyConfirmationResult(
@@ -196,6 +201,49 @@ export class PaymentsService {
     return { received: true };
   }
 
+  /** Real Razorpay webhook route — reads the raw request body directly (required for correct
+   *  HMAC verification against the literal bytes Razorpay signed, not a re-serialized
+   *  JSON.stringify of a parsed object, which can mismatch on key order/whitespace even for a
+   *  genuine payload) and its own nested envelope shape, translating success into the same
+   *  applyConfirmationResult-driven flow the dev-adapter webhook and client-confirm paths share. */
+  async handleRazorpayWebhook(
+    rawBody: string | undefined,
+    signature: string | undefined,
+  ) {
+    if (!rawBody || !this.provider.verifyWebhookSignature(rawBody, signature)) {
+      throw new BadRequestException({
+        code: 'INVALID_WEBHOOK_SIGNATURE',
+        message: 'Webhook signature verification failed.',
+      });
+    }
+
+    const envelope = JSON.parse(rawBody) as RazorpayWebhookEnvelope;
+    const paymentEntity = envelope.payload?.payment?.entity;
+    if (!paymentEntity) {
+      // No payment entity to act on (a webhook event type this app doesn't care about) —
+      // acknowledge without erroring so Razorpay doesn't endlessly retry.
+      return { received: true };
+    }
+
+    const payment = await this.prisma.payment.findFirst({
+      where: { providerRef: paymentEntity.order_id },
+    });
+    if (!payment) {
+      return { received: true };
+    }
+    if (payment.status !== PaymentStatus.PENDING) {
+      return { received: true, alreadyProcessed: true };
+    }
+
+    await this.applyConfirmationResult(payment, null, {
+      success: envelope.event === 'payment.captured',
+      raw: { razorpayPaymentId: paymentEntity.id, razorpayOrderId: paymentEntity.order_id, source: 'webhook' },
+      failureReason:
+        envelope.event === 'payment.captured' ? undefined : `Razorpay event: ${envelope.event}`,
+    });
+    return { received: true };
+  }
+
   /** Shared by the client-confirm path and the webhook path: applies a provider's
    *  success/failure outcome to a still-PENDING payment and (on success) drives
    *  the order's PAID -> CONFIRMED transition atomically with the payment write. */
@@ -205,11 +253,17 @@ export class PaymentsService {
     confirmResult: ConfirmPaymentResult,
   ): Promise<Payment> {
     if (confirmResult.success) {
+      // Populated by RazorpayPaymentAdapter (never the dev adapter) — refunds need the
+      // payment id, not the order id providerRef already holds from createIntent time.
+      const providerPaymentRef =
+        typeof confirmResult.raw?.razorpayPaymentId === 'string'
+          ? confirmResult.raw.razorpayPaymentId
+          : undefined;
       const [updatedPayment, transition] = await this.prisma.$transaction(
         async (tx) => {
           const updatedPayment = await tx.payment.update({
             where: { id: payment.id },
-            data: { status: PaymentStatus.SUCCEEDED },
+            data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef },
           });
           const transition = await this.ordersService.confirmPaymentTransition(
             tx,

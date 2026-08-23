@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class ConfirmPaymentDto {
   // Development/testing hook only — lets the e2e suite deterministically exercise
@@ -8,4 +8,16 @@ export class ConfirmPaymentDto {
   @IsOptional()
   @IsBoolean()
   simulateFailure?: boolean;
+
+  // Real Razorpay Checkout handoff: the browser widget returns these two fields to the
+  // client on success, which POSTs them here for server-side signature verification.
+  // RazorpayPaymentAdapter is what actually trusts or distrusts them — a client can send
+  // anything, but only a value Razorpay itself signed will ever verify successfully.
+  @IsOptional()
+  @IsString()
+  razorpayPaymentId?: string;
+
+  @IsOptional()
+  @IsString()
+  razorpaySignature?: string;
 }

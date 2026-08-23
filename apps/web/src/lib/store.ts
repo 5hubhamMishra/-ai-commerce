@@ -102,11 +102,18 @@ type StoreState = {
   updateServerAddress: (id: string, input: UpdateAddressInput) => Promise<Address>;
   removeServerAddress: (id: string) => Promise<void>;
 
-  /** Orchestrates the real checkout chain apps/api requires as three separate calls
-   *  (create order -> create payment -> confirm payment), then re-fetches the cart (the
-   *  backend already cleared it server-side as part of order creation) and returns the
-   *  final order detail with its post-payment status. */
-  placeServerOrder: (addressId: string, shippingMethod: "STANDARD" | "EXPRESS") => Promise<OrderDetail>;
+  /** Confirms an already-created payment (the checkout page owns order/payment *creation*
+   *  itself now, since a real Razorpay payment needs a browser widget interaction in between
+   *  create and confirm — a Zustand action can't open one), then re-fetches the cart (the
+   *  backend already cleared it server-side as part of order creation) and returns the final
+   *  order detail. Throws if the confirm outcome isn't SUCCEEDED — a real provider can
+   *  legitimately return a failed confirmation as an ordinary 200 (tampered/expired
+   *  signature), unlike the dev adapter, which always succeeds. */
+  finalizeServerOrder: (
+    orderId: string,
+    paymentId: string,
+    confirmPayload?: { razorpayPaymentId?: string; razorpaySignature?: string },
+  ) => Promise<OrderDetail>;
 
   /** A random id persisted per-browser, generated lazily on first use — apps/api's sole
    *  ownership key for a logged-out caller's ShopAI conversation and behavioral events
@@ -370,11 +377,12 @@ export const useStore = create<StoreState>()(
         }));
       },
 
-      placeServerOrder: async (addressId, shippingMethod) => {
-        const created = await ordersApi.create({ addressId, shippingMethod });
-        const payment = await paymentsApi.create(created.id);
-        await paymentsApi.confirm(payment.paymentId);
-        const finalOrder = await ordersApi.get(created.id);
+      finalizeServerOrder: async (orderId, paymentId, confirmPayload) => {
+        const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
+        if (confirmed.status !== "SUCCEEDED") {
+          throw new Error(confirmed.failureReason ?? "Payment was not successful. Please try again.");
+        }
+        const finalOrder = await ordersApi.get(orderId);
         void get().fetchServerCart();
         get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
         get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });

@@ -54,8 +54,9 @@ export interface PaymentProvider {
    *  charge, and never for more than that payment's own amount (enforced by
    *  RefundsService, not the provider). */
   refund(input: RefundInput): Promise<RefundResult>;
-  /** Dev adapter has no real signing secret — always returns true. A real adapter
-   *  must verify against its provider's HMAC signature before trusting a webhook body. */
+  /** Every adapter verifies a real HMAC signature against its own configured secret and
+   *  fails closed (rejects) when unset — never treats "unconfigured" as "trust everything",
+   *  even the dev adapter, since its webhook route is @Public() with no other gate. */
   verifyWebhookSignature(
     payload: string,
     signature: string | undefined,

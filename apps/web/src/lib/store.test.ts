@@ -332,19 +332,13 @@ describe("server address / order actions", () => {
     expect(useStore.getState().serverAddresses).toEqual([]);
   });
 
-  it("placeServerOrder orchestrates create-order -> create-payment -> confirm-payment, then re-fetches the cart and returns the confirmed order", async () => {
-    const pendingOrder = { id: "ord-1", status: "PENDING_PAYMENT", total: 500 };
+  it("finalizeServerOrder confirms the payment, then re-fetches the order and cart", async () => {
     const confirmedOrder = { id: "ord-1", status: "CONFIRMED", total: 500 };
     const emptyCart = { id: "cart-1", items: [], itemCount: 0, subtotal: 0, currency: "INR", hasUnavailableItems: false };
 
     vi.stubGlobal(
       "fetch",
       mockFetch({
-        "POST /api/v1/orders": { status: 201, body: pendingOrder },
-        "POST /api/v1/payments": {
-          status: 201,
-          body: { paymentId: "pay-1", orderId: "ord-1", providerRef: "dev_1", clientSecret: null, amount: 500, currency: "INR", status: "PENDING" },
-        },
         "POST /api/v1/payments/pay-1/confirm": {
           status: 201,
           body: { paymentId: "pay-1", orderId: "ord-1", status: "SUCCEEDED", amount: 500, currency: "INR", failureReason: null },
@@ -354,11 +348,27 @@ describe("server address / order actions", () => {
       }),
     );
 
-    const result = await useStore.getState().placeServerOrder("addr-1", "STANDARD");
+    const result = await useStore.getState().finalizeServerOrder("ord-1", "pay-1");
 
     expect(result).toEqual(confirmedOrder);
-    // fetchServerCart() is fired but not awaited by placeServerOrder — wait for it to settle.
+    // fetchServerCart() is fired but not awaited by finalizeServerOrder — wait for it to settle.
     await vi.waitFor(() => expect(useStore.getState().serverCart).toEqual(emptyCart));
+  });
+
+  it("finalizeServerOrder throws the real failure reason and does not fetch the order when confirmation fails", async () => {
+    const fetchSpy = mockFetch({
+      "POST /api/v1/payments/pay-1/confirm": {
+        status: 201,
+        body: { paymentId: "pay-1", orderId: "ord-1", status: "FAILED", amount: 500, currency: "INR", failureReason: "Razorpay payment signature verification failed." },
+      },
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(useStore.getState().finalizeServerOrder("ord-1", "pay-1")).rejects.toThrow(
+      "Razorpay payment signature verification failed.",
+    );
+    // Only the confirm call happened — no follow-up GET /orders/:id once confirmation failed.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
 

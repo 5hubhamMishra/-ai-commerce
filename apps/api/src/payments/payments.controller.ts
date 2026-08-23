@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import type { Request } from 'express';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -46,6 +56,18 @@ export class PaymentsController {
     @Headers('x-webhook-signature') signature?: string,
   ) {
     return this.paymentsService.handleWebhook(signature, dto);
+  }
+
+  @Public()
+  @Post('webhook/razorpay')
+  razorpayWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('x-razorpay-signature') signature?: string,
+  ) {
+    return this.paymentsService.handleRazorpayWebhook(
+      req.rawBody?.toString('utf8'),
+      signature,
+    );
   }
 
   @Roles(...PAYMENT_ADMIN_ROLES)

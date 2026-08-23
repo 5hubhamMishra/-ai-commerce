@@ -1,7 +1,8 @@
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaymentProviderType } from '@prisma/client';
+import { verifyHmacSignature } from '../../common/utils/hmac-signature';
 import type {
   ConfirmPaymentInput,
   ConfirmPaymentResult,
@@ -71,12 +72,6 @@ export class DevelopmentPaymentAdapter implements PaymentProvider {
     signature: string | undefined,
   ): boolean {
     const secret = this.config.get<string>('payments.webhookSecret');
-    if (!secret || !signature) return false;
-
-    const expected = createHmac('sha256', secret).update(payload).digest('hex');
-    const expectedBuf = Buffer.from(expected, 'hex');
-    const signatureBuf = Buffer.from(signature, 'hex');
-    if (expectedBuf.length !== signatureBuf.length) return false;
-    return timingSafeEqual(expectedBuf, signatureBuf);
+    return verifyHmacSignature(secret, payload, signature);
   }
 }
