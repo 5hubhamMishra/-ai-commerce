@@ -74,32 +74,50 @@ export class SearchAnalyticsService {
     const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
     const rows = await this.prisma.searchQueryLog.findMany({
       where: { createdAt: { gte: since } },
-      select: { query: true, resultCount: true, usedSemantic: true },
+      select: { query: true, resultCount: true, usedSemantic: true, createdAt: true },
     });
 
     const total = rows.length;
     const zeroResultCount = rows.filter((r) => r.resultCount === 0).length;
     const semanticCount = rows.filter((r) => r.usedSemantic).length;
 
-    const queryCounts = new Map<string, number>();
-    const zeroResultQueryCounts = new Map<string, number>();
+    // Tracks last-seen time per query alongside its count — analytics log rows
+    // accumulate indefinitely by design (never cleaned up, real history, same
+    // as product_embeddings), so once more distinct queries exist than the
+    // top-N limit, count-only sorting leaves ties broken by arbitrary row-scan
+    // order. That silently drops the newest (most actionable) queries in favor
+    // of however the database happened to return older ones first.
+    const queryCounts = new Map<string, { count: number; lastSeenAt: Date }>();
+    const zeroResultQueryCounts = new Map<string, { count: number; lastSeenAt: Date }>();
+    const bump = (
+      counts: Map<string, { count: number; lastSeenAt: Date }>,
+      query: string,
+      occurredAt: Date,
+    ) => {
+      const existing = counts.get(query);
+      counts.set(query, {
+        count: (existing?.count ?? 0) + 1,
+        lastSeenAt: existing && existing.lastSeenAt > occurredAt ? existing.lastSeenAt : occurredAt,
+      });
+    };
     for (const row of rows) {
       const normalized = row.query.trim().toLowerCase();
       if (!normalized) continue; // filter-only browsing, not a search term
-      queryCounts.set(normalized, (queryCounts.get(normalized) ?? 0) + 1);
+      bump(queryCounts, normalized, row.createdAt);
       if (row.resultCount === 0) {
-        zeroResultQueryCounts.set(
-          normalized,
-          (zeroResultQueryCounts.get(normalized) ?? 0) + 1,
-        );
+        bump(zeroResultQueryCounts, normalized, row.createdAt);
       }
     }
 
-    const topOf = (counts: Map<string, number>) =>
+    const topOf = (counts: Map<string, { count: number; lastSeenAt: Date }>) =>
       [...counts.entries()]
-        .sort((a, b) => b[1] - a[1])
+        .sort(
+          (a, b) =>
+            b[1].count - a[1].count ||
+            b[1].lastSeenAt.getTime() - a[1].lastSeenAt.getTime(),
+        )
         .slice(0, SEARCH_ANALYTICS_TOP_QUERIES_LIMIT)
-        .map(([query, count]) => ({ query, count }));
+        .map(([query, { count }]) => ({ query, count }));
 
     return {
       windowDays,
