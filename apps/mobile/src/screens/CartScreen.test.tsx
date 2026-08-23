@@ -97,4 +97,13 @@ describe('CartScreen', () => {
 
     expect(navigate).toHaveBeenCalledWith('ProductDetail', { slug: 'silk-scarf' });
   });
+
+  it('navigates to Checkout when the checkout button is pressed', async () => {
+    mockStore({ items: [cartItem], itemCount: 2, subtotal: 2400 });
+
+    const { findByLabelText } = await render(<CartScreen navigation={navigation} route={{} as never} />);
+    await fireEvent.press(await findByLabelText('Proceed to checkout'));
+
+    expect(navigate).toHaveBeenCalledWith('Checkout');
+  });
 });

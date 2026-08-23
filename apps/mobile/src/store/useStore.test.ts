@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react-native';
 import type { PublicUser } from '@ai-commerce/types';
-import { authApi, cartApi, wishlistApi } from '@ai-commerce/api-client';
+import { addressesApi, authApi, cartApi, ordersApi, paymentsApi, wishlistApi } from '@ai-commerce/api-client';
 import { session } from '../api/session';
 import { mobileRefresh, setAccessToken } from '../api/apiClient';
 import { useStore } from './useStore';
@@ -9,6 +9,9 @@ jest.mock('@ai-commerce/api-client', () => ({
   authApi: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), me: jest.fn() },
   cartApi: { getCart: jest.fn(), addItem: jest.fn(), updateItem: jest.fn(), removeItem: jest.fn() },
   wishlistApi: { list: jest.fn(), add: jest.fn(), remove: jest.fn() },
+  addressesApi: { list: jest.fn(), create: jest.fn() },
+  ordersApi: { create: jest.fn(), get: jest.fn() },
+  paymentsApi: { create: jest.fn(), confirm: jest.fn() },
 }));
 jest.mock('../api/session', () => ({
   session: { save: jest.fn(), getRefreshToken: jest.fn(), clear: jest.fn() },
@@ -35,7 +38,10 @@ const initialState = useStore.getState();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useStore.setState({ ...initialState, user: null, authStatus: 'idle', cart: null, wishlist: null }, true);
+  useStore.setState(
+    { ...initialState, user: null, authStatus: 'idle', cart: null, wishlist: null, addresses: null },
+    true,
+  );
 });
 
 describe('auth actions', () => {
@@ -81,7 +87,13 @@ describe('auth actions', () => {
   });
 
   it('logout clears tokens, storage, and store state', async () => {
-    useStore.setState({ user: publicUser, authStatus: 'authenticated', cart: emptyCart, wishlist: emptyWishlist });
+    useStore.setState({
+      user: publicUser,
+      authStatus: 'authenticated',
+      cart: emptyCart,
+      wishlist: emptyWishlist,
+      addresses: [],
+    });
     (session.getRefreshToken as jest.Mock).mockResolvedValue('r1');
     (authApi.logout as jest.Mock).mockResolvedValue(undefined);
 
@@ -94,6 +106,7 @@ describe('auth actions', () => {
     expect(useStore.getState().authStatus).toBe('unauthenticated');
     expect(useStore.getState().cart).toBeNull();
     expect(useStore.getState().wishlist).toBeNull();
+    expect(useStore.getState().addresses).toBeNull();
   });
 
   it('logout still clears local session state even if the server call fails', async () => {
@@ -202,5 +215,103 @@ describe('wishlist actions', () => {
     await useStore.getState().toggleWishlistItem('p1');
     expect(wishlistApi.remove).toHaveBeenCalledWith('p1');
     expect(useStore.getState().wishlist).toEqual(emptyWishlist);
+  });
+});
+
+const address = {
+  id: 'addr-1',
+  userId: 'u1',
+  label: 'Home',
+  line1: '221B Baker Street',
+  line2: null,
+  city: 'Mumbai',
+  state: 'Maharashtra',
+  postalCode: '400001',
+  country: 'India',
+  isDefault: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+describe('address actions', () => {
+  it('fetchAddresses loads the server address list', async () => {
+    (addressesApi.list as jest.Mock).mockResolvedValue([address]);
+
+    await useStore.getState().fetchAddresses();
+
+    expect(useStore.getState().addresses).toEqual([address]);
+    expect(useStore.getState().addressesStatus).toBe('idle');
+  });
+
+  it('fetchAddresses sets an error status on failure', async () => {
+    (addressesApi.list as jest.Mock).mockRejectedValue(new Error('network error'));
+
+    await useStore.getState().fetchAddresses();
+
+    expect(useStore.getState().addressesStatus).toBe('error');
+  });
+
+  it('createAddress appends a non-default address to the existing list', async () => {
+    useStore.setState({ addresses: [address] });
+    const nonDefault = { ...address, id: 'addr-2', isDefault: false };
+    (addressesApi.create as jest.Mock).mockResolvedValue(nonDefault);
+
+    const created = await useStore.getState().createAddress({
+      line1: nonDefault.line1,
+      city: nonDefault.city,
+      state: nonDefault.state,
+      postalCode: nonDefault.postalCode,
+      country: nonDefault.country,
+    });
+
+    expect(created).toEqual(nonDefault);
+    expect(useStore.getState().addresses).toEqual([address, nonDefault]);
+  });
+
+  it('createAddress prepends a new default address and un-defaults the others', async () => {
+    useStore.setState({ addresses: [address] });
+    const newDefault = { ...address, id: 'addr-2', isDefault: true };
+    (addressesApi.create as jest.Mock).mockResolvedValue(newDefault);
+
+    await useStore.getState().createAddress({
+      line1: newDefault.line1,
+      city: newDefault.city,
+      state: newDefault.state,
+      postalCode: newDefault.postalCode,
+      country: newDefault.country,
+      isDefault: true,
+    });
+
+    expect(useStore.getState().addresses).toEqual([newDefault, { ...address, isDefault: false }]);
+  });
+});
+
+describe('placeOrder', () => {
+  it('orchestrates create-order -> create-payment -> confirm-payment -> refetch, and refetches the cart', async () => {
+    const pendingOrder = { id: 'ord-1', status: 'PENDING_PAYMENT', total: 500 };
+    const confirmedOrder = { id: 'ord-1', status: 'CONFIRMED', total: 500 };
+    (ordersApi.create as jest.Mock).mockResolvedValue(pendingOrder);
+    (paymentsApi.create as jest.Mock).mockResolvedValue({ paymentId: 'pay-1' });
+    (paymentsApi.confirm as jest.Mock).mockResolvedValue({ status: 'SUCCEEDED' });
+    (ordersApi.get as jest.Mock).mockResolvedValue(confirmedOrder);
+    (cartApi.getCart as jest.Mock).mockResolvedValue(emptyCart);
+
+    const result = await useStore.getState().placeOrder('addr-1', 'STANDARD');
+
+    expect(ordersApi.create).toHaveBeenCalledWith({ addressId: 'addr-1', shippingMethod: 'STANDARD' });
+    expect(paymentsApi.create).toHaveBeenCalledWith('ord-1');
+    expect(paymentsApi.confirm).toHaveBeenCalledWith('pay-1');
+    expect(ordersApi.get).toHaveBeenCalledWith('ord-1');
+    expect(result).toEqual(confirmedOrder);
+
+    // fetchCart() is fired but not awaited by placeOrder — wait for it to settle.
+    await waitFor(() => expect(useStore.getState().cart).toEqual(emptyCart));
+  });
+
+  it('propagates a failure from any step in the chain', async () => {
+    (ordersApi.create as jest.Mock).mockRejectedValue(new Error('Insufficient stock.'));
+
+    await expect(useStore.getState().placeOrder('addr-1', 'STANDARD')).rejects.toThrow('Insufficient stock.');
+    expect(paymentsApi.create).not.toHaveBeenCalled();
   });
 });

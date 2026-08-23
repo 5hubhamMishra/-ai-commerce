@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ShopStack from './ShopStack';
 import CartStack from './CartStack';
 import WishlistStack from './WishlistStack';
-import AccountScreen from '../screens/AccountScreen';
+import AccountStack from './AccountStack';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -13,7 +13,7 @@ export default function MainTabs() {
       <Tab.Screen name="Shop" component={ShopStack} />
       <Tab.Screen name="Cart" component={CartStack} />
       <Tab.Screen name="Wishlist" component={WishlistStack} />
-      <Tab.Screen name="Account" component={AccountScreen} options={{ headerShown: true, title: 'Account' }} />
+      <Tab.Screen name="Account" component={AccountStack} />
     </Tab.Navigator>
   );
 }

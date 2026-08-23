@@ -1,6 +1,13 @@
 import { create } from 'zustand';
-import type { CartResponse, PublicUser, WishlistResponse } from '@ai-commerce/types';
-import { authApi, cartApi, wishlistApi } from '@ai-commerce/api-client';
+import type {
+  Address,
+  CartResponse,
+  CreateAddressInput,
+  OrderDetail,
+  PublicUser,
+  WishlistResponse,
+} from '@ai-commerce/types';
+import { addressesApi, authApi, cartApi, ordersApi, paymentsApi, wishlistApi } from '@ai-commerce/api-client';
 import { session } from '../api/session';
 import { configureMobileApiClient, mobileRefresh, setAccessToken } from '../api/apiClient';
 
@@ -34,6 +41,16 @@ type StoreState = {
   wishlistStatus: AsyncStatus;
   fetchWishlist: () => Promise<void>;
   toggleWishlistItem: (productId: string) => Promise<void>;
+
+  addresses: Address[] | null;
+  addressesStatus: AsyncStatus;
+  fetchAddresses: () => Promise<void>;
+  createAddress: (input: CreateAddressInput) => Promise<Address>;
+
+  /** Mirrors apps/web's placeServerOrder (create -> payment create -> payment confirm ->
+   *  refetch final order), minus the analytics calls web fires around it — mobile has no
+   *  event-tracking infrastructure and this phase doesn't introduce one. */
+  placeOrder: (addressId: string, shippingMethod: 'STANDARD' | 'EXPRESS') => Promise<OrderDetail>;
 };
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -69,7 +86,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
   clearSession: () => {
     setAccessToken(null);
-    set({ user: null, authStatus: 'unauthenticated', cart: null, wishlist: null });
+    set({ user: null, authStatus: 'unauthenticated', cart: null, wishlist: null, addresses: null });
   },
 
   restoreSession: async () => {
@@ -137,6 +154,38 @@ export const useStore = create<StoreState>((set, get) => ({
     const isWishlisted = get().wishlist?.items.some((i) => i.productId === productId) ?? false;
     const wishlist = isWishlisted ? await wishlistApi.remove(productId) : await wishlistApi.add(productId);
     set({ wishlist });
+  },
+
+  addresses: null,
+  addressesStatus: 'idle',
+
+  fetchAddresses: async () => {
+    set({ addressesStatus: 'loading' });
+    try {
+      const addresses = await addressesApi.list();
+      set({ addresses, addressesStatus: 'idle' });
+    } catch {
+      set({ addressesStatus: 'error' });
+    }
+  },
+
+  createAddress: async (input) => {
+    const address = await addressesApi.create(input);
+    set((state) => ({
+      addresses: address.isDefault
+        ? [address, ...(state.addresses ?? []).map((a) => ({ ...a, isDefault: false }))]
+        : [...(state.addresses ?? []), address],
+    }));
+    return address;
+  },
+
+  placeOrder: async (addressId, shippingMethod) => {
+    const created = await ordersApi.create({ addressId, shippingMethod });
+    const payment = await paymentsApi.create(created.id);
+    await paymentsApi.confirm(payment.paymentId);
+    const finalOrder = await ordersApi.get(created.id);
+    void get().fetchCart(); // apps/api already clears the cart server-side as part of order creation
+    return finalOrder;
   },
 }));
 

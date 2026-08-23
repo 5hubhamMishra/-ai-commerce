@@ -5,16 +5,30 @@ export type ProductStackParamList = {
   ProductDetail: { slug: string };
 };
 
+/** Shared shape for the order-detail screen — reachable from both CartStack (right after
+ *  placing an order) and AccountStack (via My Orders), same cross-stack pattern as
+ *  ProductStackParamList above. */
+export type OrderStackParamList = {
+  OrderDetail: { id: string };
+};
+
 export type ShopStackParamList = ProductStackParamList & {
   ShopHome: undefined;
 };
 
-export type CartStackParamList = ProductStackParamList & {
-  CartHome: undefined;
-};
+export type CartStackParamList = ProductStackParamList &
+  OrderStackParamList & {
+    CartHome: undefined;
+    Checkout: undefined;
+  };
 
 export type WishlistStackParamList = ProductStackParamList & {
   WishlistHome: undefined;
+};
+
+export type AccountStackParamList = OrderStackParamList & {
+  AccountHome: undefined;
+  OrderList: undefined;
 };
 
 export type MainTabParamList = {

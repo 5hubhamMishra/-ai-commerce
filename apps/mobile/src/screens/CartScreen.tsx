@@ -130,8 +130,18 @@ export default function CartScreen({ navigation }: Props) {
         }}
       />
       <View style={styles.footer}>
-        <Text style={styles.footerLabel}>Subtotal ({cart.itemCount})</Text>
-        <Text style={styles.footerTotal}>{formatPrice(cart.subtotal)}</Text>
+        <View style={styles.footerRow}>
+          <Text style={styles.footerLabel}>Subtotal ({cart.itemCount})</Text>
+          <Text style={styles.footerTotal}>{formatPrice(cart.subtotal)}</Text>
+        </View>
+        <Pressable
+          style={styles.checkoutButton}
+          onPress={() => navigation.navigate('Checkout')}
+          accessibilityRole="button"
+          accessibilityLabel="Proceed to checkout"
+        >
+          <Text style={styles.checkoutButtonText}>Checkout</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -159,13 +169,18 @@ const styles = StyleSheet.create({
   qtyValue: { width: 20, textAlign: 'center', fontSize: 13, fontWeight: '600', color: '#111827' },
   removeText: { fontSize: 12, fontWeight: '600', color: '#b45309' },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
   },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   footerLabel: { fontSize: 13, color: '#6b7280' },
   footerTotal: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  checkoutButton: { backgroundColor: '#b45309', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  checkoutButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
