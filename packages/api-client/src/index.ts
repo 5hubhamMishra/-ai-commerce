@@ -12,6 +12,7 @@ export * from './payments';
 export * from './shopai';
 export * from './events';
 export * from './recommendations';
+export * from './reviews';
 export * from './activity';
 export * from './analytics';
 export * from './users';

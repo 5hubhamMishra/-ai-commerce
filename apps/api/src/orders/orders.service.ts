@@ -38,7 +38,12 @@ const ORDER_VIEW_ROLES: Role[] = [
 ];
 
 const orderDetailInclude = {
-  items: true,
+  // Only the product id/slug are pulled through the variant relation — everything else
+  // about the item (name/sku/price) stays the ADR-016 snapshot on OrderItem itself, never
+  // re-derived from the live product. Needed so the client can link "write a review" to
+  // the actual product without a separate lookup; variant is ON DELETE RESTRICT, so this
+  // join is always safe to make.
+  items: { include: { variant: { select: { product: { select: { id: true, slug: true } } } } } },
   shipment: {
     include: { events: { orderBy: { occurredAt: 'asc' as const } } },
   },
@@ -770,6 +775,8 @@ function toOrderDetail(order: OrderDetailRow) {
     items: order.items.map((item) => ({
       id: item.id,
       variantId: item.variantId,
+      productId: item.variant.product.id,
+      productSlug: item.variant.product.slug,
       productName: item.productName,
       sku: item.sku,
       unitPrice: Number(item.unitPrice),

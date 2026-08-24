@@ -8,6 +8,7 @@ export * from './events';
 export * from './orders';
 export * from './payments';
 export * from './recommendations';
+export * from './reviews';
 export * from './roles';
 export * from './search';
 export * from './shipping';

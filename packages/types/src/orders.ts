@@ -44,6 +44,8 @@ export type CreateOrderInput = {
 export type OrderItemDetail = {
   id: string;
   variantId: string;
+  productId: string;
+  productSlug: string;
   productName: string;
   sku: string;
   unitPrice: number;

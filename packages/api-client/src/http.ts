@@ -114,9 +114,12 @@ async function defaultRefresh(): Promise<string | null> {
 // chain) — two independent concurrent refreshes off the same cookie/stored-token would
 // trigger exactly that and force-logout the user. This guard wraps whichever refresh
 // implementation is configured (default or custom), so it protects both the same way.
+// Exported so callers that need a fresh token up front (e.g. a session-restore effect on
+// mount) go through the same de-dup instead of firing a second, unguarded refresh that races
+// this one — any caller that raced it would lose the whole session to theft-detection above.
 let refreshPromise: Promise<string | null> | null = null;
 
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = (clientConfig.refresh ?? defaultRefresh)()
       .catch(() => null)

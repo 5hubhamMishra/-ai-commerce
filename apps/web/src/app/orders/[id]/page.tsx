@@ -14,6 +14,7 @@ import {
   progressStageIndex,
 } from "@/lib/order-status";
 import { RowsPageSkeleton } from "@/components/Skeleton";
+import WriteReviewAction from "@/components/product/WriteReviewAction";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -156,7 +157,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="divide-y" style={{ borderColor: "var(--clr-border)" }}>
           {order.items.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 px-5 py-4">
+            <div key={item.id} className="flex flex-wrap items-start gap-4 px-5 py-4">
               <div
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
                 style={{ background: "var(--clr-surface-2)" }}
@@ -167,13 +168,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-[10rem]">
                 <p className="text-sm font-medium line-clamp-1" style={{ color: "var(--clr-text-primary)" }}>
                   {item.productName}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "var(--clr-text-disabled)" }}>
                   {item.sku} · Qty: {item.quantity}
                 </p>
+                {order.status === "DELIVERED" && (
+                  <div className="mt-1.5">
+                    <WriteReviewAction
+                      orderId={order.id}
+                      productSlug={item.productSlug}
+                      productName={item.productName}
+                    />
+                  </div>
+                )}
               </div>
               <p className="text-sm font-bold shrink-0" style={{ color: "var(--clr-text-primary)" }}>
                 {formatPrice(item.lineTotal)}

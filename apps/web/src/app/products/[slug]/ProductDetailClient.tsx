@@ -11,6 +11,7 @@ import { useRecommendations } from "@/lib/hooks/useRecommendations";
 import { fromProductListItem } from "@/lib/catalog-mappers";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import VariantPicker from "@/components/catalog/VariantPicker";
+import ProductReviews from "@/components/product/ProductReviews";
 
 export default function ProductDetailClient({ initialProduct }: { initialProduct: ProductDetail }) {
   const product = initialProduct;
@@ -317,6 +318,11 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           )}
         </div>
       </div>
+
+      <ProductReviews
+        productSlug={product.slug}
+        summary={{ average: product.rating, count: product.reviewCount }}
+      />
 
       {frequentlyBoughtWith && frequentlyBoughtWith.length > 0 && (
         <div className="mt-12">

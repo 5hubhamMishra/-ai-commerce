@@ -34,6 +34,8 @@ export type ProductListItem = {
   maxPrice: number | null;
   primaryImageUrl: string | null;
   inStock: boolean;
+  rating: number | null;
+  reviewCount: number;
 };
 
 export type ProductVariantAttribute = {
