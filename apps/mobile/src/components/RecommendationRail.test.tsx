@@ -28,6 +28,8 @@ function makeProduct(id: string, name: string): ProductListItem {
     maxPrice: 100,
     primaryImageUrl: null,
     inStock: true,
+    rating: null,
+    reviewCount: 0,
   };
 }
 

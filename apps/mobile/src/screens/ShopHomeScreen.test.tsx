@@ -36,6 +36,8 @@ const product = {
   maxPrice: 1200,
   primaryImageUrl: null,
   inStock: true,
+  rating: null,
+  reviewCount: 0,
 };
 
 const recommendedProduct = {

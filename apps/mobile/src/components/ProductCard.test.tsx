@@ -32,6 +32,8 @@ const product: ProductListItem = {
   maxPrice: 1200,
   primaryImageUrl: '/products/items/scarf.jpg',
   inStock: true,
+  rating: null,
+  reviewCount: 0,
 };
 
 describe('ProductCard', () => {

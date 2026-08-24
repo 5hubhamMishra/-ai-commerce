@@ -13,6 +13,7 @@ import type { ProductDetail, ProductSpecification, ProductVariant } from '@ai-co
 import { catalogApi } from '@ai-commerce/api-client';
 import VariantPicker from '../components/VariantPicker';
 import RecommendationRail from '../components/RecommendationRail';
+import ProductReviews from '../components/ProductReviews';
 import { useStore } from '../store/useStore';
 import { formatPrice, resolveImageUrl } from '../lib/format';
 import { useRecommendations } from '../lib/useRecommendations';
@@ -263,6 +264,11 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
           ))}
         </View>
       )}
+
+      <ProductReviews
+        productSlug={product.slug}
+        summary={{ average: product.rating, count: product.reviewCount }}
+      />
 
       {frequentlyBoughtWith && (
         <RecommendationRail

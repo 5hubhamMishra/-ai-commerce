@@ -13,6 +13,7 @@ import {
   progressStageIndex,
 } from '../lib/order-status';
 import type { OrderStackParamList } from '../navigation/types';
+import WriteReviewAction from '../components/WriteReviewAction';
 
 type Props = NativeStackScreenProps<OrderStackParamList, 'OrderDetail'>;
 
@@ -127,6 +128,15 @@ export default function OrderDetailScreen({ route }: Props) {
               <Text style={styles.itemMeta}>
                 {item.sku} · Qty: {item.quantity}
               </Text>
+              {order.status === 'DELIVERED' && (
+                <View style={styles.reviewAction}>
+                  <WriteReviewAction
+                    orderId={order.id}
+                    productSlug={item.productSlug}
+                    productName={item.productName}
+                  />
+                </View>
+              )}
             </View>
             <Text style={styles.itemTotal}>{formatPrice(item.lineTotal)}</Text>
           </View>
@@ -246,10 +256,11 @@ const styles = StyleSheet.create({
   stageLabel: { fontSize: 9, fontWeight: '600', color: '#9ca3af', textAlign: 'center' },
   stageLabelDone: { color: '#111827' },
   itemsSection: { marginTop: 20, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 14 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 8 },
   itemDetails: { flex: 1, marginRight: 8 },
   itemName: { fontSize: 13, fontWeight: '600', color: '#111827' },
   itemMeta: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  reviewAction: { marginTop: 6 },
   itemTotal: { fontSize: 13, fontWeight: '700', color: '#111827' },
   divider: { height: 1, backgroundColor: '#e5e7eb', marginVertical: 8 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },

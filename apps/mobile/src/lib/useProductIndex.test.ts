@@ -22,6 +22,8 @@ function makeProduct(id: string): ProductListItem {
     maxPrice: 100,
     primaryImageUrl: null,
     inStock: true,
+    rating: null,
+    reviewCount: 0,
   };
 }
 

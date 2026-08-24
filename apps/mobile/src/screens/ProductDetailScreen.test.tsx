@@ -47,6 +47,8 @@ const product = {
   maxPrice: 1200,
   primaryImageUrl: null,
   inStock: true,
+  rating: null,
+  reviewCount: 0,
   description: 'A beautiful silk scarf.',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -83,6 +85,8 @@ const relatedProduct = {
   maxPrice: 500,
   primaryImageUrl: null,
   inStock: true,
+  rating: null,
+  reviewCount: 0,
 };
 
 describe('ProductDetailScreen', () => {
