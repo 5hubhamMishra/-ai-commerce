@@ -59,6 +59,7 @@ model User {
   sellerAccount             Seller?                    @relation("SellerOwner")
   sellerStaffOf             SellerStaff[]              @relation("SellerStaffUser")
   sellerRatings             SellerRating[]             @relation("SellerRatingUser")
+  productReviews            ProductReview[]            @relation("ProductReviewUser")
   sessions                  Session[]
   events                    BehavioralEvent[]
   customerProfile           CustomerProfile?
@@ -263,6 +264,7 @@ model Product {
   specifications            ProductSpecification[]
   tags                      ProductTagAssignment[]
   wishlistItems             WishlistItem[]
+  reviews                   ProductReview[]
   embedding                 ProductEmbedding?
   recommendationImpressions RecommendationImpression[]
 
@@ -501,6 +503,32 @@ model WishlistItem {
   @@map("wishlist_items")
 }
 
+// A customer's review of a product, tied to one delivered order that actually
+// included the product. One review per (product, order, user) lets repeat
+// purchases create a fresh review while blocking duplicate submissions for
+// the same order.
+model ProductReview {
+  id        String   @id @default(uuid())
+  productId String   @map("product_id")
+  userId    String   @map("user_id")
+  orderId   String   @map("order_id")
+  rating    Int
+  title     String?
+  body      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation("ProductReviewUser", fields: [userId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, orderId, userId])
+  @@index([productId, createdAt])
+  @@index([userId])
+  @@index([orderId])
+  @@map("product_reviews")
+}
+
 // Orders are never deleted or soft-deleted — they're a permanent audit/financial
 // record. Only `status` moves, and only through the explicit state machine in
 // order-state-machine.ts (never an arbitrary frontend-set value).
@@ -534,6 +562,7 @@ model Order {
   invoice        Invoice?
   supportTickets SupportTicket[]
   sellerRatings  SellerRating[]
+  productReviews ProductReview[]
 
   @@index([userId])
   @@index([status])

@@ -16,14 +16,17 @@ import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { AssignTagDto } from './dto/assign-tag.dto';
 import { CreateImageDto } from './dto/create-image.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { CreateProductReviewDto } from './dto/create-product-review.dto';
 import { CreateSpecificationDto } from './dto/create-specification.dto';
 import { CreateVariantDto } from './dto/create-variant.dto';
+import { ListProductReviewsQueryDto } from './dto/list-product-reviews-query.dto';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateSpecificationDto } from './dto/update-specification.dto';
 import { UpdateVariantDto } from './dto/update-variant.dto';
 import { ProductImagesService } from './product-images.service';
+import { ProductReviewsService } from './product-reviews.service';
 import { ProductSpecificationsService } from './product-specifications.service';
 import { ProductTagsService } from './product-tags.service';
 import { ProductVariantsService } from './product-variants.service';
@@ -41,6 +44,7 @@ export class ProductsController {
     private readonly productsService: ProductsService,
     private readonly variantsService: ProductVariantsService,
     private readonly imagesService: ProductImagesService,
+    private readonly reviewsService: ProductReviewsService,
     private readonly specificationsService: ProductSpecificationsService,
     private readonly tagsService: ProductTagsService,
   ) {}
@@ -73,6 +77,28 @@ export class ProductsController {
   @Get('admin/:id')
   adminDetail(@Param('id') id: string) {
     return this.productsService.findByIdAdmin(id);
+  }
+
+  @Public()
+  @Get(':slug/reviews')
+  listReviews(
+    @Param('slug') slug: string,
+    @Query() query: ListProductReviewsQueryDto,
+  ) {
+    return this.reviewsService.listForProduct(
+      slug,
+      query.page ?? 1,
+      query.pageSize ?? 20,
+    );
+  }
+
+  @Post(':slug/reviews')
+  createReview(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('slug') slug: string,
+    @Body() dto: CreateProductReviewDto,
+  ) {
+    return this.reviewsService.create(user, slug, dto);
   }
 
   @Public()

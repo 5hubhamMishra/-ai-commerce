@@ -44,6 +44,26 @@ type ProductDetailRow = Prisma.ProductGetPayload<{
   include: typeof detailInclude;
 }>;
 
+type ProductReviewSummary = {
+  average: number | null;
+  count: number;
+};
+
+type ProductReviewSummaryDelegate = {
+  groupBy(args: {
+    by: ['productId'];
+    where: { productId: { in: string[] } };
+    _avg: { rating: true };
+    _count: { _all: true };
+  }): Promise<
+    {
+      productId: string;
+      _avg: { rating: number | null };
+      _count: { _all: number };
+    }[]
+  >;
+};
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -133,8 +153,12 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
+    const reviewSummaries = await this.getReviewSummaries(
+      rows.map((row) => row.id),
+    );
+
     const result = {
-      items: rows.map((row) => toListItem(row)),
+      items: rows.map((row) => toListItem(row, reviewSummaries.get(row.id))),
       total,
       page,
       pageSize,
@@ -161,14 +185,16 @@ export class ProductsService {
         message: 'Product not found.',
       });
     }
-    const detail = toDetail(product);
+    const reviewSummaries = await this.getReviewSummaries([product.id]);
+    const detail = toDetail(product, reviewSummaries.get(product.id));
     await this.cache.set(cacheKey, detail, DETAIL_CACHE_TTL_SECONDS);
     return detail;
   }
 
   async findByIdAdmin(id: string) {
     const product = await this.getRowById(id);
-    return toDetail(product);
+    const reviewSummaries = await this.getReviewSummaries([product.id]);
+    return toDetail(product, reviewSummaries.get(product.id));
   }
 
   /** Lightweight hydration for a list of product IDs — used by ShopAI's
@@ -334,6 +360,35 @@ export class ProductsService {
       });
     }
   }
+
+  private async getReviewSummaries(productIds: string[]) {
+    if (productIds.length === 0) {
+      return new Map<string, ProductReviewSummary>();
+    }
+
+    const rows = await this.productReviews.groupBy({
+      by: ['productId'],
+      where: { productId: { in: productIds } },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+
+    return new Map(
+      rows.map((row) => [
+        row.productId,
+        {
+          average: row._avg.rating ?? null,
+          count: row._count._all,
+        },
+      ]),
+    );
+  }
+
+  private get productReviews(): ProductReviewSummaryDelegate {
+    return (
+      this.prisma as unknown as { productReview: ProductReviewSummaryDelegate }
+    ).productReview;
+  }
 }
 
 function sortToOrderBy(
@@ -390,7 +445,7 @@ function mapVariant(variant: ProductDetailRow['variants'][number]) {
   };
 }
 
-function toListItem(product: ProductDetailRow) {
+function toListItem(product: ProductDetailRow, summary?: ProductReviewSummary) {
   const activeVariants = product.variants.filter((v) => v.isActive);
   const prices = activeVariants.map((v) => Number(v.price));
   const primaryImage =
@@ -428,12 +483,14 @@ function toListItem(product: ProductDetailRow) {
     maxPrice: prices.length ? Math.max(...prices) : null,
     primaryImageUrl: primaryImage?.url ?? null,
     inStock: activeVariants.some((v) => availableQuantity(v.inventory) > 0),
+    rating: summary?.average ?? null,
+    reviewCount: summary?.count ?? 0,
   };
 }
 
-function toDetail(product: ProductDetailRow) {
+function toDetail(product: ProductDetailRow, summary?: ProductReviewSummary) {
   return {
-    ...toListItem(product),
+    ...toListItem(product, summary),
     description: product.description,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,

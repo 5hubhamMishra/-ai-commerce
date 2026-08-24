@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProductImagesService } from './product-images.service';
+import { ProductReviewsService } from './product-reviews.service';
 import { ProductSpecificationsService } from './product-specifications.service';
 import { ProductTagsService } from './product-tags.service';
 import { ProductVariantsService } from './product-variants.service';
@@ -12,6 +13,7 @@ import { ProductsService } from './products.service';
     ProductsService,
     ProductVariantsService,
     ProductImagesService,
+    ProductReviewsService,
     ProductSpecificationsService,
     ProductTagsService,
   ],
@@ -21,6 +23,7 @@ import { ProductsService } from './products.service';
     ProductsService,
     ProductVariantsService,
     ProductImagesService,
+    ProductReviewsService,
     ProductSpecificationsService,
     ProductTagsService,
   ],
