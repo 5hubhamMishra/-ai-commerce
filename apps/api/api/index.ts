@@ -10,8 +10,11 @@ import express from 'express';
 // this import through the real tsc output (already-plain JS, decorators already resolved
 // to metadata calls) sidesteps the incompatibility entirely. `vercel.json`'s
 // `buildCommand` (`npm run build`, i.e. `nest build`) runs before Vercel builds anything
-// under `api/`, so `dist/create-app.js` always exists by the time this file is bundled.
-import { createApp } from '../dist/src/create-app';
+// under `api/`, so `dist/src/create-app.js` always exists by the time this file is bundled.
+// TypeScript/VS Code can type this from source without needing generated dist files present.
+const { createApp } = require('../dist/src/create-app.js') as {
+  createApp: typeof import('../src/create-app').createApp;
+};
 
 /**
  * Vercel serverless entrypoint. A Vercel Function is request-scoped and terminates
