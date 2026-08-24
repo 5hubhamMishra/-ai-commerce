@@ -80,6 +80,20 @@ describe('RazorpayPaymentAdapter', () => {
         }),
       ).rejects.toThrow('RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET must be set');
     });
+
+    it('propagates Razorpay SDK/network failures without creating a fake provider reference', async () => {
+      mockOrdersCreate.mockRejectedValue(new Error('Razorpay unavailable'));
+      const adapter = new RazorpayPaymentAdapter(fullConfig());
+
+      await expect(
+        adapter.createIntent({
+          orderId: 'ord-1',
+          amount: 499,
+          currency: 'INR',
+          idempotencyKey: 'idem-1',
+        }),
+      ).rejects.toThrow('Razorpay unavailable');
+    });
   });
 
   describe('confirmPayment', () => {
@@ -183,11 +197,15 @@ describe('RazorpayPaymentAdapter', () => {
         amount: 250,
         currency: 'INR',
         reason: 'Return completed',
+        idempotencyKey: 'refund-key-1',
       });
 
       expect(mockPaymentsRefund).toHaveBeenCalledWith('pay_xyz789', {
         amount: 25000,
-        notes: { reason: 'Return completed' },
+        notes: {
+          reason: 'Return completed',
+          idempotencyKey: 'refund-key-1',
+        },
       });
       expect(result.success).toBe(true);
       expect(result.providerRefundRef).toBe('rfnd_1');
@@ -206,6 +224,22 @@ describe('RazorpayPaymentAdapter', () => {
 
       expect(result.success).toBe(false);
       expect(result.failureReason).toBe('Razorpay refund failed.');
+    });
+
+    it('propagates Razorpay SDK/network refund failures to the caller', async () => {
+      mockPaymentsRefund.mockRejectedValue(
+        new Error('Razorpay refund API down'),
+      );
+      const adapter = new RazorpayPaymentAdapter(fullConfig());
+
+      await expect(
+        adapter.refund({
+          providerRef: 'pay_xyz789',
+          amount: 250,
+          currency: 'INR',
+          reason: 'Return completed',
+        }),
+      ).rejects.toThrow('Razorpay refund API down');
     });
   });
 

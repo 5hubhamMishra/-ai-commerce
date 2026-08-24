@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -46,8 +46,10 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    startTransition(() => {
+      setLoading(true);
+      setError(null);
+    });
     catalogApi
       .getProductBySlug(slug)
       .then((res) => {

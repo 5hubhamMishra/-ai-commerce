@@ -1,4 +1,14 @@
-import { diversify, type ScoredProduct } from './recommendations.service';
+import { RecommendationContext } from '@prisma/client';
+import { CacheService } from '../common/cache/cache.service';
+import { EmbeddingsService } from '../embeddings/embeddings.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { BehavioralScoringService } from './behavioral-scoring.service';
+import { CollaborativeService } from './collaborative.service';
+import {
+  RecommendationsService,
+  diversify,
+  type ScoredProduct,
+} from './recommendations.service';
 
 function item(productId: string, score: number): ScoredProduct {
   return { productId, score, reasons: [] };
@@ -71,5 +81,173 @@ describe('diversify', () => {
     const sorted = [item('a', 5), item('b', 4)];
     const result = diversify(sorted, [], 2);
     expect(result.map((r) => r.productId)).toEqual(['a', 'b']);
+  });
+});
+
+describe('RecommendationsService verification audit', () => {
+  let service: RecommendationsService;
+  let prisma: {
+    profile: { findUnique: jest.Mock };
+    product: { findMany: jest.Mock; findUnique: jest.Mock };
+    orderItem: { groupBy: jest.Mock };
+    wishlistItem: { groupBy: jest.Mock };
+    behavioralEvent: { groupBy: jest.Mock };
+    productVariant: { findMany: jest.Mock };
+    recommendationImpression: { createMany: jest.Mock };
+  };
+  let cache: { get: jest.Mock; set: jest.Mock };
+  let embeddings: { findSimilar: jest.Mock };
+  let collaborative: { getCoPurchased: jest.Mock };
+  let behavioralScoring: { getAffinity: jest.Mock };
+
+  const baseProduct = {
+    id: 'product-1',
+    categoryId: 'category-1',
+    brandId: 'brand-1',
+    createdAt: new Date('2025-01-01T00:00:00.000Z'),
+    variants: [{ price: 100, compareAtPrice: null }],
+  };
+
+  beforeEach(() => {
+    prisma = {
+      profile: { findUnique: jest.fn().mockResolvedValue(null) },
+      product: {
+        findMany: jest.fn().mockResolvedValue([baseProduct]),
+        findUnique: jest.fn(),
+      },
+      orderItem: { groupBy: jest.fn().mockResolvedValue([]) },
+      wishlistItem: { groupBy: jest.fn().mockResolvedValue([]) },
+      behavioralEvent: { groupBy: jest.fn().mockResolvedValue([]) },
+      productVariant: { findMany: jest.fn().mockResolvedValue([]) },
+      recommendationImpression: {
+        createMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    cache = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+    };
+    embeddings = { findSimilar: jest.fn().mockResolvedValue([]) };
+    collaborative = { getCoPurchased: jest.fn().mockResolvedValue([]) };
+    behavioralScoring = {
+      getAffinity: jest.fn().mockResolvedValue({
+        categoryAffinity: {},
+        brandAffinity: {},
+        priceRangeMin: null,
+        priceRangeMax: null,
+        recentProductIds: [],
+        eventCount: 0,
+      }),
+    };
+
+    service = new RecommendationsService(
+      prisma as unknown as PrismaService,
+      cache as unknown as CacheService,
+      embeddings as unknown as EmbeddingsService,
+      collaborative as unknown as CollaborativeService,
+      behavioralScoring as unknown as BehavioralScoringService,
+    );
+  });
+
+  it('does not read behavioral affinity when a user has disabled personalization', async () => {
+    prisma.profile.findUnique.mockResolvedValue({
+      userId: 'user-1',
+      personalizationEnabled: false,
+    });
+
+    const result = await service.getPersonalized({ userId: 'user-1' }, 1);
+
+    expect(behavioralScoring.getAffinity).not.toHaveBeenCalled();
+    expect(result).toEqual([
+      {
+        productId: 'product-1',
+        score: 0,
+        reasons: ['Popular right now'],
+      },
+    ]);
+    expect(prisma.recommendationImpression.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: 'user-1',
+          anonymousId: undefined,
+          productId: 'product-1',
+          context: RecommendationContext.HOMEPAGE,
+          position: 0,
+          reason: 'Popular right now',
+        },
+      ],
+    });
+  });
+
+  it('bypasses live cache and impression logging for historical backtests', async () => {
+    const asOf = new Date('2026-08-24T12:00:00.000Z');
+
+    await service.getPersonalized({ userId: 'user-1' }, 1, asOf);
+
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
+    expect(behavioralScoring.getAffinity).toHaveBeenCalledWith(
+      { userId: 'user-1' },
+      asOf,
+    );
+    expect(prisma.recommendationImpression.createMany).not.toHaveBeenCalled();
+  });
+
+  it('filters similar-product recommendations down to purchasable products before logging impressions', async () => {
+    embeddings.findSimilar.mockResolvedValue([
+      { productId: 'draft-product', similarity: 0.95 },
+      { productId: 'active-product', similarity: 0.8 },
+    ]);
+    prisma.product.findMany.mockResolvedValue([{ id: 'active-product' }]);
+
+    const result = await service.getSimilar(
+      { anonymousId: 'anon-1' },
+      'seed',
+      4,
+    );
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ['draft-product', 'active-product'] },
+        status: 'ACTIVE',
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    expect(result).toEqual([
+      {
+        productId: 'active-product',
+        score: 0.8,
+        reasons: ['Similar to this product'],
+      },
+    ]);
+    expect(prisma.recommendationImpression.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: undefined,
+          anonymousId: 'anon-1',
+          productId: 'active-product',
+          context: RecommendationContext.SIMILAR_PRODUCTS,
+          position: 0,
+          reason: 'Similar to this product',
+        },
+      ],
+    });
+  });
+
+  it('keeps recommendation reads successful when impression logging fails', async () => {
+    prisma.recommendationImpression.createMany.mockRejectedValue(
+      new Error('analytics write unavailable'),
+    );
+
+    await expect(service.getTrending({ userId: 'user-1' }, 1)).resolves.toEqual(
+      [
+        {
+          productId: 'product-1',
+          score: 0,
+          reasons: ['Popular right now'],
+        },
+      ],
+    );
   });
 });

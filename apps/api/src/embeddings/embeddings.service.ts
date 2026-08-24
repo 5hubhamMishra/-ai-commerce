@@ -2,6 +2,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  STORED_EMBEDDING_DIMENSIONS,
+  STORED_EMBEDDING_MODEL,
+} from './embedding-model-config';
+import {
   EMBEDDING_PROVIDER,
   type EmbeddingProvider,
 } from './providers/embedding-provider.interface';
@@ -10,6 +14,13 @@ export type SimilarProduct = { productId: string; similarity: number };
 
 function vectorToLiteral(vector: number[]): string {
   return `[${vector.join(',')}]`;
+}
+
+class EmbeddingCompatibilityError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EmbeddingCompatibilityError';
+  }
 }
 
 /**
@@ -54,6 +65,7 @@ export class EmbeddingsService {
       tags: product.tags.map((t) => t.tag.name),
       specificationValues: product.specifications.map((s) => s.value),
     });
+    this.assertCompatibleVector(vector);
     const literal = vectorToLiteral(vector);
 
     // `embedding` is an `Unsupported("vector(64)")` column — Prisma Client
@@ -64,8 +76,8 @@ export class EmbeddingsService {
     await this.prisma.$transaction([
       this.prisma.productEmbedding.upsert({
         where: { productId },
-        create: { productId },
-        update: {},
+        create: { productId, model: this.provider.model },
+        update: { model: this.provider.model },
       }),
       this.prisma.$executeRaw`
         UPDATE product_embeddings SET embedding = ${literal}::vector
@@ -122,8 +134,16 @@ export class EmbeddingsService {
     limit: number,
     excludeIds: string[] = [],
   ): Promise<SimilarProduct[]> {
-    const { vector } = await this.provider.embedText(text);
-    return this.similarByLiteral(vectorToLiteral(vector), limit, excludeIds);
+    try {
+      const { vector } = await this.provider.embedText(text);
+      this.assertCompatibleVector(vector);
+      return this.similarByLiteral(vectorToLiteral(vector), limit, excludeIds);
+    } catch (error) {
+      this.logger.warn(
+        `Query embedding failed compatibility validation, degrading to no semantic results: ${String(error)}`,
+      );
+      return [];
+    }
   }
 
   /** Real pgvector nearest-neighbor query (the HNSW cosine-ops index from
@@ -162,6 +182,34 @@ export class EmbeddingsService {
         `Similarity query failed, degrading to no semantic results: ${String(error)}`,
       );
       return [];
+    }
+  }
+
+  private assertCompatibleVector(vector: number[]) {
+    if (this.provider.model !== STORED_EMBEDDING_MODEL) {
+      const providerModel = String(this.provider.model);
+      const storedModel = String(STORED_EMBEDDING_MODEL);
+      throw new EmbeddingCompatibilityError(
+        `Embedding provider model ${providerModel} does not match stored model ${storedModel}.`,
+      );
+    }
+
+    if (this.provider.dimensions !== STORED_EMBEDDING_DIMENSIONS) {
+      throw new EmbeddingCompatibilityError(
+        `Embedding provider declares ${this.provider.dimensions} dimensions, but the store is vector(${STORED_EMBEDDING_DIMENSIONS}).`,
+      );
+    }
+
+    if (vector.length !== STORED_EMBEDDING_DIMENSIONS) {
+      throw new EmbeddingCompatibilityError(
+        `Embedding vector has ${vector.length} dimensions, but the store is vector(${STORED_EMBEDDING_DIMENSIONS}).`,
+      );
+    }
+
+    if (!vector.every(Number.isFinite)) {
+      throw new EmbeddingCompatibilityError(
+        'Embedding vector contains a non-finite value.',
+      );
     }
   }
 }

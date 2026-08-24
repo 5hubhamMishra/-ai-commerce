@@ -241,8 +241,17 @@ export class CustomerProfileService {
     tx: Prisma.TransactionClient,
     identity: { userId: string } | { anonymousId: string },
   ) {
-    const existing = await tx.customerProfile.findFirst({ where: identity });
-    if (existing) return existing;
-    return tx.customerProfile.create({ data: identity });
+    if ('userId' in identity) {
+      return tx.customerProfile.upsert({
+        where: { userId: identity.userId },
+        create: { userId: identity.userId },
+        update: {},
+      });
+    }
+    return tx.customerProfile.upsert({
+      where: { anonymousId: identity.anonymousId },
+      create: { anonymousId: identity.anonymousId },
+      update: {},
+    });
   }
 }

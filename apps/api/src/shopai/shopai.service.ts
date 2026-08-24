@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { PrismaService } from '../prisma/prisma.service';
 import { ShopAIAnalyticsService } from './shopai-analytics.service';
@@ -6,6 +6,7 @@ import { SHOPAI_CONFIG, type ShopAIConfig } from './shopai.config';
 import {
   LLM_PROVIDER,
   type LLMProvider,
+  type LLMStopReason,
   type LLMToolResult,
   type LLMTurn,
 } from './providers/llm-provider.interface';
@@ -26,6 +27,8 @@ export type ShopAIResponse = {
   toolActivity: { name: string }[];
 };
 
+type ShopAIStopReason = LLMStopReason | 'provider_error';
+
 const SYSTEM_PROMPT = `You are ShopAI, the shopping assistant for Veloura, an electronics marketplace.
 Help customers search for products, compare options, get recommendations, and check their own cart, orders, delivery status, and return policy.
 
@@ -41,6 +44,8 @@ Keep responses concise and focused on what the customer actually asked.`;
 
 @Injectable()
 export class ShopAIService {
+  private readonly logger = new Logger(ShopAIService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly analytics: ShopAIAnalyticsService,
@@ -94,54 +99,60 @@ export class ShopAIService {
     let outputTokens = 0;
     let iterations = 0;
     let finalText = '';
-    let finalStopReason: 'end_turn' | 'tool_use' | 'max_tokens' | 'refusal' =
-      'max_tokens';
+    let finalStopReason: ShopAIStopReason = 'max_tokens';
 
-    while (iterations < this.config.maxToolIterations) {
-      iterations++;
-      const result = await this.llm.complete({
-        system: SYSTEM_PROMPT,
-        history,
-        tools: toolDefinitions,
-      });
-      inputTokens += result.usage.inputTokens;
-      outputTokens += result.usage.outputTokens;
-      finalStopReason = result.stopReason;
-      finalText = result.text;
+    try {
+      while (iterations < this.config.maxToolIterations) {
+        iterations++;
+        const result = await this.llm.complete({
+          system: SYSTEM_PROMPT,
+          history,
+          tools: toolDefinitions,
+        });
+        inputTokens += result.usage.inputTokens;
+        outputTokens += result.usage.outputTokens;
+        finalStopReason = result.stopReason;
+        finalText = result.text;
 
-      if (result.stopReason !== 'tool_use' || result.toolCalls.length === 0) {
-        break;
-      }
+        if (result.stopReason !== 'tool_use' || result.toolCalls.length === 0) {
+          break;
+        }
 
-      history.push({
-        role: 'assistant',
-        text: result.text,
-        toolCalls: result.toolCalls,
-      });
+        history.push({
+          role: 'assistant',
+          text: result.text,
+          toolCalls: result.toolCalls,
+        });
 
-      const toolResults: LLMToolResult[] = [];
-      for (const call of result.toolCalls) {
-        toolNamesUsed.add(call.name);
-        const tool = this.tools.find((t) => t.name === call.name);
-        if (!tool) {
-          // The model asked for something outside the allowed-tool registry
-          // — never executed, never even attempted.
+        const toolResults: LLMToolResult[] = [];
+        for (const call of result.toolCalls) {
+          toolNamesUsed.add(call.name);
+          const tool = this.tools.find((t) => t.name === call.name);
+          if (!tool) {
+            // The model asked for something outside the allowed-tool registry
+            // — never executed, never even attempted.
+            toolResults.push({
+              toolUseId: call.id,
+              content: 'That tool is not available.',
+              isError: true,
+            });
+            continue;
+          }
+          const outcome = await tool.execute(call.input, toolContext);
+          toolActivity.push({ name: call.name });
           toolResults.push({
             toolUseId: call.id,
-            content: 'That tool is not available.',
-            isError: true,
+            content: outcome.content,
+            isError: outcome.isError,
           });
-          continue;
         }
-        const outcome = await tool.execute(call.input, toolContext);
-        toolActivity.push({ name: call.name });
-        toolResults.push({
-          toolUseId: call.id,
-          content: outcome.content,
-          isError: outcome.isError,
-        });
+        history.push({ role: 'tool_results', results: toolResults });
       }
-      history.push({ role: 'tool_results', results: toolResults });
+    } catch (error) {
+      this.logger.warn(`ShopAI provider failed: ${String(error)}`);
+      finalStopReason = 'provider_error';
+      finalText =
+        "I'm having trouble reaching the shopping assistant right now. Please try again in a moment.";
     }
 
     const refused = finalStopReason === 'refusal';

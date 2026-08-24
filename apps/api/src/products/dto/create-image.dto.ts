@@ -4,13 +4,13 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  IsUrl,
   MaxLength,
   Min,
 } from 'class-validator';
+import { IsProductImageUrl } from './product-image-url.validator';
 
 export class CreateImageDto {
-  @IsUrl({ require_tld: false })
+  @IsProductImageUrl()
   url!: string;
 
   @IsOptional()

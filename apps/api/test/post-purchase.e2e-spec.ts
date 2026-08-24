@@ -919,12 +919,26 @@ describe('Post-purchase (e2e)', () => {
 
   // ---- Standalone (goodwill) refund ----------------------------------------------
 
+  it('requires an Idempotency-Key header to issue a standalone admin refund', async () => {
+    const { orderId } = await placeAndDeliverOrder(variantRefundId, 1);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/refunds/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ orderId, amount: 100, reason: 'Missing key' })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.error.code).toBe('IDEMPOTENCY_KEY_REQUIRED');
+      });
+  });
+
   it('issues a standalone admin refund not tied to a return, capped at the remaining refundable amount', async () => {
     const { orderId } = await placeAndDeliverOrder(variantRefundId, 1);
 
     await request(app.getHttpServer())
       .post('/api/v1/refunds/admin')
       .set('Authorization', `Bearer ${adminToken}`)
+      .set('Idempotency-Key', `refund-cap-${run}`)
       .send({ orderId, amount: 5000, reason: 'Too much' })
       .expect(400)
       .expect((res) => {
@@ -934,9 +948,49 @@ describe('Post-purchase (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/refunds/admin')
       .set('Authorization', `Bearer ${adminToken}`)
+      .set('Idempotency-Key', `refund-goodwill-${run}`)
       .send({ orderId, amount: 100, reason: 'Goodwill credit' })
       .expect(201);
     expect(res.body.status).toBe('COMPLETED');
+  });
+
+  it('replays the same refund on a retried request with the same Idempotency-Key, without issuing it twice', async () => {
+    const { orderId } = await placeAndDeliverOrder(variantRefundId, 1);
+    const key = `refund-replay-${run}`;
+
+    const first = await request(app.getHttpServer())
+      .post('/api/v1/refunds/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Idempotency-Key', key)
+      .send({ orderId, amount: 50, reason: 'Goodwill credit' })
+      .expect(201);
+
+    const retried = await request(app.getHttpServer())
+      .post('/api/v1/refunds/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Idempotency-Key', key)
+      .send({ orderId, amount: 50, reason: 'Goodwill credit' })
+      .expect(201);
+    expect(retried.body.id).toBe(first.body.id);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/refunds/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Idempotency-Key', key)
+      .send({ orderId, amount: 51, reason: 'Goodwill credit' })
+      .expect(409)
+      .expect((res) => {
+        expect(res.body.error.code).toBe('IDEMPOTENCY_KEY_REUSED');
+      });
+
+    const refunds = await request(app.getHttpServer())
+      .get(`/api/v1/refunds/order/${orderId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(
+      (refunds.body as { id: string }[]).filter((r) => r.id === first.body.id)
+        .length,
+    ).toBe(1);
   });
 
   // ---- Notifications --------------------------------------------------------------

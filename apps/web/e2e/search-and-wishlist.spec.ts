@@ -1,8 +1,14 @@
 import { test, expect } from "@playwright/test";
-import { registerAndSignIn } from "./helpers";
+import {
+  availableProductCard,
+  availableProductLink,
+  registerAndSignIn,
+} from "./helpers";
 
 test.describe("search", () => {
-  test("searching from the navbar finds real, relevant products", async ({ page }) => {
+  test("searching from the navbar finds real, relevant products", async ({
+    page,
+  }) => {
     await page.goto("/");
     const searchInput = page.getByPlaceholder("Search products...");
     await searchInput.fill("laptop");
@@ -26,25 +32,39 @@ test.describe("search", () => {
 });
 
 test.describe("wishlist", () => {
-  test("wishlisting a product from the grid shows it on the wishlist page", async ({ page }) => {
+  test("wishlisting a product from the grid shows it on the wishlist page", async ({
+    page,
+  }) => {
     await registerAndSignIn(page);
 
     await page.goto("/shop");
-    const firstCard = page.locator('a[href^="/products/"]').first();
-    const productName = await firstCard.getByRole("heading", { level: 3 }).textContent();
+    const productLink = availableProductLink(page);
+    const productName = await productLink
+      .getByRole("heading", { level: 3 })
+      .textContent();
 
-    await page.getByRole("button", { name: "Add to wishlist" }).first().click();
+    await availableProductCard(page)
+      .getByRole("button", { name: "Add to wishlist" })
+      .click();
 
     await page.goto("/wishlist");
-    await expect(page.getByRole("heading", { name: "Your Wishlist" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Your Wishlist" }),
+    ).toBeVisible();
     if (productName) {
-      await expect(page.getByText(productName.trim(), { exact: false })).toBeVisible();
+      await expect(
+        page.getByText(productName.trim(), { exact: false }),
+      ).toBeVisible();
     }
   });
 
-  test("a guest who tries to wishlist a product is sent to sign in first", async ({ page }) => {
+  test("a guest who tries to wishlist a product is sent to sign in first", async ({
+    page,
+  }) => {
     await page.goto("/shop");
-    await page.getByRole("button", { name: "Add to wishlist" }).first().click();
+    await availableProductCard(page)
+      .getByRole("button", { name: "Add to wishlist" })
+      .click();
     await expect(page).toHaveURL(/\/login\?redirect=/);
   });
 
@@ -54,6 +74,8 @@ test.describe("wishlist", () => {
     await registerAndSignIn(page);
     await page.goto("/wishlist");
     await expect(page.getByText("Nothing saved yet")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Explore products" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Explore products" }),
+    ).toBeVisible();
   });
 });

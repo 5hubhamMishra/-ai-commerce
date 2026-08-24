@@ -24,7 +24,8 @@ describe('UsersService', () => {
     shopAIInteractionLog: { updateMany: jest.Mock };
     recommendationImpression: { updateMany: jest.Mock };
     searchQueryLog: { updateMany: jest.Mock };
-    supportTicket: { findMany: jest.Mock };
+    supportTicket: { findMany: jest.Mock; updateMany: jest.Mock };
+    supportMessage: { updateMany: jest.Mock };
     address: { updateMany: jest.Mock };
     profile: { updateMany: jest.Mock };
     refreshToken: { updateMany: jest.Mock };
@@ -78,7 +79,11 @@ describe('UsersService', () => {
       shopAIInteractionLog: { updateMany: jest.fn() },
       recommendationImpression: { updateMany: jest.fn() },
       searchQueryLog: { updateMany: jest.fn() },
-      supportTicket: { findMany: jest.fn().mockResolvedValue([]) },
+      supportTicket: {
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn(),
+      },
+      supportMessage: { updateMany: jest.fn() },
       address: { updateMany: jest.fn() },
       profile: { updateMany: jest.fn() },
       refreshToken: { updateMany: jest.fn() },
@@ -262,6 +267,17 @@ describe('UsersService', () => {
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
         where: { userId: 'u1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
+      });
+      // Support tickets aren't deletable (a non-nullable FK, and staff may have replied on
+      // the same thread) — the user's own free text is scrubbed in place instead, same
+      // treatment as addresses. Only the user's own messages, never staff replies.
+      expect(prisma.supportMessage.updateMany).toHaveBeenCalledWith({
+        where: { senderId: 'u1' },
+        data: { body: '[deleted]' },
+      });
+      expect(prisma.supportTicket.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+        data: { subject: '[deleted]' },
       });
       expect(audit.record).toHaveBeenCalledWith({
         actorId: 'u1',

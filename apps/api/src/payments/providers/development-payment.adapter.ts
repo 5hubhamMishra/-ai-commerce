@@ -55,6 +55,7 @@ export class DevelopmentPaymentAdapter implements PaymentProvider {
         simulated: true,
         providerRef: input.providerRef,
         amount: input.amount,
+        idempotencyKey: input.idempotencyKey,
       },
     });
   }

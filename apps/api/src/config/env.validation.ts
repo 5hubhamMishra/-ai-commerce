@@ -7,6 +7,7 @@ import {
   MinLength,
   validateSync,
 } from 'class-validator';
+import { assertConfigPreflight } from './config-preflight';
 
 class EnvironmentVariables {
   @IsIn(['development', 'test', 'production'])
@@ -60,6 +61,8 @@ class EnvironmentVariables {
  * failing confusingly later on the first request that needs them.
  */
 export function validateEnv(config: Record<string, unknown>) {
+  assertConfigPreflight(config, { mode: 'runtime' });
+
   const validated = plainToInstance(EnvironmentVariables, config, {
     enableImplicitConversion: true,
   });

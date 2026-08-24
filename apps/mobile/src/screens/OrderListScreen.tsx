@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { OrderListItem } from '@ai-commerce/types';
@@ -38,9 +38,11 @@ export default function OrderListScreen({ navigation }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    if (page === 1) setLoading(true);
-    else setLoadingMore(true);
-    setError(null);
+    startTransition(() => {
+      if (page === 1) setLoading(true);
+      else setLoadingMore(true);
+      setError(null);
+    });
     ordersApi
       .list({ page, pageSize: PAGE_SIZE })
       .then((res) => {

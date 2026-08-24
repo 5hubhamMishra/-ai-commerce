@@ -34,7 +34,8 @@ export default function CatalogProductCard({
   const router = useRouter();
   const authStatus = useStore((s) => s.authStatus);
   const inWishlist = useStore(
-    (s) => s.serverWishlist?.items.some((i) => i.productId === product.id) ?? false,
+    (s) =>
+      s.serverWishlist?.items.some((i) => i.productId === product.id) ?? false,
   );
   const toggleWishlist = useStore((s) => s.toggleServerWishlistItem);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
@@ -45,7 +46,9 @@ export default function CatalogProductCard({
     async (e: React.MouseEvent) => {
       e.preventDefault();
       if (authStatus === "unauthenticated") {
-        router.push(`/login?redirect=${encodeURIComponent(`/products/${product.slug}`)}`);
+        router.push(
+          `/login?redirect=${encodeURIComponent(`/products/${product.slug}`)}`,
+        );
         return;
       }
       setHeartAnimating(true);
@@ -58,7 +61,9 @@ export default function CatalogProductCard({
         // navigation gets one real chance (with a silent-refresh retry) before being
         // treated as a guest.
         if (useStore.getState().authStatus === "unauthenticated") {
-          router.push(`/login?redirect=${encodeURIComponent(`/products/${product.slug}`)}`);
+          router.push(
+            `/login?redirect=${encodeURIComponent(`/products/${product.slug}`)}`,
+          );
         }
       } finally {
         setPending(false);
@@ -77,6 +82,8 @@ export default function CatalogProductCard({
 
   return (
     <div
+      data-testid="catalog-product-card"
+      data-available={product.available ? "true" : "false"}
       className="rounded-2xl overflow-hidden bg-white flex flex-col relative group"
       style={{
         boxShadow: "var(--shadow-card)",
@@ -96,7 +103,10 @@ export default function CatalogProductCard({
         onClick={handleWishlist}
         disabled={pending}
         className="absolute right-3 top-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200"
-        style={{ border: "1px solid var(--clr-border)", boxShadow: "var(--shadow-xs)" }}
+        style={{
+          border: "1px solid var(--clr-border)",
+          boxShadow: "var(--shadow-xs)",
+        }}
         aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
       >
         <svg
@@ -104,7 +114,9 @@ export default function CatalogProductCard({
           width="18"
           height="18"
           style={{
-            animation: heartAnimating ? "heartPop 0.38s ease forwards" : undefined,
+            animation: heartAnimating
+              ? "heartPop 0.38s ease forwards"
+              : undefined,
             fill: inWishlist ? "var(--clr-accent)" : "none",
             stroke: inWishlist ? "var(--clr-accent)" : "currentColor",
             strokeWidth: 2,
@@ -161,10 +173,18 @@ export default function CatalogProductCard({
       {reason && (
         <div className="px-3 pb-3">
           <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-[var(--clr-accent-subtle)]">
-            <svg viewBox="0 0 24 24" width="10" height="10" fill="var(--clr-accent)" className="flex-shrink-0">
+            <svg
+              viewBox="0 0 24 24"
+              width="10"
+              height="10"
+              fill="var(--clr-accent)"
+              className="flex-shrink-0"
+            >
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            <span className="text-[10px] font-medium line-clamp-1 text-[var(--clr-accent-text)]">{reason}</span>
+            <span className="text-[10px] font-medium line-clamp-1 text-[var(--clr-accent-text)]">
+              {reason}
+            </span>
           </div>
         </div>
       )}

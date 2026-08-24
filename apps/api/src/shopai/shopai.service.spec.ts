@@ -7,6 +7,7 @@ import {
   LLM_PROVIDER,
   type LLMCompletionResult,
 } from './providers/llm-provider.interface';
+import { DeterministicTestLLMAdapter } from './providers/deterministic-test-llm.adapter';
 import type {
   ShopAITool,
   ShopAIToolResult,
@@ -210,6 +211,90 @@ describe('ShopAIService', () => {
     expect(result.message.content).toBe('Here is what I found.');
   });
 
+  it('verifies the deterministic successful path across every registered commerce tool', async () => {
+    const toolNames = [
+      'search_products',
+      'get_product_details',
+      'compare_products',
+      'get_recommendations',
+      'get_cart',
+      'add_to_cart',
+      'get_order_info',
+      'get_delivery_info',
+      'get_return_policy',
+    ];
+    const fakeTools = toolNames.map((name) =>
+      fakeTool(name, {
+        content: `${name} result`,
+        isError: false,
+      }),
+    );
+    const deterministic = new DeterministicTestLLMAdapter([
+      toolUse(
+        toolNames.map((name, index) => ({
+          id: `call-${index + 1}`,
+          name,
+          input: { productId: `product-${index + 1}` },
+        })),
+      ),
+      endTurn(
+        'I checked the catalog, cart, order, delivery, and policy details.',
+      ),
+    ]);
+    const module = await Test.createTestingModule({
+      providers: [
+        ShopAIService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: ShopAIAnalyticsService, useValue: analytics },
+        { provide: SHOPAI_CONFIG, useValue: config },
+        { provide: LLM_PROVIDER, useValue: deterministic },
+        { provide: SHOPAI_TOOLS, useValue: fakeTools.map(({ tool }) => tool) },
+      ],
+    }).compile();
+    const deterministicService = module.get(ShopAIService);
+
+    const result = await deterministicService.sendMessage(
+      { message: 'find and compare headphones, add one, then check delivery' },
+      {
+        authenticatedUser: {
+          id: 'customer-1',
+          email: 'customer@example.com',
+          roles: [],
+        },
+      },
+    );
+
+    expect(result.message.content).toContain('catalog, cart, order');
+    expect(result.toolActivity).toEqual(toolNames.map((name) => ({ name })));
+    for (const { execute } of fakeTools) {
+      expect(execute).toHaveBeenCalledTimes(1);
+      expect(execute).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          userId: 'customer-1',
+          authenticatedUser: expect.objectContaining({ id: 'customer-1' }),
+        }),
+      );
+    }
+    expect(deterministic.calls[1].history.at(-1)).toEqual({
+      role: 'tool_results',
+      results: toolNames.map((name, index) => ({
+        toolUseId: `call-${index + 1}`,
+        content: `${name} result`,
+        isError: false,
+      })),
+    });
+    expect(analytics.logInteraction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'deterministic-test',
+        toolCallCount: toolNames.length,
+        toolNames,
+        stopReason: 'end_turn',
+        refused: false,
+      }),
+    );
+  });
+
   it('rejects a tool name outside the allowed registry without executing anything', async () => {
     llm.complete
       .mockResolvedValueOnce(
@@ -255,6 +340,35 @@ describe('ShopAIService', () => {
     expect(result.message.content).toMatch(/can't help/i);
     expect(analytics.logInteraction).toHaveBeenCalledWith(
       expect.objectContaining({ refused: true }),
+    );
+  });
+
+  it('returns a safe fallback and logs provider_error when the LLM provider is unavailable', async () => {
+    llm.complete.mockRejectedValue(new Error('Anthropic unavailable'));
+
+    const result = await service.sendMessage(
+      { message: 'find me headphones' },
+      { anonymousId: 'anon-1' },
+    );
+
+    expect(result.message.content).toMatch(/try again/i);
+    expect(prisma.shopAIMessage.create).toHaveBeenCalledWith({
+      data: {
+        conversationId: 'conv-1',
+        role: 'ASSISTANT',
+        content: result.message.content,
+        toolCalls: undefined,
+      },
+    });
+    expect(analytics.logInteraction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'claude-opus-5',
+        inputTokens: 0,
+        outputTokens: 0,
+        toolCallCount: 0,
+        stopReason: 'provider_error',
+        refused: false,
+      }),
     );
   });
 

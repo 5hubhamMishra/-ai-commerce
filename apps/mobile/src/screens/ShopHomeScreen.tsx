@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -49,9 +49,11 @@ export default function ShopHomeScreen({ navigation }: Props) {
   // Re-fetch page 1 whenever a filter changes; append subsequent pages on infinite scroll.
   useEffect(() => {
     let cancelled = false;
-    if (page === 1) setLoading(true);
-    else setLoadingMore(true);
-    setError(null);
+    startTransition(() => {
+      if (page === 1) setLoading(true);
+      else setLoadingMore(true);
+      setError(null);
+    });
     catalogApi
       .listProducts({ page, pageSize: PAGE_SIZE, search: search || undefined, category: categorySlug, sort })
       .then((res) => {

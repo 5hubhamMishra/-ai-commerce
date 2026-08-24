@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 /** Registers a fresh, randomly-suffixed account against the real apps/api and lands signed
@@ -10,7 +10,10 @@ import { expect, test } from "@playwright/test";
  *  not something to weaken here. Several parallel Playwright workers each registering their
  *  own account can legitimately bump into it, so this retries with backoff on a genuine
  *  `ThrottlerException` rather than failing the whole test. */
-export async function registerAndSignIn(page: Page, name = "E2E Shopper"): Promise<{ email: string }> {
+export async function registerAndSignIn(
+  page: Page,
+  name = "E2E Shopper",
+): Promise<{ email: string }> {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 
   for (let attempt = 1; attempt <= 4; attempt++) {
@@ -37,4 +40,15 @@ export async function registerAndSignIn(page: Page, name = "E2E Shopper"): Promi
     }
   }
   throw new Error("unreachable");
+}
+
+export function availableProductLink(page: Page): Locator {
+  return availableProductCard(page).locator('a[href^="/products/"]').first();
+}
+
+export function availableProductCard(page: Page): Locator {
+  return page
+    .getByTestId("catalog-product-card")
+    .filter({ hasNotText: /Out of Stock/i })
+    .first();
 }

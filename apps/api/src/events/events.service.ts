@@ -93,6 +93,35 @@ export class EventsService {
     return this.customerProfiles.getForUser(userId);
   }
 
+  async getAggregationStatus(now = new Date()) {
+    const [totalEvents, backlog, processed] = await Promise.all([
+      this.prisma.behavioralEvent.count(),
+      this.prisma.behavioralEvent.aggregate({
+        where: { processedAt: null },
+        _count: { _all: true },
+        _min: { receivedAt: true },
+        _max: { receivedAt: true },
+      }),
+      this.prisma.behavioralEvent.aggregate({
+        where: { processedAt: { not: null } },
+        _max: { processedAt: true },
+      }),
+    ]);
+
+    const oldestUnprocessedReceivedAt = backlog._min.receivedAt ?? null;
+
+    return {
+      totalEvents,
+      unprocessedEvents: backlog._count._all,
+      oldestUnprocessedReceivedAt,
+      newestUnprocessedReceivedAt: backlog._max.receivedAt ?? null,
+      oldestUnprocessedAgeMs: oldestUnprocessedReceivedAt
+        ? Math.max(0, now.getTime() - oldestUnprocessedReceivedAt.getTime())
+        : null,
+      newestProcessedAt: processed._max.processedAt ?? null,
+    };
+  }
+
   private async upsertSessions(
     userId: string | undefined,
     events: TrackEventsDto['events'],

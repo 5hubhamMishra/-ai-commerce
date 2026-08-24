@@ -25,10 +25,11 @@ export class IdempotencyService {
     scope: string,
     key: string,
     operation: () => Promise<IdempotentResult<T>>,
+    requestFingerprint?: string,
   ): Promise<IdempotentResult<T> & { replayed: boolean }> {
     try {
       await this.prisma.idempotencyKey.create({
-        data: { userId, scope, key },
+        data: { userId, scope, key, requestFingerprint },
       });
     } catch {
       // Unique violation: a claim already exists — either finished (replay the
@@ -36,6 +37,16 @@ export class IdempotencyService {
       const existing = await this.prisma.idempotencyKey.findUnique({
         where: { userId_scope_key: { userId, scope, key } },
       });
+      if (
+        requestFingerprint !== undefined &&
+        existing?.requestFingerprint !== requestFingerprint
+      ) {
+        throw new ConflictException({
+          code: 'IDEMPOTENCY_KEY_REUSED',
+          message:
+            'This Idempotency-Key was already used for a different request.',
+        });
+      }
       if (existing && existing.statusCode !== null) {
         return {
           statusCode: existing.statusCode,

@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import type { NotificationChannel } from './channels/notification-channel.types';
+import { NotificationDeliveryService } from './notification-delivery.service';
+
+type CreateNotificationOptions = {
+  channels?: NotificationChannel[];
+};
 
 /**
  * Real in-app notification center. Called directly (like AuditService) by any
@@ -13,7 +19,10 @@ import { PrismaService } from '../prisma/prisma.service';
  */
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly delivery: NotificationDeliveryService,
+  ) {}
 
   async create(
     userId: string,
@@ -22,10 +31,25 @@ export class NotificationsService {
     body: string,
     relatedType?: string,
     relatedId?: string,
+    options: CreateNotificationOptions = {},
   ) {
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: { userId, type, title, body, relatedType, relatedId },
     });
+
+    if (options.channels?.length) {
+      await this.delivery.dispatch(options.channels, {
+        notificationId: notification.id,
+        userId,
+        type,
+        title,
+        body,
+        relatedType,
+        relatedId,
+      });
+    }
+
+    return notification;
   }
 
   async listForUser(userId: string, unreadOnly: boolean) {

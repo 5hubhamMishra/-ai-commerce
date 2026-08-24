@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import type { ProductListItem, ScoredProduct } from '@ai-commerce/types';
 import { recommendationsApi } from '@ai-commerce/api-client';
 import { useProductIndex } from './useProductIndex';
@@ -22,7 +22,7 @@ export function useRecommendations(
 
   useEffect(() => {
     if (!enabled || ((kind === 'similar' || kind === 'frequentlyBoughtWith') && !productId)) {
-      setScored(null);
+      startTransition(() => setScored(null));
       return;
     }
     let cancelled = false;

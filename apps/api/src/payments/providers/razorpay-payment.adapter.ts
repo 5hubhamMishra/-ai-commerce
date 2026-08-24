@@ -107,9 +107,11 @@ export class RazorpayPaymentAdapter implements PaymentProvider {
     // Razorpay refunds operate on the payment id, not the order id — the caller
     // (RefundsService/ReturnsService) is responsible for passing Payment.providerPaymentRef
     // here, not the order-id-holding providerRef.
+    const notes: Record<string, string> = { reason: input.reason };
+    if (input.idempotencyKey) notes.idempotencyKey = input.idempotencyKey;
     const refund = await this.getClient().payments.refund(input.providerRef, {
       amount: Math.round(input.amount * 100),
-      notes: { reason: input.reason },
+      notes,
     });
     return {
       success: refund.status !== 'failed',

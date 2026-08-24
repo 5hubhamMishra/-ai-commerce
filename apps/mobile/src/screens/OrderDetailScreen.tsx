@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { OrderDetail } from '@ai-commerce/types';
@@ -34,7 +34,7 @@ export default function OrderDetailScreen({ route }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    startTransition(() => setLoading(true));
     ordersApi
       .get(id)
       .then((res) => {

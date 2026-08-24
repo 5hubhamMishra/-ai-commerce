@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import {
   Body,
   Controller,
@@ -10,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { ListActivityQueryDto } from './dto/list-activity-query.dto';
@@ -31,6 +33,12 @@ export class EventsController {
     @Body() dto: TrackEventsDto,
   ) {
     return this.eventsService.track(user?.id, dto);
+  }
+
+  @Roles(Role.ANALYST, Role.ADMIN, Role.SUPER_ADMIN)
+  @Get('admin/aggregation-status')
+  aggregationStatus() {
+    return this.eventsService.getAggregationStatus();
   }
 }
 

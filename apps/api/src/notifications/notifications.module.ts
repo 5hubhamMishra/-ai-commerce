@@ -1,4 +1,7 @@
 import { Global, Module } from '@nestjs/common';
+import { DisabledNotificationChannelProvider } from './channels/disabled-notification-channel.provider';
+import { NOTIFICATION_CHANNEL_PROVIDER } from './channels/notification-channel-provider.token';
+import { NotificationDeliveryService } from './notification-delivery.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 
@@ -9,7 +12,14 @@ import { NotificationsService } from './notifications.service';
 @Global()
 @Module({
   controllers: [NotificationsController],
-  providers: [NotificationsService],
-  exports: [NotificationsService],
+  providers: [
+    NotificationsService,
+    NotificationDeliveryService,
+    {
+      provide: NOTIFICATION_CHANNEL_PROVIDER,
+      useClass: DisabledNotificationChannelProvider,
+    },
+  ],
+  exports: [NotificationsService, NotificationDeliveryService],
 })
 export class NotificationsModule {}

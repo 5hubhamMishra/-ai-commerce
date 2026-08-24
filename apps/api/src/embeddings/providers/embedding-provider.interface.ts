@@ -1,3 +1,5 @@
+import type { EmbeddingModel } from '@prisma/client';
+
 export type EmbeddingInput = {
   productId: string;
   name: string;
@@ -21,6 +23,7 @@ export type EmbeddingResult = {
  * `HashingEmbeddingAdapter` exists as of Phase 8; see ADR-023/ADR-024 for why.
  */
 export interface EmbeddingProvider {
+  readonly model: EmbeddingModel;
   readonly dimensions: number;
   embed(input: EmbeddingInput): Promise<EmbeddingResult>;
   /** Embeds arbitrary free text into the same vector space as `embed()`'s

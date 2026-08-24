@@ -248,6 +248,18 @@ export class UsersService {
       this.prisma.cart.deleteMany({ where: { userId } }),
       this.prisma.wishlistItem.deleteMany({ where: { userId } }),
       this.prisma.notification.deleteMany({ where: { userId } }),
+      // Not deleted: SupportTicket.userId isn't nullable, and a ticket's thread needs to stay
+      // structurally intact for the other party (support staff) who may have replied on it.
+      // Same treatment as addresses — scrub the free text the user themselves wrote, keep the
+      // row. Only the user's own messages (never staff replies) are touched.
+      this.prisma.supportMessage.updateMany({
+        where: { senderId: userId },
+        data: { body: REDACTED },
+      }),
+      this.prisma.supportTicket.updateMany({
+        where: { userId },
+        data: { subject: REDACTED },
+      }),
       // Not deleted: Order.addressId requires the row to keep existing. Scrubbed instead.
       this.prisma.address.updateMany({
         where: { userId },

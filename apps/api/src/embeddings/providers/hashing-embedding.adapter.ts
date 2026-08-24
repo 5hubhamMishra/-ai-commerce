@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import {
+  STORED_EMBEDDING_DIMENSIONS,
+  STORED_EMBEDDING_MODEL,
+} from '../embedding-model-config';
 import type {
   EmbeddingInput,
   EmbeddingProvider,
   EmbeddingResult,
 } from './embedding-provider.interface';
 
-const DIMENSIONS = 64;
+const DIMENSIONS = STORED_EMBEDDING_DIMENSIONS;
 /** Category/brand tokens get more weight than a plain word — they're the
  *  strongest, least noisy same-product-family signal available without a
  *  real trained model. */
@@ -49,6 +53,7 @@ function l2Normalize(vector: number[]): number[] {
 
 @Injectable()
 export class HashingEmbeddingAdapter implements EmbeddingProvider {
+  readonly model = STORED_EMBEDDING_MODEL;
   readonly dimensions = DIMENSIONS;
 
   embed(input: EmbeddingInput): Promise<EmbeddingResult> {

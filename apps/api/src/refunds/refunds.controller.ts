@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -18,8 +18,9 @@ export class RefundsController {
   createStandalone(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateRefundDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    return this.refundsService.createStandalone(user.id, dto);
+    return this.refundsService.createStandalone(user.id, dto, idempotencyKey);
   }
 
   @Roles(...REFUND_VIEW_ROLES)

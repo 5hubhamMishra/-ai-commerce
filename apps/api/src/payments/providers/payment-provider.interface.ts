@@ -29,6 +29,7 @@ export type RefundInput = {
   amount: number;
   currency: string;
   reason: string;
+  idempotencyKey?: string;
 };
 
 export type RefundResult = {

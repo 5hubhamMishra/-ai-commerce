@@ -66,12 +66,29 @@ describe('Privacy (e2e)', () => {
         .send({ productId: product.id })
         .expect(201);
     }
+
+    // A support ticket, so deletion's handling of the user's own free text (subject +
+    // message body) is actually exercised — the ticket itself was previously untested here.
+    await request(app.getHttpServer())
+      .post('/api/v1/support/tickets')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        subject: 'My real name is in this subject line',
+        category: 'ACCOUNT',
+        message: 'And my real phone number is in this message body.',
+      })
+      .expect(201);
   });
 
   afterAll(async () => {
     // The account may already be anonymized+retained by the deletion test below (real
     // production behavior) — hard-delete here is just test-DB hygiene, not asserting on
-    // production behavior itself.
+    // production behavior itself. SupportTicket/SupportMessage have no cascading FK to
+    // User (unlike Address), so they must go first or the user delete fails with a real
+    // FK violation — which previously aborted this hook before app.close() ran, leaving
+    // Jest hanging on the still-open Nest app afterward.
+    await prisma.supportMessage.deleteMany({ where: { senderId: userId } });
+    await prisma.supportTicket.deleteMany({ where: { userId } });
     await prisma.user.deleteMany({ where: { id: userId } });
     await app.close();
   });
@@ -144,6 +161,17 @@ describe('Privacy (e2e)', () => {
 
     const wishlist = await prisma.wishlistItem.findMany({ where: { userId } });
     expect(wishlist).toHaveLength(0);
+
+    // The support ticket itself isn't deletable (order/staff-reply history), but the user's
+    // own free text must not survive in the clear.
+    const tickets = await prisma.supportTicket.findMany({ where: { userId } });
+    expect(tickets).toHaveLength(1);
+    expect(tickets[0].subject).toBe('[deleted]');
+    const messages = await prisma.supportMessage.findMany({
+      where: { senderId: userId },
+    });
+    expect(messages).toHaveLength(1);
+    expect(messages[0].body).toBe('[deleted]');
 
     // The access token issued before deletion is real and unexpired, but JwtStrategy
     // re-checks isActive/deletedAt against the database on every request — a still-valid

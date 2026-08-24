@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Address, CreatePaymentResponse, ShippingMethodQuote } from '@ai-commerce/types';
@@ -80,9 +80,11 @@ export default function CheckoutScreen({ navigation }: Props) {
   useEffect(() => {
     if (!effectiveAddressId) return;
     let cancelled = false;
-    setQuotesLoading(true);
-    setQuotes(null);
-    setSelectedMethod(null);
+    startTransition(() => {
+      setQuotesLoading(true);
+      setQuotes(null);
+      setSelectedMethod(null);
+    });
     shippingApi
       .quote(effectiveAddressId)
       .then((result) => {

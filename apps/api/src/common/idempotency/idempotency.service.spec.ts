@@ -39,7 +39,12 @@ describe('IdempotencyService', () => {
     );
 
     expect(prisma.idempotencyKey.create).toHaveBeenCalledWith({
-      data: { userId: 'user1', scope: 'order_create', key: 'key1' },
+      data: {
+        userId: 'user1',
+        scope: 'order_create',
+        key: 'key1',
+        requestFingerprint: undefined,
+      },
     });
     expect(operation).toHaveBeenCalledTimes(1);
     expect(prisma.idempotencyKey.update).toHaveBeenCalledWith({
@@ -64,6 +69,7 @@ describe('IdempotencyService', () => {
       new Error('unique constraint violation'),
     );
     prisma.idempotencyKey.findUnique.mockResolvedValue({
+      requestFingerprint: undefined,
       statusCode: 201,
       responseBody: { orderId: 'o1' },
     });
@@ -89,6 +95,7 @@ describe('IdempotencyService', () => {
       new Error('unique constraint violation'),
     );
     prisma.idempotencyKey.findUnique.mockResolvedValue({
+      requestFingerprint: undefined,
       statusCode: null,
       responseBody: null,
     });
@@ -121,5 +128,22 @@ describe('IdempotencyService', () => {
       },
     });
     expect(prisma.idempotencyKey.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects same-key reuse for a different request fingerprint', async () => {
+    prisma.idempotencyKey.create.mockRejectedValue(
+      new Error('unique constraint violation'),
+    );
+    prisma.idempotencyKey.findUnique.mockResolvedValue({
+      requestFingerprint: 'hash-a',
+      statusCode: 201,
+      responseBody: { refundId: 'r1' },
+    });
+    const operation = jest.fn();
+
+    await expect(
+      service.run('admin1', 'refund_create', 'key1', operation, 'hash-b'),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(operation).not.toHaveBeenCalled();
   });
 });

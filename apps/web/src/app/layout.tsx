@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s — Veloura",
   },
   description:
-    "Veloura is a smarter place to shop electronics — personalized picks, honest search, and a shopping assistant that knows the catalog.",
+    "Veloura is a personalized place to shop electronics — grounded picks, honest search, and an AI shopping assistant that knows the catalog.",
   applicationName: "Veloura",
   manifest: "/manifest.webmanifest",
   alternates: {
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Veloura — Shopping that gets you",
     description:
-      "Personalized picks, honest search, and a shopping assistant that knows the catalog.",
+      "Grounded picks, honest search, and an AI shopping assistant that knows the catalog.",
     siteName: "Veloura",
     type: "website",
   },
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Veloura — Shopping that gets you",
     description:
-      "Personalized picks, honest search, and a shopping assistant that knows the catalog.",
+      "Grounded picks, honest search, and an AI shopping assistant that knows the catalog.",
   },
   // Explicit `icons` here takes over from the src/app/favicon.ico file
   // convention entirely, so both are declared in one place instead of Next
@@ -68,16 +68,31 @@ export const viewport = {
   themeColor: "#b45309",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className={`h-full scroll-smooth ${inter.variable} ${playfair.variable}`}>
-      <body className="min-h-full flex flex-col" style={{ background: "var(--clr-bg)", color: "var(--clr-text-primary)" }}>
+    <html
+      lang="en"
+      className={`h-full scroll-smooth ${inter.variable} ${playfair.variable}`}
+    >
+      <body
+        className="min-h-full flex flex-col"
+        style={{
+          background: "var(--clr-bg)",
+          color: "var(--clr-text-primary)",
+        }}
+      >
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
         <SessionProvider />
         <Navbar />
-        <main id="main-content" className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1">
+          {children}
+        </main>
         <Footer />
         <Analytics />
         <SpeedInsights />

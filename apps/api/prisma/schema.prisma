@@ -10,7 +10,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   // DATABASE_URL is the pooled connection (Neon's PgBouncer-compatible pooler, needed for
   // serverless — a fresh connection per cold start would exhaust Postgres's real
   // connection limit under concurrent invocations). DIRECT_URL is Neon's unpooled
@@ -592,21 +592,21 @@ model OrderStateHistory {
 // unique per order so a client retry with the same key can never create a second
 // concurrent attempt.
 model Payment {
-  id             String              @id @default(uuid())
-  orderId        String              @map("order_id")
-  provider       PaymentProviderType
-  providerRef    String?             @map("provider_ref")
+  id                 String              @id @default(uuid())
+  orderId            String              @map("order_id")
+  provider           PaymentProviderType
+  providerRef        String?             @map("provider_ref")
   // Razorpay's refund API operates on the payment id, not the order id providerRef holds
   // (populated at createIntent time, before a payment id exists) — set once confirmPayment
   // succeeds. Null for the dev adapter and for any payment that never reached confirmation.
-  providerPaymentRef String?         @map("provider_payment_ref")
-  status         PaymentStatus       @default(PENDING)
-  amount         Decimal             @db.Decimal(12, 2)
-  currency       String              @default("INR")
-  idempotencyKey String              @map("idempotency_key")
-  failureReason  String?             @map("failure_reason")
-  createdAt      DateTime            @default(now()) @map("created_at")
-  updatedAt      DateTime            @updatedAt @map("updated_at")
+  providerPaymentRef String?             @map("provider_payment_ref")
+  status             PaymentStatus       @default(PENDING)
+  amount             Decimal             @db.Decimal(12, 2)
+  currency           String              @default("INR")
+  idempotencyKey     String              @map("idempotency_key")
+  failureReason      String?             @map("failure_reason")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
 
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   refunds Refund[]
@@ -658,13 +658,14 @@ model ShipmentEvent {
 // so concurrent duplicate requests are blocked by the unique constraint itself,
 // not by a check-then-act race.
 model IdempotencyKey {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  scope        String
-  key          String
-  statusCode   Int?     @map("status_code")
-  responseBody Json?    @map("response_body")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id                 String   @id @default(uuid())
+  userId             String   @map("user_id")
+  scope              String
+  key                String
+  requestFingerprint String?  @map("request_fingerprint")
+  statusCode         Int?     @map("status_code")
+  responseBody       Json?    @map("response_body")
+  createdAt          DateTime @default(now()) @map("created_at")
 
   @@unique([userId, scope, key])
   @@map("idempotency_keys")
@@ -743,6 +744,18 @@ enum NotificationType {
   EXCHANGE
   SUPPORT
   SYSTEM
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum NotificationDeliveryStatus {
+  SENT
+  SKIPPED
+  FAILED
 }
 
 enum TicketStatus {
@@ -938,10 +951,30 @@ model Notification {
   readAt      DateTime?        @map("read_at")
   createdAt   DateTime         @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries NotificationDeliveryAttempt[]
 
   @@index([userId])
   @@map("notifications")
+}
+
+model NotificationDeliveryAttempt {
+  id                String                     @id @default(uuid())
+  notificationId    String                     @map("notification_id")
+  channel           NotificationChannel
+  status            NotificationDeliveryStatus
+  provider          String?
+  providerMessageId String?                    @map("provider_message_id")
+  errorCode         String?                    @map("error_code")
+  errorMessage      String?                    @map("error_message")
+  attemptedAt       DateTime                   @default(now()) @map("attempted_at")
+  createdAt         DateTime                   @default(now()) @map("created_at")
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([channel, status])
+  @@map("notification_delivery_attempts")
 }
 
 model SupportTicket {
@@ -1302,11 +1335,11 @@ enum EmbeddingModel {
 // products, but real infrastructure the spec explicitly scoped to this
 // phase, not deferred further.
 model ProductEmbedding {
-  id        String                       @id @default(uuid())
-  productId String                       @unique @map("product_id")
+  id        String                     @id @default(uuid())
+  productId String                     @unique @map("product_id")
   embedding Unsupported("vector(64)")?
-  model     EmbeddingModel               @default(HASHING_V1)
-  updatedAt DateTime                     @updatedAt @map("updated_at")
+  model     EmbeddingModel             @default(HASHING_V1)
+  updatedAt DateTime                   @updatedAt @map("updated_at")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 

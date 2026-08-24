@@ -5,9 +5,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { Prisma, RefundStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { OrderEventsService } from '../common/events/order-events.service';
+import { IdempotencyService } from '../common/idempotency/idempotency.service';
 import { OrdersService } from '../orders/orders.service';
 import {
   PAYMENT_PROVIDER,
@@ -25,6 +27,7 @@ export class RefundsService {
     private readonly prisma: PrismaService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
     private readonly ordersService: OrdersService,
+    private readonly idempotency: IdempotencyService,
     private readonly audit: AuditService,
     private readonly orderEvents: OrderEventsService,
   ) {}
@@ -37,8 +40,15 @@ export class RefundsService {
     amount: number,
     currency: string,
     reason: string,
+    idempotencyKey?: string,
   ): Promise<RefundResult> {
-    return this.provider.refund({ providerRef, amount, currency, reason });
+    return this.provider.refund({
+      providerRef,
+      amount,
+      currency,
+      reason,
+      idempotencyKey,
+    });
   }
 
   /** Called by ReturnsService.complete() inside its own transaction — creates
@@ -82,8 +92,42 @@ export class RefundsService {
 
   /** Admin-initiated refund not tied to a return (goodwill/cancellation
    *  adjustment) — doesn't transition order status, since the order's own
-   *  fulfillment state isn't necessarily affected by a partial goodwill refund. */
-  async createStandalone(actorId: string, dto: CreateRefundDto) {
+   *  fulfillment state isn't necessarily affected by a partial goodwill refund.
+   *
+   *  Idempotency-gated the same way PaymentsService.createPayment is: a retried
+   *  or double-submitted admin request must not issue a second real refund
+   *  through the payment provider (the `refundable` amount check below only
+   *  guards against exceeding the payment total, not against replaying the
+   *  same logical request). */
+  async createStandalone(
+    actorId: string,
+    dto: CreateRefundDto,
+    idempotencyKey?: string,
+  ) {
+    if (!idempotencyKey) {
+      throw new BadRequestException({
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+        message: 'An Idempotency-Key header is required to issue a refund.',
+      });
+    }
+    const result = await this.idempotency.run(
+      actorId,
+      'refund_create',
+      idempotencyKey,
+      async () => ({
+        statusCode: 201,
+        body: await this.createStandaloneInternal(actorId, dto, idempotencyKey),
+      }),
+      fingerprintRefundRequest(dto),
+    );
+    return result.body;
+  }
+
+  private async createStandaloneInternal(
+    actorId: string,
+    dto: CreateRefundDto,
+    idempotencyKey: string,
+  ) {
     const order = await this.prisma.order.findUnique({
       where: { id: dto.orderId },
     });
@@ -105,35 +149,64 @@ export class RefundsService {
       });
     }
 
-    const alreadyRefunded = await this.prisma.refund.aggregate({
-      where: { paymentId: payment.id, status: RefundStatus.COMPLETED },
-      _sum: { amount: true },
-    });
-    const refundable =
-      Number(payment.amount) - Number(alreadyRefunded._sum.amount ?? 0);
-    if (dto.amount > refundable) {
-      throw new BadRequestException({
-        code: 'REFUND_EXCEEDS_REMAINING_AMOUNT',
-        message: `This payment has ${refundable.toFixed(2)} left refundable.`,
-      });
-    }
+    const refund = await this.prisma.$transaction(
+      async (tx) => {
+        const alreadyClaimed = await tx.refund.aggregate({
+          where: {
+            paymentId: payment.id,
+            status: { not: RefundStatus.FAILED },
+          },
+          _sum: { amount: true },
+        });
+        const refundable =
+          Number(payment.amount) - Number(alreadyClaimed._sum.amount ?? 0);
+        if (dto.amount > refundable) {
+          throw new BadRequestException({
+            code: 'REFUND_EXCEEDS_REMAINING_AMOUNT',
+            message: `This payment has ${refundable.toFixed(2)} left refundable.`,
+          });
+        }
 
-    const result = await this.requestProviderRefund(
-      payment.providerPaymentRef ?? payment.providerRef!,
-      dto.amount,
-      payment.currency,
-      dto.reason,
+        return tx.refund.create({
+          data: {
+            orderId: dto.orderId,
+            paymentId: payment.id,
+            amount: dto.amount,
+            currency: payment.currency,
+            reason: dto.reason,
+            status: RefundStatus.PROCESSING,
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
 
-    const refund = await this.prisma.refund.create({
+    let result: RefundResult;
+    try {
+      result = await this.requestProviderRefund(
+        payment.providerPaymentRef ?? payment.providerRef!,
+        dto.amount,
+        payment.currency,
+        dto.reason,
+        idempotencyKey,
+      );
+    } catch (error) {
+      result = {
+        success: false,
+        providerRefundRef: '',
+        raw: {},
+        failureReason:
+          error instanceof Error
+            ? error.message
+            : 'Refund provider request failed.',
+      };
+    }
+
+    const updatedRefund = await this.prisma.refund.update({
+      where: { id: refund.id },
       data: {
-        orderId: dto.orderId,
-        paymentId: payment.id,
-        amount: dto.amount,
-        currency: payment.currency,
-        reason: dto.reason,
         status: result.success ? RefundStatus.COMPLETED : RefundStatus.FAILED,
-        providerRef: result.providerRefundRef,
+        providerRef: result.providerRefundRef || null,
         failureReason: result.failureReason,
       },
     });
@@ -142,14 +215,19 @@ export class RefundsService {
       actorId,
       action: 'REFUND_ISSUED',
       entityType: 'refund',
-      entityId: refund.id,
-      metadata: { orderId: dto.orderId, amount: dto.amount, standalone: true },
+      entityId: updatedRefund.id,
+      metadata: {
+        orderId: dto.orderId,
+        amount: dto.amount,
+        standalone: true,
+        idempotencyKey,
+      },
     });
     if (result.success) {
       this.orderEvents.paymentSucceeded(dto.orderId, payment.id, order.userId);
     }
 
-    return toRefundView(refund);
+    return toRefundView(updatedRefund);
   }
 
   async listForOrder(orderId: string) {
@@ -199,4 +277,16 @@ function toRefundView(refund: {
     failureReason: refund.failureReason,
     createdAt: refund.createdAt,
   };
+}
+
+function fingerprintRefundRequest(dto: CreateRefundDto): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        orderId: dto.orderId,
+        amount: Number(dto.amount),
+        reason: dto.reason,
+      }),
+    )
+    .digest('hex');
 }

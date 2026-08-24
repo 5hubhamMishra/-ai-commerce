@@ -142,10 +142,19 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
+  // Deliberately keyed on the cart's empty-to-non-empty transition, not just `hydrated`:
+  // on a hard navigation straight to /checkout (e.g. from an external link, not the in-app
+  // "Checkout" button), `hydrated` can flip true before the cart itself has finished
+  // loading — with only [hydrated] as a dependency, this effect would run once with
+  // lines.length still 0 and then never run again, since hydrated never changes a second
+  // time. The result: addresses never fetched, and the whole Shipping address section
+  // renders nothing at all (no skeleton, no form, no error) — a real dead end for the
+  // customer, not just a cosmetic gap.
+  const hasCartItems = lines.length > 0;
   useEffect(() => {
-    if (hydrated && lines.length > 0) void fetchServerAddresses();
+    if (hydrated && hasCartItems) void fetchServerAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
+  }, [hydrated, hasCartItems]);
 
   // Both "which address is selected" and "show the add-address form" have a derived
   // default (the account's default address once addresses load; the form when there
@@ -332,6 +341,20 @@ export default function CheckoutPage() {
             <h2 className="block text-sm font-semibold mb-3" style={{ color: 'var(--clr-text-primary)' }}>Shipping address</h2>
 
             {addressesStatus === "loading" && !addresses && <SkeletonBlock className="h-20 w-full" />}
+
+            {addressesStatus === "error" && !addresses && (
+              <div className="rounded-2xl border border-[var(--clr-border)] p-4 text-sm" role="alert">
+                <p style={{ color: "var(--clr-error, #dc2626)" }}>Couldn&apos;t load your saved addresses.</p>
+                <button
+                  type="button"
+                  onClick={() => void fetchServerAddresses()}
+                  className="mt-2 text-sm font-medium transition-colors"
+                  style={{ color: "var(--clr-accent)" }}
+                >
+                  Try again
+                </button>
+              </div>
+            )}
 
             {addresses && addresses.length > 0 && (
               <div className="space-y-2.5">

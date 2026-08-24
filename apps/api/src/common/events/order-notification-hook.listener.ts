@@ -22,53 +22,67 @@ export class OrderNotificationHookListener {
 
   @OnEvent(ORDER_EVENTS.ORDER_CREATED)
   async onOrderCreated(event: OrderCreatedEvent) {
-    await this.notifications.create(
-      event.userId,
+    await this.createNotification(
+      event,
       NotificationType.ORDER_STATUS,
       'Order placed',
-      `Your order has been placed and is awaiting payment.`,
-      'order',
-      event.orderId,
+      'Your order has been placed and is awaiting payment.',
     );
   }
 
   @OnEvent(ORDER_EVENTS.ORDER_STATUS_CHANGED)
   async onOrderStatusChanged(event: OrderStatusChangedEvent) {
-    await this.notifications.create(
-      event.userId,
+    await this.createNotification(
+      event,
       NotificationType.ORDER_STATUS,
       'Order status updated',
       `Your order is now ${humanize(event.toStatus)}.`,
-      'order',
-      event.orderId,
     );
   }
 
   @OnEvent(ORDER_EVENTS.PAYMENT_SUCCEEDED)
   async onPaymentSucceeded(event: PaymentEvent) {
-    await this.notifications.create(
-      event.userId,
+    await this.createNotification(
+      event,
       NotificationType.PAYMENT,
       'Payment successful',
       'Your payment was successful and your order is confirmed.',
-      'order',
-      event.orderId,
     );
   }
 
   @OnEvent(ORDER_EVENTS.PAYMENT_FAILED)
   async onPaymentFailed(event: PaymentEvent) {
-    await this.notifications.create(
-      event.userId,
+    await this.createNotification(
+      event,
       NotificationType.PAYMENT,
       'Payment failed',
       'Your payment could not be completed. Please try again.',
-      'order',
-      event.orderId,
     );
     this.logger.log(
       `payment ${event.paymentId} failed for order ${event.orderId}`,
     );
+  }
+
+  private async createNotification(
+    event: OrderCreatedEvent | OrderStatusChangedEvent | PaymentEvent,
+    type: NotificationType,
+    title: string,
+    body: string,
+  ) {
+    try {
+      await this.notifications.create(
+        event.userId,
+        type,
+        title,
+        body,
+        'order',
+        event.orderId,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to create ${type} notification for order ${event.orderId}: ${String(error)}`,
+      );
+    }
   }
 }
 
