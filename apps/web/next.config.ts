@@ -4,6 +4,21 @@ const nextConfig: NextConfig = {
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: "inline",
+    // The showcase catalog in apps/api/prisma/seed-data/presentation-products.json links
+    // directly to each product's real image on its official manufacturer/retailer store
+    // (never downloaded/hosted here) — one entry per hostname actually used there.
+    remotePatterns: [
+      { protocol: "https", hostname: "dlcdnwebimgs.asus.com" },
+      { protocol: "https", hostname: "www.apple.com" },
+      { protocol: "https", hostname: "us.sennheiser-hearing.com" },
+      { protocol: "https", hostname: "image-us.samsung.com" },
+      { protocol: "https", hostname: "images.samsung.com" },
+      { protocol: "https", hostname: "assets2.razerzone.com" },
+      { protocol: "https", hostname: "assets.corsair.com" },
+      { protocol: "https", hostname: "s7d1.scene7.com" },
+      { protocol: "https", hostname: "assets.bosecreative.com" },
+      { protocol: "https", hostname: "www.spigen.com" },
+    ],
   },
   // Next's default bundler skips transpiling anything under node_modules, including these
   // workspace packages (symlinked, shipped as raw TS with no build step of their own) — this
