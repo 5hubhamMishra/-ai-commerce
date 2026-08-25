@@ -7,11 +7,16 @@ import type { Category, ListProductsResponse } from "@ai-commerce/types";
 import { catalogApi } from "@ai-commerce/api-client";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import { fromProductListItem } from "@/lib/catalog-mappers";
+import { listDemoProducts, mergeDemoProducts } from "@/lib/demo-catalog";
 import { useStore } from "@/lib/store";
 
 const PAGE_SIZE = 20;
 
-export default function CategoryPageClient({ initialCategory }: { initialCategory: Category }) {
+export default function CategoryPageClient({
+  initialCategory,
+}: {
+  initialCategory: Category;
+}) {
   const category = initialCategory;
   const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
@@ -32,13 +37,25 @@ export default function CategoryPageClient({ initialCategory }: { initialCategor
       .listCategoryProducts(category.slug, { page, pageSize: PAGE_SIZE })
       .then((res) => {
         if (!cancelled) {
-          setResult(res);
+          setResult(
+            mergeDemoProducts(res, {
+              page,
+              pageSize: PAGE_SIZE,
+              category: category.slug,
+            }),
+          );
           setLoading(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setResult(null);
+          setResult(
+            listDemoProducts({
+              page,
+              pageSize: PAGE_SIZE,
+              category: category.slug,
+            }),
+          );
           setLoading(false);
         }
       });
@@ -49,7 +66,9 @@ export default function CategoryPageClient({ initialCategory }: { initialCategor
 
   const products = result ? result.items.map(fromProductListItem) : [];
   const total = result?.total ?? 0;
-  const totalPages = result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1;
+  const totalPages = result
+    ? Math.max(1, Math.ceil(result.total / result.pageSize))
+    : 1;
 
   return (
     <>
@@ -57,15 +76,26 @@ export default function CategoryPageClient({ initialCategory }: { initialCategor
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 flex items-center justify-between gap-8 h-full">
           <div>
             <div className="text-xs text-stone-500">
-              <Link href="/" className="hover:text-stone-300">Home</Link> › <span className="text-stone-300">{category.name}</span>
+              <Link href="/" className="hover:text-stone-300">
+                Home
+              </Link>{" "}
+              › <span className="text-stone-300">{category.name}</span>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-white mt-2">{category.name}</h1>
+            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-white mt-2">
+              {category.name}
+            </h1>
             <p className="mt-2 text-sm text-stone-400">
               {loading ? "Loading…" : `${total} products`}
             </p>
           </div>
           <div className="hidden md:block relative h-36 w-48 rounded-2xl overflow-hidden opacity-80">
-            <Image src={`/products/${category.slug}.svg`} alt={category.name} fill className="object-cover" unoptimized />
+            <Image
+              src={`/products/${category.slug}.svg`}
+              alt={category.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
           </div>
         </div>
       </div>

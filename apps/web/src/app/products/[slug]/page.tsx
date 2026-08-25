@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { catalogApi, ApiError } from "@ai-commerce/api-client";
+import { getDemoProductBySlug } from "@/lib/demo-catalog";
 import ProductDetailClient from "./ProductDetailClient";
 
 async function fetchProduct(slug: string) {
   try {
     return await catalogApi.getProductBySlug(slug);
   } catch (err) {
-    if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
+    if (err instanceof ApiError && err.status === 404) {
+      return getDemoProductBySlug(slug);
+    }
+    return getDemoProductBySlug(slug);
   }
 }
 
@@ -25,7 +28,11 @@ export async function generateMetadata({
     title: product.name,
     description: product.description,
     alternates: { canonical: `/products/${product.slug}` },
-    openGraph: { title: product.name, description: product.description, type: "website" },
+    openGraph: {
+      title: product.name,
+      description: product.description,
+      type: "website",
+    },
     twitter: { title: product.name, description: product.description },
   };
 }
@@ -44,7 +51,9 @@ export default async function ProductDetailPage({
     "@type": "Product",
     name: product.name,
     description: product.description,
-    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand.name } } : {}),
+    ...(product.brand
+      ? { brand: { "@type": "Brand", name: product.brand.name } }
+      : {}),
     image: product.images.map((img) => img.url),
     offers: {
       "@type": "Offer",

@@ -8,6 +8,7 @@
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { seedCatalog } from './seed-catalog';
+import { seedPresentationProducts } from './seed-presentation-products';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +24,9 @@ async function main() {
   }
 
   if (inProduction) {
-    console.log('SEED_CATALOG_IN_PRODUCTION=true — seeding catalog only, skipping demo admin account.');
+    console.log(
+      'SEED_CATALOG_IN_PRODUCTION=true — seeding catalog only, skipping demo admin account.',
+    );
   } else {
     const email = 'admin@veloura.dev';
     const existingAdmin = await prisma.user.findUnique({ where: { email } });
@@ -40,11 +43,14 @@ async function main() {
           profile: { create: {} },
         },
       });
-      console.log(`Seed admin created: ${email} / ChangeMe123! — change this password before deploying anywhere shared.`);
+      console.log(
+        `Seed admin created: ${email} / ChangeMe123! — change this password before deploying anywhere shared.`,
+      );
     }
   }
 
   await seedCatalog(prisma);
+  await seedPresentationProducts(prisma);
 }
 
 main()

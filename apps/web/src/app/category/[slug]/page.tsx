@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { catalogApi, ApiError } from "@ai-commerce/api-client";
+import { getDemoCategoryBySlug } from "@/lib/demo-catalog";
 import CategoryPageClient from "./CategoryPageClient";
 
 async function fetchCategory(slug: string) {
@@ -8,7 +9,7 @@ async function fetchCategory(slug: string) {
     return await catalogApi.getCategoryBySlug(slug);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
+    return getDemoCategoryBySlug(slug);
   }
 }
 
@@ -48,7 +49,12 @@ export default async function CategoryPage({
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: "/" },
-        { "@type": "ListItem", position: 2, name: category.name, item: `/category/${category.slug}` },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: category.name,
+          item: `/category/${category.slug}`,
+        },
       ],
     },
   };

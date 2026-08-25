@@ -6,13 +6,29 @@ import { catalogApi } from "@ai-commerce/api-client";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import Filters, { type FilterState } from "@/components/Filters";
 import { fromProductListItem } from "@/lib/catalog-mappers";
+import {
+  demoBrands,
+  demoCategories,
+  listDemoProducts,
+  mergeDemoProducts,
+} from "@/lib/demo-catalog";
 import { useStore } from "@/lib/store";
 
 const PAGE_SIZE = 20;
 
 function FilterIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg {...props} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      {...props}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   );
@@ -32,8 +48,14 @@ function ShopContent() {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    catalogApi.listCategories().then(setCategories).catch(() => setCategories([]));
-    catalogApi.listBrands().then(setBrands).catch(() => setBrands([]));
+    catalogApi
+      .listCategories()
+      .then(setCategories)
+      .catch(() => setCategories(demoCategories));
+    catalogApi
+      .listBrands()
+      .then(setBrands)
+      .catch(() => setBrands(demoBrands));
   }, []);
 
   useEffect(() => {
@@ -50,13 +72,31 @@ function ShopContent() {
       })
       .then((res) => {
         if (!cancelled) {
-          setResult(res);
+          setResult(
+            mergeDemoProducts(res, {
+              page,
+              pageSize: PAGE_SIZE,
+              category: state.category,
+              brand: state.brand,
+              maxPrice: state.maxPrice,
+              sort: state.sort,
+            }),
+          );
           setLoading(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setResult(null);
+          setResult(
+            listDemoProducts({
+              page,
+              pageSize: PAGE_SIZE,
+              category: state.category,
+              brand: state.brand,
+              maxPrice: state.maxPrice,
+              sort: state.sort,
+            }),
+          );
           setLoading(false);
         }
       });
@@ -86,13 +126,23 @@ function ShopContent() {
   function handleFilterChange(next: FilterState) {
     setState(next);
     setPage(1);
-    trackEvent("FILTER_USED", { category: next.category, brand: next.brand, metadata: { sort: next.sort } });
-    trackRealEvent("FILTER_USED", undefined, { category: next.category, brand: next.brand, sort: next.sort });
+    trackEvent("FILTER_USED", {
+      category: next.category,
+      brand: next.brand,
+      metadata: { sort: next.sort },
+    });
+    trackRealEvent("FILTER_USED", undefined, {
+      category: next.category,
+      brand: next.brand,
+      sort: next.sort,
+    });
   }
 
   const products = result ? result.items.map(fromProductListItem) : [];
   const total = result?.total ?? 0;
-  const totalPages = result ? Math.max(1, Math.ceil(result.total / result.pageSize)) : 1;
+  const totalPages = result
+    ? Math.max(1, Math.ceil(result.total / result.pageSize))
+    : 1;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -108,7 +158,7 @@ function ShopContent() {
             ref={filterButtonRef}
             onClick={() => setFilterOpen(true)}
             className="flex items-center gap-2 rounded-xl border border-[var(--clr-border)] px-3 py-2 text-sm font-medium lg:hidden"
-            style={{ color: 'var(--clr-text-secondary)' }}
+            style={{ color: "var(--clr-text-secondary)" }}
             aria-haspopup="dialog"
             aria-expanded={filterOpen}
             aria-controls="filter-drawer"
@@ -120,7 +170,12 @@ function ShopContent() {
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
         <aside className="hidden lg:block sticky top-24 h-fit rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] p-5">
-          <Filters state={state} onChange={handleFilterChange} categories={categories} brands={brands} />
+          <Filters
+            state={state}
+            onChange={handleFilterChange}
+            categories={categories}
+            brands={brands}
+          />
         </aside>
         <div>
           <CatalogProductGrid products={products} />
@@ -150,7 +205,11 @@ function ShopContent() {
 
       {filterOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setFilterOpen(false)} aria-hidden="true" />
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setFilterOpen(false)}
+            aria-hidden="true"
+          />
           <div
             id="filter-drawer"
             ref={filterPanelRef}
@@ -162,11 +221,32 @@ function ShopContent() {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-xl font-semibold">Filters</h2>
-              <button onClick={() => setFilterOpen(false)} className="p-2 text-[var(--clr-text-secondary)]" aria-label="Close filters">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="p-2 text-[var(--clr-text-secondary)]"
+                aria-label="Close filters"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
-            <Filters state={state} onChange={handleFilterChange} categories={categories} brands={brands} />
+            <Filters
+              state={state}
+              onChange={handleFilterChange}
+              categories={categories}
+              brands={brands}
+            />
           </div>
         </div>
       )}
