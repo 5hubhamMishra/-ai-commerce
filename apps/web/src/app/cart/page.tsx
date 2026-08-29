@@ -95,12 +95,17 @@ export default function CartPage() {
                 )}
               </div>
               <div className="flex flex-col items-end justify-between shrink-0">
-                <button onClick={() => removeItem(item.id)} className="text-xs text-[var(--clr-text-disabled)] hover:text-[var(--clr-error)] transition-colors">
+                <button
+                  onClick={() => removeItem(item.id)}
+                  aria-label={`Remove ${item.productName} from cart`}
+                  className="text-xs text-[var(--clr-text-disabled)] hover:text-[var(--clr-error)] transition-colors"
+                >
                   Remove
                 </button>
                 <div className="flex items-center rounded-xl border border-[var(--clr-border)] overflow-hidden">
                   <button
                     onClick={() => updateItem(item.id, item.quantity - 1)}
+                    aria-label={`Decrease quantity of ${item.productName}`}
                     className="px-3 py-2 text-sm font-medium hover:bg-stone-50"
                   >
                     −
@@ -108,6 +113,7 @@ export default function CartPage() {
                   <span className="w-9 text-center text-sm font-semibold">{item.quantity}</span>
                   <button
                     onClick={() => updateItem(item.id, item.quantity + 1)}
+                    aria-label={`Increase quantity of ${item.productName}`}
                     className="px-3 py-2 text-sm font-medium hover:bg-stone-50"
                   >
                     +

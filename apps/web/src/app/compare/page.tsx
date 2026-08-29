@@ -341,6 +341,7 @@ export default function ComparePage() {
                     </p>
                     <button
                       onClick={() => removeProduct(p.id)}
+                      aria-label={`Remove ${p.name} from comparison`}
                       className="text-xs text-[var(--clr-error,red)] hover:underline mt-1"
                     >
                       Remove
