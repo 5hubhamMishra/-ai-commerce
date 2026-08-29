@@ -49,7 +49,10 @@ test("machine-readable public resources are available", async ({ request }) => {
   expect(await robots.text()).toContain("Sitemap:");
 
   expect(sitemap.status()).toBe(200);
-  expect(await sitemap.text()).toContain("<urlset");
+  const sitemapXml = await sitemap.text();
+  expect(sitemapXml).toContain("<urlset");
+  expect(sitemapXml).not.toContain("/search");
+  expect(sitemapXml).not.toContain("/recommendations");
 
   expect(llms.status()).toBe(200);
   expect(await llms.text()).toContain("Veloura");

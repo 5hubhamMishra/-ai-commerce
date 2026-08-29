@@ -8,8 +8,6 @@ const BASE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-ly
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/", changeFrequency: "daily", priority: 1 },
   { path: "/shop", changeFrequency: "daily", priority: 0.9 },
-  { path: "/search", changeFrequency: "weekly", priority: 0.5 },
-  { path: "/recommendations", changeFrequency: "daily", priority: 0.6 },
   { path: "/ai-shopping", changeFrequency: "monthly", priority: 0.6 },
   { path: "/compare", changeFrequency: "monthly", priority: 0.4 },
   { path: "/about", changeFrequency: "monthly", priority: 0.5 },
