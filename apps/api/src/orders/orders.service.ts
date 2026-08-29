@@ -43,7 +43,11 @@ const orderDetailInclude = {
   // re-derived from the live product. Needed so the client can link "write a review" to
   // the actual product without a separate lookup; variant is ON DELETE RESTRICT, so this
   // join is always safe to make.
-  items: { include: { variant: { select: { product: { select: { id: true, slug: true } } } } } },
+  items: {
+    include: {
+      variant: { select: { product: { select: { id: true, slug: true } } } },
+    },
+  },
   shipment: {
     include: { events: { orderBy: { occurredAt: 'asc' as const } } },
   },
