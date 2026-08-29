@@ -75,12 +75,12 @@ export default function CategoryPageClient({
       <div className="relative overflow-hidden bg-stone-950 w-full min-h-[180px]">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 flex items-center justify-between gap-8 h-full">
           <div>
-            <div className="text-xs text-stone-500">
+            <nav aria-label="Breadcrumb" className="text-xs text-stone-500">
               <Link href="/" className="hover:text-stone-300">
                 Home
               </Link>{" "}
               › <span className="text-stone-300">{category.name}</span>
-            </div>
+            </nav>
             <h1 className="font-display text-3xl sm:text-4xl font-semibold text-white mt-2">
               {category.name}
             </h1>

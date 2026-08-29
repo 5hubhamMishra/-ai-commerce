@@ -118,7 +118,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <nav className="text-xs mb-6" style={{ color: "var(--clr-text-secondary)" }}>
+      <nav aria-label="Breadcrumb" className="text-xs mb-6" style={{ color: "var(--clr-text-secondary)" }}>
         <Link href="/" className="hover:underline">Home</Link> ›{" "}
         <Link href={`/category/${product.category.slug}`} className="hover:underline">
           {product.category.name}
