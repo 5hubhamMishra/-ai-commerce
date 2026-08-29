@@ -114,3 +114,19 @@ test("catalog JSON-LD uses absolute public URLs", async ({ request }) => {
     expect(data.url, path).toMatch(/^https:\/\//);
   }
 });
+
+test("category pages include server-rendered product content", async ({
+  request,
+}) => {
+  const home = await (await request.get("/")).text();
+  const categoryPath = home.match(/href="(\/category\/[^"]+)"/)?.[1];
+
+  expect(categoryPath).toBeTruthy();
+
+  const response = await request.get(categoryPath!);
+  const html = await response.text();
+
+  expect(response.status()).toBe(200);
+  expect(html).toContain('data-testid="catalog-product-card"');
+  expect(html).not.toContain("Loading…");
+});

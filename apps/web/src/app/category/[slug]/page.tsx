@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { catalogApi, ApiError } from "@ai-commerce/api-client";
-import { getDemoCategoryBySlug } from "@/lib/demo-catalog";
+import type { ListProductsResponse } from "@ai-commerce/types";
+import {
+  getDemoCategoryBySlug,
+  listDemoProducts,
+  mergeDemoProducts,
+} from "@/lib/demo-catalog";
 import CategoryPageClient from "./CategoryPageClient";
 
 const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
+const PAGE_SIZE = 20;
 
 async function fetchCategory(slug: string) {
   try {
@@ -12,6 +18,18 @@ async function fetchCategory(slug: string) {
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
     return getDemoCategoryBySlug(slug);
+  }
+}
+
+async function fetchCategoryProducts(slug: string): Promise<ListProductsResponse> {
+  try {
+    const result = await catalogApi.listCategoryProducts(slug, {
+      page: 1,
+      pageSize: PAGE_SIZE,
+    });
+    return mergeDemoProducts(result, { category: slug, pageSize: PAGE_SIZE });
+  } catch {
+    return listDemoProducts({ category: slug, pageSize: PAGE_SIZE });
   }
 }
 
@@ -42,6 +60,7 @@ export default async function CategoryPage({
   const { slug } = await params;
   const category = await fetchCategory(slug);
   if (!category) notFound();
+  const initialResult = await fetchCategoryProducts(category.slug);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -68,7 +87,10 @@ export default async function CategoryPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <CategoryPageClient initialCategory={category} />
+      <CategoryPageClient
+        initialCategory={category}
+        initialResult={initialResult}
+      />
     </>
   );
 }

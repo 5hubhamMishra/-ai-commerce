@@ -14,15 +14,19 @@ const PAGE_SIZE = 20;
 
 export default function CategoryPageClient({
   initialCategory,
+  initialResult,
 }: {
   initialCategory: Category;
+  initialResult: ListProductsResponse;
 }) {
   const category = initialCategory;
   const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const [page, setPage] = useState(1);
-  const [result, setResult] = useState<ListProductsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<ListProductsResponse | null>(
+    initialResult,
+  );
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     trackEvent("CATEGORY_VIEWED", { category: category.name });
