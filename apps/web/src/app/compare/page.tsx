@@ -13,6 +13,10 @@ import { formatPrice } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 const MAX_COMPARE = 4;
+const STARTER_PRODUCTS = listDemoProducts({
+  pageSize: MAX_COMPARE,
+  sort: "featured",
+}).items;
 
 function createLocalComparison(
   products: ProductListItem[],
@@ -276,6 +280,24 @@ export default function ComparePage() {
           <p className="mt-2 text-sm text-[var(--clr-text-secondary)]">
             Search and add products above to compare their specifications.
           </p>
+          <div className="mt-6 grid w-full max-w-2xl gap-2 sm:grid-cols-2">
+            {STARTER_PRODUCTS.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                data-testid="compare-starter-product"
+                onClick={() => addProduct(product)}
+                className="rounded-xl border border-[var(--clr-border)] bg-[var(--clr-surface-2)] px-3 py-2 text-left text-sm hover:border-[var(--clr-accent)]"
+              >
+                <span className="block font-medium">{product.name}</span>
+                <span className="text-xs text-[var(--clr-text-secondary)]">
+                  {product.minPrice != null
+                    ? formatPrice(product.minPrice)
+                    : "Price not listed"}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       ) : ids.length === 1 ? (
         <div className="empty-state mt-10 p-12 text-center rounded-2xl border border-[var(--clr-border)] bg-[var(--clr-surface)] flex flex-col items-center">

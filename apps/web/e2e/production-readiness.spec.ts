@@ -164,3 +164,14 @@ test("recommendations page includes server-rendered product content", async ({
   expect(html).toContain("Recommended for you");
   expect(html).toContain('data-testid="catalog-product-card"');
 });
+
+test("compare page includes server-rendered starter products", async ({
+  request,
+}) => {
+  const response = await request.get("/compare");
+  const html = await response.text();
+
+  expect(response.status()).toBe(200);
+  expect(html).toContain("Compare Products");
+  expect(html).toContain('data-testid="compare-starter-product"');
+});
