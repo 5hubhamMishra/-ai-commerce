@@ -377,6 +377,7 @@ export default function Navbar() {
               <button 
                 onClick={() => setMobileOpen(false)}
                 className="p-2 rounded-lg hover:bg-[var(--clr-surface-2)] text-[var(--clr-text-secondary)]"
+                aria-label="Close menu"
               >
                 <XIcon className="h-5 w-5" />
               </button>
