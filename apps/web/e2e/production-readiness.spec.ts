@@ -141,3 +141,15 @@ test("shop page includes server-rendered product content", async ({
   expect(html).toContain('data-testid="catalog-product-card"');
   expect(html).not.toContain("Loading...");
 });
+
+test("search result pages include server-rendered product content", async ({
+  request,
+}) => {
+  const response = await request.get("/search?q=headphones");
+  const html = await response.text();
+
+  expect(response.status()).toBe(200);
+  expect(html).toContain("results for &quot;headphones&quot;");
+  expect(html).toContain('data-testid="catalog-product-card"');
+  expect(html).not.toContain("Searching");
+});
