@@ -531,7 +531,8 @@ describe("real event tracking and behavioral profile", () => {
 
   it("clearActivity always clears local state, and also calls the real delete endpoint when signed in", async () => {
     useStore.setState({ events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }], recentlyViewed: ["p1"] });
-    const deleteSpy = vi.fn(async (..._args: [RequestInfo | URL, RequestInit?]) => ({ ok: true, status: 204, json: async () => undefined }) as Response);
+    const deleteMock: typeof fetch = async () => ({ ok: true, status: 204, json: async () => undefined }) as Response;
+    const deleteSpy = vi.fn(deleteMock);
     vi.stubGlobal("fetch", deleteSpy);
 
     await useStore.getState().clearActivity();

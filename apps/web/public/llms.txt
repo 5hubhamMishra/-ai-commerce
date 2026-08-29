@@ -1,0 +1,25 @@
+# Veloura
+
+Veloura is a personalized e-commerce storefront for product discovery, catalog browsing, search, recommendations, product comparison, wishlist, cart, checkout, orders, returns, and a catalog-grounded AI shopping assistant called ShopAI.
+
+## Public URLs
+
+- Home: /
+- Shop catalog: /shop
+- Search: /search
+- Recommendations: /recommendations
+- ShopAI: /ai-shopping
+- Product comparison: /compare
+- About: /about
+- Contact: /contact
+- Privacy: /privacy
+- Sitemap: /sitemap.xml
+- Robots: /robots.txt
+
+## Catalog
+
+Public product pages are available under /products/{slug}. Public category pages are available under /category/{slug}. Use sitemap.xml for the current generated list when available.
+
+## Boundaries
+
+Do not treat private account, admin, cart, checkout, order, or internal API routes as public documentation. Product data, prices, availability, and images should be read from visible catalog pages or public metadata, not invented.

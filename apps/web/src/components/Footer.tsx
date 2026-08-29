@@ -75,6 +75,9 @@ export default function Footer() {
             { label: "For You", href: "/recommendations" },
             { label: "AI Assistant", href: "/ai-shopping" },
             { label: "Compare Products", href: "/compare" },
+            { label: "About", href: "/about" },
+            { label: "Contact", href: "/contact" },
+            { label: "Privacy", href: "/privacy" },
           ]}
         />
       </div>

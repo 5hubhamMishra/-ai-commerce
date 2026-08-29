@@ -1,170 +1,70 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { startTransition, useEffect, useMemo, useState } from "react";
-import type { Category, ProductListItem } from "@ai-commerce/types";
-import { catalogApi } from "@ai-commerce/api-client";
-import { useStore } from "@/lib/store";
-import { useCategories } from "@/lib/hooks/useCategories";
-import { useRecommendations } from "@/lib/hooks/useRecommendations";
-import { useProductIndex } from "@/lib/hooks/useProductIndex";
+import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
 import { fromProductListItem } from "@/lib/catalog-mappers";
-import { listDemoProducts, mergeDemoProducts } from "@/lib/demo-catalog";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import Section from "@/components/Section";
-import { SkeletonBlock } from "@/components/Skeleton";
+import HomeDynamicSections from "./HomeDynamicSections";
+
+const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
 
 export default function Home() {
-  const hydrated = useStore((s) => s.hydrated);
-  const events = useStore((s) => s.events);
-  const user = useStore((s) => s.user);
-  const anonymousId = useStore((s) => s.anonymousId);
-  const behavioralProfile = useStore((s) => s.behavioralProfile);
-  const recentlyViewedReal = useStore((s) => s.recentlyViewedReal);
-  const personalizationEnabled = useStore((s) => s.personalizationEnabled);
-
-  // A real signed-in user's history lives server-side (behavioralProfile.eventCount);
-  // an anonymous visitor only has this browser's local event count as a proxy.
-  const hasHistory =
-    personalizationEnabled &&
-    (user ? (behavioralProfile?.eventCount ?? 0) > 0 : events.length >= 3);
-
-  const recommended = useRecommendations("personalized", {
-    limit: 10,
-    anonymousId: anonymousId ?? undefined,
-  });
-  const trending = useRecommendations("trending", { limit: 10 });
-  const productIndex = useProductIndex();
-
-  const recommendedCards = useMemo(
-    () => recommended?.map((r) => fromProductListItem(r.product)) ?? null,
-    [recommended],
-  );
-  const demoFeaturedCards = useMemo(
-    () =>
-      listDemoProducts({ featured: true, pageSize: 10 }).items.map(
-        fromProductListItem,
-      ),
-    [],
-  );
-  const reasons = useMemo(() => {
-    const map: Record<string, string> = {};
-    recommended?.forEach((r) => (map[r.product.id] = r.reasons[0]));
-    return map;
-  }, [recommended]);
-  const trendingCards = useMemo(
-    () => trending?.map((r) => fromProductListItem(r.product)) ?? null,
-    [trending],
-  );
-
-  const recentCards = useMemo(() => {
-    if (!productIndex) return null;
-    return recentlyViewedReal
-      .map((id) => productIndex.get(id))
-      .filter((p): p is NonNullable<typeof p> => Boolean(p))
-      .slice(0, 10)
-      .map(fromProductListItem);
-  }, [recentlyViewedReal, productIndex]);
-
-  const [featured, setFeatured] = useState<ProductListItem[] | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    startTransition(() => setFeatured(null));
-    catalogApi
-      .listProducts({ featured: true, pageSize: 10 })
-      .then((res) => {
-        if (!cancelled)
-          setFeatured(
-            mergeDemoProducts(res, { featured: true, pageSize: 10 }).items,
-          );
-      })
-      .catch(() => {
-        if (!cancelled)
-          setFeatured(listDemoProducts({ featured: true, pageSize: 10 }).items);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  const featuredCards = useMemo(
-    () => featured?.map(fromProductListItem) ?? null,
-    [featured],
-  );
-
-  const realCategories = useCategories();
-
-  const topCategoryName = useMemo(() => {
-    if (!behavioralProfile) return undefined;
-    const topId = Object.entries(
-      behavioralProfile.categoryAffinity.viewed,
-    ).sort((a, b) => b[1] - a[1])[0]?.[0];
-    return topId ? realCategories.find((c) => c.id === topId)?.name : undefined;
-  }, [behavioralProfile, realCategories]);
+  const featuredCards = listDemoProducts({
+    featured: true,
+    pageSize: 10,
+  }).items.map(fromProductListItem);
+  const categories = demoCategories;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": ["WebSite", "OnlineStore"],
+    name: "Veloura",
+    url: SITE_URL,
+    description:
+      "Veloura is a personalized e-commerce storefront for discovering products through catalog browsing, search, recommendations, comparison, and a catalog-grounded AI shopping assistant.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
 
   return (
     <div>
-      <Hero
-        topCategory={hasHistory ? topCategoryName : undefined}
-        categories={realCategories}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <Hero categories={categories} />
 
-      {hydrated && recentCards && recentCards.length > 0 && (
-        <Section
-          title="Continue shopping"
-          subtitle="Pick up where you left off"
-          variant="scroll"
-        >
-          <CatalogProductGrid products={recentCards} />
-        </Section>
-      )}
-
-      <Section
-        title={hasHistory ? "Recommended for you" : "Popular right now"}
-        subtitle={
-          hasHistory
-            ? "Based on what you've browsed and saved"
-            : "Loved by shoppers across the store"
-        }
-        href="/recommendations"
-      >
-        {recommendedCards ? (
-          <CatalogProductGrid
-            products={
-              recommendedCards.length > 0 ? recommendedCards : demoFeaturedCards
-            }
-            reasons={reasons}
-          />
-        ) : (
-          <SkeletonBlock className="h-64 w-full" />
-        )}
-      </Section>
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="max-w-3xl">
+          <h2 className="font-display text-2xl font-semibold text-[var(--clr-text-primary)]">
+            Discover products with less guesswork
+          </h2>
+          <p className="mt-3 leading-relaxed text-[var(--clr-text-secondary)]">
+            Veloura brings a modern commerce catalog together with
+            plain-language search, personalized recommendations, product
+            comparison, wishlists, cart, checkout, and order tracking. Browse
+            categories such as headphones, smartphones, laptops, wearables,
+            gaming gear, cameras, footwear, apparel, groceries, and home audio,
+            then use ShopAI when you want help narrowing choices by need,
+            budget, or use case.
+          </p>
+        </div>
+      </section>
 
       <Section
         title="Featured"
         subtitle="Handpicked from across the catalog"
         href="/shop"
       >
-        {featuredCards ? (
-          <CatalogProductGrid products={featuredCards} />
-        ) : (
-          <SkeletonBlock className="h-64 w-full" />
-        )}
+        <CatalogProductGrid products={featuredCards} />
       </Section>
 
-      <Section title="Trending now" subtitle="Highly rated, frequently bought">
-        {trendingCards ? (
-          <CatalogProductGrid
-            products={
-              trendingCards.length > 0 ? trendingCards : demoFeaturedCards
-            }
-          />
-        ) : (
-          <SkeletonBlock className="h-64 w-full" />
-        )}
-      </Section>
+      <HomeDynamicSections />
 
       <section
+        id="categories"
         className="w-full py-14"
         style={{ background: "var(--clr-surface-2)" }}
       >
@@ -175,12 +75,16 @@ export default function Home() {
           >
             Shop by category
           </h2>
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {realCategories.map((c) => (
+          <p className="mt-2 max-w-2xl text-sm text-[var(--clr-text-secondary)]">
+            Start with a department, then refine by brand, price,
+            availability, and product details as you move through the catalog.
+          </p>
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {categories.map((c) => (
               <Link
                 key={c.slug}
                 href={`/category/${c.slug}`}
-                className="rounded-2xl overflow-hidden relative h-40 group cursor-pointer"
+                className="group relative h-40 cursor-pointer overflow-hidden rounded-2xl"
                 style={{ background: "var(--clr-surface)" }}
               >
                 <Image
@@ -189,8 +93,8 @@ export default function Home() {
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 transition-opacity duration-200 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-amber-900/40 to-transparent" />
-                <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-stone-950/90 to-transparent text-sm font-semibold text-white">
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-3 text-sm font-semibold text-white">
                   {c.name}
                 </div>
               </Link>
@@ -202,13 +106,7 @@ export default function Home() {
   );
 }
 
-function Hero({
-  topCategory,
-  categories,
-}: {
-  topCategory?: string;
-  categories: Category[];
-}) {
+function Hero({ categories }: { categories: typeof demoCategories }) {
   return (
     <section
       className="relative overflow-hidden"
@@ -224,29 +122,25 @@ function Hero({
             "radial-gradient(ellipse 60% 50% at 30% 50%, rgba(180,83,9,0.18) 0%, transparent 70%)",
         }}
       />
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:px-8 relative z-10 md:grid-cols-2 md:items-center">
+      <div className="relative z-10 mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 md:grid-cols-2 md:items-center lg:px-8">
         <div>
           <p
-            className="text-xs font-semibold uppercase tracking-widest mb-4"
+            className="mb-4 text-xs font-semibold uppercase tracking-widest"
             style={{ color: "var(--clr-accent)" }}
           >
-            {topCategory
-              ? `Because you like ${topCategory.toLowerCase()}`
-              : "New here? Start exploring"}
+            Personalized commerce, grounded in the catalog
           </p>
-          <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-[1.1] text-white">
-            Shopping that
-            <br />
-            <span style={{ color: "var(--clr-accent)" }}>gets you.</span>
+          <h1 className="font-display text-5xl font-semibold leading-[1.1] text-white sm:text-6xl">
+            Veloura
           </h1>
           <p
-            className="mt-5 text-base leading-relaxed max-w-md"
-            style={{ color: "#a8a29e" }}
+            className="mt-5 max-w-md text-base leading-relaxed"
+            style={{ color: "#d6d3d1" }}
           >
-            Search in plain language, get picks tuned to how you actually shop,
-            and ask ShopAI when you&apos;re not sure what you need.
+            Shopping that gets you. Search in plain language, compare products,
+            get recommendations, and ask ShopAI for catalog-aware guidance.
           </p>
-          <div className="mt-8 flex gap-3">
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/shop" className="btn btn-accent">
               Browse the catalog
             </Link>
@@ -259,7 +153,7 @@ function Hero({
                 border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
-              Ask ShopAI →
+              Ask ShopAI
             </Link>
           </div>
         </div>
@@ -269,7 +163,7 @@ function Hero({
               <Link
                 key={c.slug}
                 href={`/category/${c.slug}`}
-                className={`relative h-36 rounded-2xl overflow-hidden cursor-pointer hover:ring-2 ring-[var(--clr-accent)] transition-all duration-200 ${
+                className={`relative h-36 cursor-pointer overflow-hidden rounded-2xl ring-[var(--clr-accent)] transition-all duration-200 hover:ring-2 ${
                   i === 1 || i === 4
                     ? "mt-5"
                     : i === 2 || i === 5
