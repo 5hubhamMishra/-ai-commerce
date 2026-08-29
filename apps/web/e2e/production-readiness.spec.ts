@@ -83,3 +83,29 @@ test("trust pages are public and describe only verified Veloura information", as
     expect(html, path).toContain("Veloura");
   }
 });
+
+test("catalog JSON-LD uses absolute public URLs", async ({ request }) => {
+  const home = await (await request.get("/")).text();
+  const paths = [
+    home.match(/href="(\/category\/[^"]+)"/)?.[1],
+    home.match(/href="(\/products\/[^"]+)"/)?.[1],
+  ].filter((path): path is string => Boolean(path));
+
+  expect(new Set(paths.map((path) => path.split("/")[1]))).toEqual(
+    new Set(["category", "products"]),
+  );
+
+  for (const path of paths) {
+    const response = await request.get(path);
+    const html = await response.text();
+    const script = html.match(
+      /<script type="application\/ld\+json">(.*?)<\/script>/,
+    )?.[1];
+
+    expect(response.status(), path).toBe(200);
+    expect(script, path).toBeTruthy();
+
+    const data = JSON.parse(script!);
+    expect(data.url, path).toMatch(/^https:\/\//);
+  }
+});

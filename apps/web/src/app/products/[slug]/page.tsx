@@ -4,6 +4,8 @@ import { catalogApi, ApiError } from "@ai-commerce/api-client";
 import { getDemoProductBySlug } from "@/lib/demo-catalog";
 import ProductDetailClient from "./ProductDetailClient";
 
+const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
+
 async function fetchProduct(slug: string) {
   try {
     return await catalogApi.getProductBySlug(slug);
@@ -51,12 +53,14 @@ export default async function ProductDetailPage({
     "@type": "Product",
     name: product.name,
     description: product.description,
+    url: `${SITE_URL}/products/${product.slug}`,
     ...(product.brand
       ? { brand: { "@type": "Brand", name: product.brand.name } }
       : {}),
     image: product.images.map((img) => img.url),
     offers: {
       "@type": "Offer",
+      url: `${SITE_URL}/products/${product.slug}`,
       priceCurrency: product.currency,
       price: product.minPrice ?? undefined,
       availability: product.inStock
