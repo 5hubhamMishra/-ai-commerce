@@ -1,8 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { useStore } from "@/lib/store";
-import { useCategories } from "@/lib/hooks/useCategories";
+import { demoCategories } from "@/lib/demo-catalog";
+import FooterAccountLinks from "./FooterAccountLinks";
 
 function FooterCol({
   title,
@@ -30,9 +28,6 @@ function FooterCol({
 }
 
 export default function Footer() {
-  const user = useStore((s) => s.user);
-  const categories = useCategories();
-
   return (
     <footer className="bg-stone-950 text-stone-300 border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 pt-14 pb-10 grid grid-cols-2 md:grid-cols-4 gap-10">
@@ -53,22 +48,17 @@ export default function Footer() {
 
         <FooterCol
           title="Shop"
-          links={categories.map((c) => ({
+          links={demoCategories.map((c) => ({
             label: c.name,
             href: `/category/${c.slug}`,
           }))}
         />
-        <FooterCol
-          title="Account"
-          links={[
-            user
-              ? { label: "My Profile", href: "/profile" }
-              : { label: "Sign In", href: "/login" },
-            { label: "Wishlist", href: "/wishlist" },
-            { label: "Shopping Cart", href: "/cart" },
-            { label: "Your Orders", href: "/orders" },
-          ]}
-        />
+        <div className="flex flex-col gap-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-3">
+            Account
+          </h3>
+          <FooterAccountLinks />
+        </div>
         <FooterCol
           title="Discover"
           links={[

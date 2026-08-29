@@ -14,6 +14,8 @@ test("homepage raw HTML contains meaningful server-rendered Veloura content", as
   expect(html).toContain("Veloura");
   expect(html).toContain("Discover products with less guesswork");
   expect(html).toContain("Shop by category");
+  expect(html).toContain('href="/about"');
+  expect(html).toContain('href="/privacy"');
 });
 
 test("homepage supports markdown content negotiation", async ({ request }) => {
