@@ -68,6 +68,19 @@ export const viewport = {
   themeColor: "#b45309",
 };
 
+// Organization schema, site-wide (every page shares one brand identity — the homepage's own
+// JSON-LD covers WebSite/OnlineStore separately). No sameAs/address/contactPoint: no real
+// social profiles or business contact info exist in this repo to publish truthfully.
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Veloura",
+  url: SITE_URL,
+  logo: `${SITE_URL}/icon-512.svg`,
+  description:
+    "Veloura is a personalized place to shop electronics — grounded picks, honest search, and an AI shopping assistant that knows the catalog.",
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -85,6 +98,10 @@ export default function RootLayout({
           color: "var(--clr-text-primary)",
         }}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
