@@ -181,6 +181,19 @@ test("recommendations page includes server-rendered product content", async ({
   expect(html).toContain('data-testid="catalog-product-card"');
 });
 
+test("noindex public utility pages use route-specific canonicals", async ({
+  request,
+}) => {
+  for (const path of ["/search", "/recommendations"]) {
+    const response = await request.get(path);
+    const html = await response.text();
+
+    expect(response.status(), path).toBe(200);
+    expect(html, path).toContain('name="robots" content="noindex, follow"');
+    expect(html, path).toContain(`rel="canonical" href="https://web-lyart-three-94.vercel.app${path}"`);
+  }
+});
+
 test("compare page includes server-rendered starter products", async ({
   request,
 }) => {

@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   description: "Personalized picks based on your recent browsing, wishlist, and cart activity.",
   // Content is session-personalized, not a stable page to index.
   robots: { index: false, follow: true },
+  alternates: { canonical: "/recommendations" },
 };
 
 export default function RecommendationsLayout({ children }: { children: React.ReactNode }) {

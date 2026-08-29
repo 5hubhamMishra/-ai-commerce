@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   // Every result set is query-driven and session-specific — no single
   // stable canonical result to index.
   robots: { index: false, follow: true },
+  alternates: { canonical: "/search" },
 };
 
 export default function SearchLayout({ children }: { children: React.ReactNode }) {
