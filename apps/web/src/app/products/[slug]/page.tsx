@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { ProductDetail } from "@ai-commerce/types";
 import { catalogApi, ApiError } from "@ai-commerce/api-client";
-import { getDemoProductBySlug } from "@/lib/demo-catalog";
+import {
+  getDemoProductBySlug,
+  listDemoProducts,
+  mergeDemoProducts,
+} from "@/lib/demo-catalog";
 import ProductDetailClient from "./ProductDetailClient";
 
 const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
@@ -14,6 +19,24 @@ async function fetchProduct(slug: string) {
       return getDemoProductBySlug(slug);
     }
     return getDemoProductBySlug(slug);
+  }
+}
+
+async function fetchSimilarProducts(product: ProductDetail) {
+  try {
+    const result = await catalogApi.listProducts({
+      category: product.category.slug,
+      pageSize: 7,
+    });
+    return mergeDemoProducts(result, {
+      category: product.category.slug,
+      pageSize: 7,
+    }).items.filter((item) => item.id !== product.id).slice(0, 6);
+  } catch {
+    return listDemoProducts({
+      category: product.category.slug,
+      pageSize: 7,
+    }).items.filter((item) => item.id !== product.id).slice(0, 6);
   }
 }
 
@@ -47,6 +70,7 @@ export default async function ProductDetailPage({
   const { slug } = await params;
   const product = await fetchProduct(slug);
   if (!product) notFound();
+  const initialSimilarProducts = await fetchSimilarProducts(product);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -114,7 +138,10 @@ export default async function ProductDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <ProductDetailClient initialProduct={product} />
+      <ProductDetailClient
+        initialProduct={product}
+        initialSimilarProducts={initialSimilarProducts}
+      />
     </>
   );
 }

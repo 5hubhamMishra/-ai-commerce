@@ -4,7 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ProductDetail, ProductVariant } from "@ai-commerce/types";
+import type {
+  ProductDetail,
+  ProductListItem,
+  ProductVariant,
+} from "@ai-commerce/types";
 import { formatPrice } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import { useRecommendations } from "@/lib/hooks/useRecommendations";
@@ -13,7 +17,13 @@ import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import VariantPicker from "@/components/catalog/VariantPicker";
 import ProductReviews from "@/components/product/ProductReviews";
 
-export default function ProductDetailClient({ initialProduct }: { initialProduct: ProductDetail }) {
+export default function ProductDetailClient({
+  initialProduct,
+  initialSimilarProducts,
+}: {
+  initialProduct: ProductDetail;
+  initialSimilarProducts: ProductListItem[];
+}) {
   const product = initialProduct;
   const router = useRouter();
   const authStatus = useStore((s) => s.authStatus);
@@ -31,6 +41,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   const similar = useRecommendations("similar", { productId: product.id, limit: 6 });
   const frequentlyBoughtWith = useRecommendations("frequentlyBoughtWith", { productId: product.id, limit: 3 });
+  const similarProducts =
+    similar && similar.length > 0
+      ? similar.map((r) => r.product)
+      : initialSimilarProducts;
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
@@ -333,12 +347,12 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         </div>
       )}
 
-      {similar && similar.length > 0 && (
+      {similarProducts.length > 0 && (
         <div className="mt-12">
           <h2 className="font-display text-xl font-semibold mb-4" style={{ color: "var(--clr-text-primary)" }}>
             Similar products
           </h2>
-          <CatalogProductGrid products={similar.map((r) => fromProductListItem(r.product))} />
+          <CatalogProductGrid products={similarProducts.map(fromProductListItem)} />
         </div>
       )}
 
