@@ -48,6 +48,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await fetchProduct(slug);
   if (!product) return {};
+  const image = product.images[0]?.url;
 
   return {
     title: product.name,
@@ -57,8 +58,13 @@ export async function generateMetadata({
       title: product.name,
       description: product.description,
       type: "website",
+      ...(image ? { images: [image] } : {}),
     },
-    twitter: { title: product.name, description: product.description },
+    twitter: {
+      title: product.name,
+      description: product.description,
+      ...(image ? { images: [image] } : {}),
+    },
   };
 }
 

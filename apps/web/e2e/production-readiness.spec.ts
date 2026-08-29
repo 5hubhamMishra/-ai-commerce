@@ -115,6 +115,22 @@ test("catalog JSON-LD uses absolute public URLs", async ({ request }) => {
   }
 });
 
+test("product pages expose product images for social previews", async ({
+  request,
+}) => {
+  const home = await (await request.get("/")).text();
+  const productPath = home.match(/href="(\/products\/[^"]+)"/)?.[1];
+
+  expect(productPath).toBeTruthy();
+
+  const response = await request.get(productPath!);
+  const html = await response.text();
+  const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+
+  expect(response.status()).toBe(200);
+  expect(ogImage).toContain("/products/items/");
+});
+
 test("category pages include server-rendered product content", async ({
   request,
 }) => {
