@@ -67,6 +67,18 @@ export default async function ProductDetailPage({
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
     },
+    // Mirrors exactly what the page itself shows (ProductDetailClient's review summary) — a
+    // real aggregate from the reviews table, not invented; omitted entirely for products with
+    // zero reviews rather than publishing a fake ratingValue/reviewCount.
+    ...(product.rating != null && product.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.reviewCount,
+          },
+        }
+      : {}),
   };
 
   // A separate BreadcrumbList block, not a `breadcrumb` property on the Product object itself —
