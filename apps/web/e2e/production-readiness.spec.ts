@@ -153,3 +153,14 @@ test("search result pages include server-rendered product content", async ({
   expect(html).toContain('data-testid="catalog-product-card"');
   expect(html).not.toContain("Searching");
 });
+
+test("recommendations page includes server-rendered product content", async ({
+  request,
+}) => {
+  const response = await request.get("/recommendations");
+  const html = await response.text();
+
+  expect(response.status()).toBe(200);
+  expect(html).toContain("Recommended for you");
+  expect(html).toContain('data-testid="catalog-product-card"');
+});
