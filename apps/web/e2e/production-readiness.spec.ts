@@ -130,3 +130,14 @@ test("category pages include server-rendered product content", async ({
   expect(html).toContain('data-testid="catalog-product-card"');
   expect(html).not.toContain("Loading…");
 });
+
+test("shop page includes server-rendered product content", async ({
+  request,
+}) => {
+  const response = await request.get("/shop");
+  const html = await response.text();
+
+  expect(response.status()).toBe(200);
+  expect(html).toContain('data-testid="catalog-product-card"');
+  expect(html).not.toContain("Loading...");
+});
