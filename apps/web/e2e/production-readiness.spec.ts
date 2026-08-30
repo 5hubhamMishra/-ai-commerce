@@ -10,6 +10,12 @@ test("homepage raw HTML contains meaningful server-rendered Veloura content", as
 
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("text/html");
+  expect(response.headers()).toMatchObject({
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), geolocation=(), microphone=()",
+  });
   expect(html).toContain("<h1");
   expect(html).toContain("Veloura");
   expect(html).toContain("Discover products with less guesswork");
