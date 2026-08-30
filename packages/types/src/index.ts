@@ -6,6 +6,7 @@ export * from './catalog';
 export * from './comparison';
 export * from './events';
 export * from './orders';
+export * from './notifications';
 export * from './payments';
 export * from './recommendations';
 export * from './reviews';

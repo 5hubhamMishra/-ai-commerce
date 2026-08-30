@@ -85,6 +85,9 @@ function AccountMenuLinks({ user, onNavigate }: { user: PublicUser; onNavigate: 
       <Link role="menuitem" href="/orders" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
         Your Orders
       </Link>
+      <Link role="menuitem" href="/notifications" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
+        Notifications
+      </Link>
       <div className="h-px bg-[var(--clr-border)] mx-2 my-1.5" />
       <p className="px-4 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--clr-text-disabled)]">
         Discover

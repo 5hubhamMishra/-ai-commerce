@@ -8,6 +8,7 @@ export * from './comparison';
 export * from './addresses';
 export * from './shipping';
 export * from './orders';
+export * from './notifications';
 export * from './payments';
 export * from './shopai';
 export * from './events';
