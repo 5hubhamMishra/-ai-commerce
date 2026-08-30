@@ -64,7 +64,7 @@ export class BusinessInsightsService {
   ) {}
 
   async generate(inputs?: InsightInputs): Promise<BusinessInsight[]> {
-    const reports =
+    const reports: InsightInputs =
       inputs ??
       (await Promise.all([
         this.segmentation.getReport(),
