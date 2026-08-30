@@ -16,6 +16,12 @@ const pagesToScan = [
   { name: "cart (empty)", path: "/cart" },
   { name: "login", path: "/login" },
   { name: "register", path: "/register" },
+  { name: "category", path: "/category/laptops" },
+  { name: "recommendations", path: "/recommendations" },
+  { name: "compare (empty)", path: "/compare" },
+  { name: "about", path: "/about" },
+  { name: "contact", path: "/contact" },
+  { name: "privacy", path: "/privacy" },
 ];
 
 for (const { name, path } of pagesToScan) {
