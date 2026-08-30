@@ -28,6 +28,7 @@ export type ShopAIResponse = {
 };
 
 type ShopAIStopReason = LLMStopReason | 'provider_error';
+const MAX_HISTORY_MESSAGES = 40;
 
 const SYSTEM_PROMPT = `You are ShopAI, the shopping assistant for Veloura, an electronics marketplace.
 Help customers search for products, compare options, get recommendations, and check their own cart, orders, delivery status, and return policy.
@@ -73,10 +74,11 @@ export class ShopAIService {
 
     const priorMessages = await this.prisma.shopAIMessage.findMany({
       where: { conversationId: conversation.id },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
+      take: MAX_HISTORY_MESSAGES,
       select: { role: true, content: true },
     });
-    const history: LLMTurn[] = priorMessages.map((m) => ({
+    const history: LLMTurn[] = priorMessages.reverse().map((m) => ({
       role: m.role === 'USER' ? 'user' : 'assistant',
       text: m.content,
     }));

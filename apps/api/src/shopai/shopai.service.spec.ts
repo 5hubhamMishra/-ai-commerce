@@ -135,6 +135,34 @@ describe('ShopAIService', () => {
     });
   });
 
+  it('replays only the latest bounded conversation history', async () => {
+    const messages = Array.from({ length: 42 }, (_, index) => ({
+      role: index % 2 === 0 ? 'USER' : 'ASSISTANT',
+      content: `message-${index}`,
+    }));
+    prisma.shopAIMessage.findMany.mockResolvedValue(
+      messages.slice(-40).reverse(),
+    );
+    llm.complete.mockResolvedValue(endTurn('Done.'));
+
+    await service.sendMessage({ message: 'latest' }, { anonymousId: 'anon-1' });
+
+    expect(prisma.shopAIMessage.findMany).toHaveBeenCalledWith({
+      where: { conversationId: 'conv-1' },
+      orderBy: { createdAt: 'desc' },
+      take: 40,
+      select: { role: true, content: true },
+    });
+    expect(llm.complete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        history: messages.slice(2).map((message) => ({
+          role: message.role === 'USER' ? 'user' : 'assistant',
+          text: message.content,
+        })),
+      }),
+    );
+  });
+
   it('rejects continuing a conversation that belongs to someone else (IDOR)', async () => {
     prisma.shopAIConversation.findUnique.mockResolvedValue({
       id: 'conv-1',
