@@ -48,24 +48,15 @@ export class CartService {
     const variant = await this.assertVariantPurchasable(dto.variantId);
     const cart = await this.getOrCreateCart(userId);
 
-    const existing = await this.prisma.cartItem.findUnique({
+    await this.prisma.cartItem.upsert({
       where: { cartId_variantId: { cartId: cart.id, variantId: variant.id } },
+      create: {
+        cartId: cart.id,
+        variantId: variant.id,
+        quantity: dto.quantity,
+      },
+      update: { quantity: { increment: dto.quantity } },
     });
-
-    if (existing) {
-      await this.prisma.cartItem.update({
-        where: { id: existing.id },
-        data: { quantity: existing.quantity + dto.quantity },
-      });
-    } else {
-      await this.prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          variantId: variant.id,
-          quantity: dto.quantity,
-        },
-      });
-    }
     return this.getCart(userId);
   }
 
