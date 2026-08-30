@@ -25,7 +25,8 @@ export type DeleteAccountInput = {
 };
 
 /** Matches `UsersService.exportData()`'s envelope (spec PRIVACY: "data export"). The
- *  `orders`/`cart`/`wishlist`/`shopaiConversations`/`supportTickets` sections are the real,
+ *  `orders`/`cart`/`wishlist`/`shopaiConversations`/`supportTickets`/`productReviews`/
+ *  `sellerRatings` sections are the real,
  *  raw stored rows (Prisma's own shape, not each domain's own friendlier response mapper —
  *  an export should hand back what's actually stored, not a UI-shaped view of it), so
  *  they're intentionally typed loosely here rather than reusing e.g. `OrderDetail`, which
@@ -49,4 +50,6 @@ export type ExportDataResponse = {
   notifications: Record<string, unknown>[];
   shopaiConversations: Record<string, unknown>[];
   supportTickets: Record<string, unknown>[];
+  productReviews: Record<string, unknown>[];
+  sellerRatings: Record<string, unknown>[];
 };

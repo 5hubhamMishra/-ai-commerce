@@ -127,6 +127,8 @@ export class UsersService {
       notifications,
       shopaiConversations,
       supportTickets,
+      productReviews,
+      sellerRatings,
     ] = await Promise.all([
       this.prisma.order.findMany({
         where: { userId },
@@ -167,6 +169,14 @@ export class UsersService {
         include: { messages: { where: { senderId: userId } } },
         orderBy: { createdAt: 'desc' },
       }),
+      this.prisma.productReview.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.sellerRating.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
     ]);
 
     return {
@@ -188,6 +198,8 @@ export class UsersService {
       notifications,
       shopaiConversations,
       supportTickets,
+      productReviews,
+      sellerRatings,
     };
   }
 
@@ -231,6 +243,8 @@ export class UsersService {
         data: { userId: null },
       }),
       this.prisma.customerProfile.deleteMany({ where: { userId } }),
+      this.prisma.productReview.deleteMany({ where: { userId } }),
+      this.prisma.sellerRating.deleteMany({ where: { userId } }),
       // Cascades to ShopAIMessage at the DB level (Cascade FK on the conversation).
       this.prisma.shopAIConversation.deleteMany({ where: { userId } }),
       // Operational telemetry, not conversation content — severed from the identity

@@ -27,6 +27,8 @@ describe('UsersService', () => {
     searchQueryLog: { updateMany: jest.Mock };
     supportTicket: { findMany: jest.Mock; updateMany: jest.Mock };
     supportMessage: { updateMany: jest.Mock };
+    productReview: { findMany: jest.Mock; deleteMany: jest.Mock };
+    sellerRating: { findMany: jest.Mock; deleteMany: jest.Mock };
     address: { updateMany: jest.Mock };
     profile: { updateMany: jest.Mock };
     refreshToken: { updateMany: jest.Mock };
@@ -86,6 +88,14 @@ describe('UsersService', () => {
         updateMany: jest.fn(),
       },
       supportMessage: { updateMany: jest.fn() },
+      productReview: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+      },
+      sellerRating: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+      },
       address: { updateMany: jest.fn() },
       profile: { updateMany: jest.fn() },
       refreshToken: { updateMany: jest.fn() },
@@ -184,6 +194,8 @@ describe('UsersService', () => {
           'notifications',
           'orders',
           'profile',
+          'productReviews',
+          'sellerRatings',
           'shopaiConversations',
           'supportTickets',
           'wishlist',
@@ -269,6 +281,12 @@ describe('UsersService', () => {
       expect(prisma.session.updateMany).toHaveBeenCalledWith({
         where: { userId: 'u1' },
         data: { userId: null },
+      });
+      expect(prisma.productReview.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+      });
+      expect(prisma.sellerRating.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
       });
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
         where: { userId: 'u1', revokedAt: null },
