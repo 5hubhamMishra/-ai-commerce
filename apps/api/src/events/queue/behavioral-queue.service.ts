@@ -83,8 +83,13 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
     // ponytail: replay 1,000 per cron run; add cursor pagination if backlog volume outgrows drain capacity.
     if (!this.queue) return 0;
 
+    // Declared outside the try block, not `const` inside it - the catch block below reports
+    // how many were found even when addBulk (not findMany) is what throws, and a try-scoped
+    // `const` isn't visible from its own catch (confirmed at runtime, not just by inspection:
+    // referencing it from catch throws "pending is not defined", masking the real error).
+    let pending: { id: string }[] = [];
     try {
-      const pending = await this.prisma.behavioralEvent.findMany({
+      pending = await this.prisma.behavioralEvent.findMany({
         where: { processedAt: null },
         orderBy: { receivedAt: 'asc' },
         take: limit,

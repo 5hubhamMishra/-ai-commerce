@@ -61,4 +61,19 @@ describe('BehavioralQueueService failure modes', () => {
       },
     ]);
   });
+
+  it('does not throw when addBulk fails partway through requeueing', async () => {
+    // Regression test: pending's count is reported in the catch block below the one that
+    // finds it - it must be declared outside the try, not as a try-scoped const, or reading
+    // it here throws its own "not defined" error and masks the real one.
+    prisma.behavioralEvent.findMany = jest
+      .fn()
+      .mockResolvedValue([{ id: 'event-1' }, { id: 'event-2' }]);
+    const service = new BehavioralQueueService({} as ConfigService, prisma);
+    (service as unknown as { queue: { addBulk: jest.Mock } }).queue = {
+      addBulk: jest.fn().mockRejectedValue(new Error('redis down mid-requeue')),
+    };
+
+    await expect(service.enqueuePending()).resolves.toBe(0);
+  });
 });
