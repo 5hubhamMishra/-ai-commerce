@@ -49,7 +49,8 @@ test.describe("admin dashboard", () => {
     const ordersTable = page.locator("table").filter({ hasText: "Order" });
     const firstRow = ordersTable.locator("tbody tr").first();
     await expect(firstRow).toBeVisible({ timeout: 10000 });
-    await firstRow.click();
+    await firstRow.focus();
+    await firstRow.press("Enter");
 
     await expect(page).toHaveURL(/\/admin\/orders\//);
     await expect(page.getByRole("heading", { name: "Update status" })).toBeVisible();
