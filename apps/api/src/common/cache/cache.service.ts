@@ -14,9 +14,7 @@ export class CacheService implements OnModuleDestroy {
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis | null) {
     if (!this.redis) return;
     this.redis.on('error', (error) => {
-      if (Date.now() - this.lastRedisWarningAt < 30_000) return;
-      this.lastRedisWarningAt = Date.now();
-      this.logger.warn(`Redis connection failed: ${error.message}`);
+      this.warnRedis(`Redis connection failed: ${error.message}`);
     });
   }
 
@@ -26,9 +24,7 @@ export class CacheService implements OnModuleDestroy {
       const raw = await this.redis.get(key);
       return raw ? (JSON.parse(raw) as T) : null;
     } catch (error) {
-      this.logger.warn(
-        `Cache read failed for "${key}": ${(error as Error).message}`,
-      );
+      this.warnRedis(`Cache read failed for "${key}": ${errorMessage(error)}`);
       return null;
     }
   }
@@ -38,9 +34,7 @@ export class CacheService implements OnModuleDestroy {
     try {
       await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (error) {
-      this.logger.warn(
-        `Cache write failed for "${key}": ${(error as Error).message}`,
-      );
+      this.warnRedis(`Cache write failed for "${key}": ${errorMessage(error)}`);
     }
   }
 
@@ -65,13 +59,23 @@ export class CacheService implements OnModuleDestroy {
         await this.redis.del(...keysToDelete);
       }
     } catch (error) {
-      this.logger.warn(
-        `Cache invalidation failed for prefix "${prefix}": ${(error as Error).message}`,
+      this.warnRedis(
+        `Cache invalidation failed for prefix "${prefix}": ${errorMessage(error)}`,
       );
     }
+  }
+
+  private warnRedis(message: string) {
+    if (Date.now() - this.lastRedisWarningAt < 30_000) return;
+    this.lastRedisWarningAt = Date.now();
+    this.logger.warn(message);
   }
 
   async onModuleDestroy() {
     await this.redis?.quit();
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

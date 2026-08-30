@@ -40,9 +40,7 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
     if (!url) return;
     this.connection = new IORedis(url, { maxRetriesPerRequest: null });
     this.connection.on('error', (error) => {
-      if (Date.now() - this.lastRedisWarningAt < 30_000) return;
-      this.lastRedisWarningAt = Date.now();
-      this.logger.warn(`Redis queue connection failed: ${error.message}`);
+      this.warnRedis(`Redis queue connection failed: ${error.message}`);
     });
     this.queue = new Queue<AggregateJobData>(BEHAVIORAL_QUEUE_NAME, {
       connection: this.connection,
@@ -70,9 +68,15 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.queue.add('aggregate', data, { jobId: data.eventId });
     } catch (error) {
-      this.logger.warn(
+      this.warnRedis(
         `Failed to enqueue aggregation for event ${data.eventId}: ${String(error)}`,
       );
     }
+  }
+
+  private warnRedis(message: string) {
+    if (Date.now() - this.lastRedisWarningAt < 30_000) return;
+    this.lastRedisWarningAt = Date.now();
+    this.logger.warn(message);
   }
 }

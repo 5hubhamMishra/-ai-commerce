@@ -12,6 +12,10 @@ describe('CacheService failure modes', () => {
   };
   let service: CacheService;
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   beforeEach(() => {
     redis = {
       get: jest.fn(),
@@ -28,6 +32,19 @@ describe('CacheService failure modes', () => {
     redis.get.mockRejectedValue(new Error('redis down'));
 
     await expect(service.get('products:list')).resolves.toBeNull();
+  });
+
+  it('throttles repeated operation failures', async () => {
+    const warn = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined);
+    jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    redis.get.mockRejectedValue(new Error('redis down'));
+
+    await service.get('products:list');
+    await service.get('products:list');
+
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 
   it('treats Redis write failures as no-ops', async () => {
@@ -67,10 +84,6 @@ describe('CacheService failure modes', () => {
       )! as [string, (error: Error) => void];
       handler(new Error(message));
     }
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
 
     it('logs a Redis connection error the first time it fires', () => {
       const warn = jest
