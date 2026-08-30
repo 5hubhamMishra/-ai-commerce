@@ -12,7 +12,9 @@ export default () => ({
     url: process.env.DATABASE_URL,
   },
   redis: {
-    url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+    url:
+      process.env.REDIS_URL?.trim() ||
+      (process.env.VERCEL === '1' ? undefined : 'redis://localhost:6379'),
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,

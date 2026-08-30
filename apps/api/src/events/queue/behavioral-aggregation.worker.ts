@@ -37,10 +37,9 @@ export class BehavioralAggregationWorker
   ) {}
 
   onModuleInit() {
-    this.connection = new IORedis(
-      this.config.get<string>('redis.url') ?? 'redis://localhost:6379',
-      { maxRetriesPerRequest: null },
-    );
+    const url = this.config.get<string>('redis.url');
+    if (!url) return;
+    this.connection = new IORedis(url, { maxRetriesPerRequest: null });
     this.connection.on('error', (error) => {
       if (Date.now() - this.lastRedisWarningAt < 30_000) return;
       this.lastRedisWarningAt = Date.now();

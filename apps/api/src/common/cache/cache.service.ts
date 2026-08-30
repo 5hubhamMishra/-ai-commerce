@@ -11,7 +11,8 @@ export class CacheService implements OnModuleDestroy {
   private readonly logger = new Logger(CacheService.name);
   private lastRedisWarningAt = 0;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis | null) {
+    if (!this.redis) return;
     this.redis.on('error', (error) => {
       if (Date.now() - this.lastRedisWarningAt < 30_000) return;
       this.lastRedisWarningAt = Date.now();
@@ -20,6 +21,7 @@ export class CacheService implements OnModuleDestroy {
   }
 
   async get<T>(key: string): Promise<T | null> {
+    if (!this.redis) return null;
     try {
       const raw = await this.redis.get(key);
       return raw ? (JSON.parse(raw) as T) : null;
@@ -32,6 +34,7 @@ export class CacheService implements OnModuleDestroy {
   }
 
   async set(key: string, value: unknown, ttlSeconds: number): Promise<void> {
+    if (!this.redis) return;
     try {
       await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (error) {
@@ -43,6 +46,7 @@ export class CacheService implements OnModuleDestroy {
 
   /** Deletes every key under a prefix via non-blocking SCAN — never KEYS (blocks Redis). */
   async delByPrefix(prefix: string): Promise<void> {
+    if (!this.redis) return;
     try {
       let cursor = '0';
       const keysToDelete: string[] = [];
@@ -68,6 +72,6 @@ export class CacheService implements OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.redis.quit();
+    await this.redis?.quit();
   }
 }

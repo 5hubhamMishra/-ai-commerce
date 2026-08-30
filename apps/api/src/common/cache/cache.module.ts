@@ -16,11 +16,15 @@ import { REDIS_CLIENT } from './cache.tokens';
     {
       provide: REDIS_CLIENT,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        new Redis(config.get<string>('redis.url') ?? 'redis://localhost:6379', {
-          maxRetriesPerRequest: 2,
-          retryStrategy: (times: number) => Math.min(times * 200, 2000),
-        }),
+      useFactory: (config: ConfigService) => {
+        const url = config.get<string>('redis.url');
+        return url
+          ? new Redis(url, {
+              maxRetriesPerRequest: 2,
+              retryStrategy: (times: number) => Math.min(times * 200, 2000),
+            })
+          : null;
+      },
     },
     CacheService,
   ],

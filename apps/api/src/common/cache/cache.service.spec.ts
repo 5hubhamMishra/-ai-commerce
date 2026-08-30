@@ -45,6 +45,21 @@ describe('CacheService failure modes', () => {
     expect(redis.del).not.toHaveBeenCalled();
   });
 
+  it('stays a no-op when Redis is intentionally disabled', async () => {
+    const serviceWithoutRedis = new CacheService(null);
+
+    await expect(serviceWithoutRedis.get('products:list')).resolves.toBeNull();
+    await expect(
+      serviceWithoutRedis.set('products:list', { ids: [] }, 60),
+    ).resolves.toBeUndefined();
+    await expect(
+      serviceWithoutRedis.delByPrefix('products:'),
+    ).resolves.toBeUndefined();
+    await expect(
+      serviceWithoutRedis.onModuleDestroy(),
+    ).resolves.toBeUndefined();
+  });
+
   describe('Redis error-event throttling', () => {
     function triggerRedisError(message: string) {
       const [, handler] = redis.on.mock.calls.find(

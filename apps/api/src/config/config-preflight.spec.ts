@@ -54,6 +54,30 @@ describe('config preflight', () => {
     ).toEqual([{ key: 'DIRECT_URL', reason: 'is required' }]);
   });
 
+  it('allows Redis to be omitted from Vercel Preview', () => {
+    const previewConfig: Record<string, unknown> = {
+      ...validConfig,
+      VERCEL: '1',
+      VERCEL_ENV: 'preview',
+    };
+    delete previewConfig.REDIS_URL;
+
+    expect(validateConfigPreflight(previewConfig)).not.toContainEqual({
+      key: 'REDIS_URL',
+      reason: 'is required',
+    });
+  });
+
+  it('requires Redis outside Vercel Preview', () => {
+    const withoutRedis: Record<string, unknown> = { ...validConfig };
+    delete withoutRedis.REDIS_URL;
+
+    expect(validateConfigPreflight(withoutRedis)).toContainEqual({
+      key: 'REDIS_URL',
+      reason: 'is required',
+    });
+  });
+
   it('requires cron protection in production-like environments', () => {
     expect(
       validateConfigPreflight({

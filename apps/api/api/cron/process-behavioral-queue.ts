@@ -47,16 +47,26 @@ export default async function handler(
     return;
   }
 
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        processed: 0,
+        failed: 0,
+        skipped: 'redis_unconfigured',
+      }),
+    );
+    return;
+  }
+
   const appContext = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn'],
   });
 
   try {
     const customerProfiles = appContext.get(CustomerProfileService);
-    const connection = new IORedis(
-      process.env.REDIS_URL ?? 'redis://localhost:6379',
-      { maxRetriesPerRequest: null },
-    );
+    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
     let processed = 0;
     let failed = 0;

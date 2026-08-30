@@ -36,10 +36,9 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
-    this.connection = new IORedis(
-      this.config.get<string>('redis.url') ?? 'redis://localhost:6379',
-      { maxRetriesPerRequest: null },
-    );
+    const url = this.config.get<string>('redis.url');
+    if (!url) return;
+    this.connection = new IORedis(url, { maxRetriesPerRequest: null });
     this.connection.on('error', (error) => {
       if (Date.now() - this.lastRedisWarningAt < 30_000) return;
       this.lastRedisWarningAt = Date.now();
@@ -67,6 +66,7 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
    *  EventsService.track), so aggregation can always be recomputed/retried
    *  later without losing the underlying data. */
   async enqueue(data: AggregateJobData): Promise<void> {
+    if (!this.queue) return;
     try {
       await this.queue.add('aggregate', data, { jobId: data.eventId });
     } catch (error) {

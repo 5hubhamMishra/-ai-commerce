@@ -33,6 +33,7 @@ export function validateConfigPreflight(
   const paymentProvider =
     getOptionalString(config, 'PAYMENT_PROVIDER') ?? 'development';
   const isVercel = getOptionalString(config, 'VERCEL') === '1';
+  const isPreview = getOptionalString(config, 'VERCEL_ENV') === 'preview';
   const isProductionLike =
     env === 'production' ||
     isVercel ||
@@ -50,7 +51,11 @@ export function validateConfigPreflight(
   } else {
     optionalUrl(issues, config, 'DIRECT_URL', ['postgres:', 'postgresql:']);
   }
-  optionalUrl(issues, config, 'REDIS_URL', ['redis:', 'rediss:']);
+  if (isPreview) {
+    optionalUrl(issues, config, 'REDIS_URL', ['redis:', 'rediss:']);
+  } else {
+    requiredUrl(issues, config, 'REDIS_URL', ['redis:', 'rediss:']);
+  }
   secret(issues, config, 'JWT_ACCESS_SECRET', 32);
   secret(issues, config, 'JWT_REFRESH_SECRET', 32);
   originList(issues, config, 'WEB_ORIGIN', true);
