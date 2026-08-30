@@ -22,6 +22,7 @@ export async function createApp(
   const app = httpAdapter
     ? await NestFactory.create(AppModule, httpAdapter, { rawBody: true })
     : await NestFactory.create(AppModule, { rawBody: true });
+  app.enableShutdownHooks();
   const config = app.get(ConfigService);
 
   app.use(helmet());
