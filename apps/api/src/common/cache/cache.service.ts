@@ -9,9 +9,12 @@ import { REDIS_CLIENT } from './cache.tokens';
 @Injectable()
 export class CacheService implements OnModuleDestroy {
   private readonly logger = new Logger(CacheService.name);
+  private lastRedisWarningAt = 0;
 
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {
     this.redis.on('error', (error) => {
+      if (Date.now() - this.lastRedisWarningAt < 30_000) return;
+      this.lastRedisWarningAt = Date.now();
       this.logger.warn(`Redis connection failed: ${error.message}`);
     });
   }

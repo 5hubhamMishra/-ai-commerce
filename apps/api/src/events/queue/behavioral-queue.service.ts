@@ -29,6 +29,7 @@ import {
 @Injectable()
 export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BehavioralQueueService.name);
+  private lastRedisWarningAt = 0;
   private connection!: IORedis;
   private queue!: Queue<AggregateJobData>;
 
@@ -40,6 +41,8 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
       { maxRetriesPerRequest: null },
     );
     this.connection.on('error', (error) => {
+      if (Date.now() - this.lastRedisWarningAt < 30_000) return;
+      this.lastRedisWarningAt = Date.now();
       this.logger.warn(`Redis queue connection failed: ${error.message}`);
     });
     this.queue = new Queue<AggregateJobData>(BEHAVIORAL_QUEUE_NAME, {

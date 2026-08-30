@@ -27,6 +27,7 @@ export class BehavioralAggregationWorker
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(BehavioralAggregationWorker.name);
+  private lastRedisWarningAt = 0;
   private connection!: IORedis;
   private worker!: Worker<AggregateJobData>;
 
@@ -41,6 +42,8 @@ export class BehavioralAggregationWorker
       { maxRetriesPerRequest: null },
     );
     this.connection.on('error', (error) => {
+      if (Date.now() - this.lastRedisWarningAt < 30_000) return;
+      this.lastRedisWarningAt = Date.now();
       this.logger.warn(`Redis worker connection failed: ${error.message}`);
     });
     this.worker = new Worker<AggregateJobData>(
