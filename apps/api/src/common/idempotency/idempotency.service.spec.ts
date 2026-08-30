@@ -1,4 +1,5 @@
 import { ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IdempotencyService } from './idempotency.service';
@@ -24,6 +25,12 @@ describe('IdempotencyService', () => {
     }).compile();
     service = moduleRef.get(IdempotencyService);
   });
+
+  const uniqueViolation = () =>
+    new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+    });
 
   it('claims the key, runs the operation once, and stores the response', async () => {
     prisma.idempotencyKey.create.mockResolvedValue({});
@@ -65,9 +72,7 @@ describe('IdempotencyService', () => {
   });
 
   it('replays the stored response instead of re-running a completed operation', async () => {
-    prisma.idempotencyKey.create.mockRejectedValue(
-      new Error('unique constraint violation'),
-    );
+    prisma.idempotencyKey.create.mockRejectedValue(uniqueViolation());
     prisma.idempotencyKey.findUnique.mockResolvedValue({
       requestFingerprint: undefined,
       statusCode: 201,
@@ -91,9 +96,7 @@ describe('IdempotencyService', () => {
   });
 
   it('rejects a concurrent request while the first attempt is still in flight', async () => {
-    prisma.idempotencyKey.create.mockRejectedValue(
-      new Error('unique constraint violation'),
-    );
+    prisma.idempotencyKey.create.mockRejectedValue(uniqueViolation());
     prisma.idempotencyKey.findUnique.mockResolvedValue({
       requestFingerprint: undefined,
       statusCode: null,
@@ -131,9 +134,7 @@ describe('IdempotencyService', () => {
   });
 
   it('rejects same-key reuse for a different request fingerprint', async () => {
-    prisma.idempotencyKey.create.mockRejectedValue(
-      new Error('unique constraint violation'),
-    );
+    prisma.idempotencyKey.create.mockRejectedValue(uniqueViolation());
     prisma.idempotencyKey.findUnique.mockResolvedValue({
       requestFingerprint: 'hash-a',
       statusCode: 201,
@@ -145,5 +146,15 @@ describe('IdempotencyService', () => {
       service.run('admin1', 'refund_create', 'key1', operation, 'hash-b'),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(operation).not.toHaveBeenCalled();
+  });
+
+  it('rethrows non-unique claim errors instead of masking them as a duplicate', async () => {
+    const error = new Error('database unavailable');
+    prisma.idempotencyKey.create.mockRejectedValue(error);
+
+    await expect(
+      service.run('user1', 'order_create', 'key1', jest.fn()),
+    ).rejects.toBe(error);
+    expect(prisma.idempotencyKey.findUnique).not.toHaveBeenCalled();
   });
 });

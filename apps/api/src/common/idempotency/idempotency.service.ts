@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type IdempotentResult<T> = {
@@ -31,7 +31,13 @@ export class IdempotencyService {
       await this.prisma.idempotencyKey.create({
         data: { userId, scope, key, requestFingerprint },
       });
-    } catch {
+    } catch (error) {
+      if (
+        !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+        error.code !== 'P2002'
+      ) {
+        throw error;
+      }
       // Unique violation: a claim already exists — either finished (replay the
       // stored response) or still in flight (tell the client to retry shortly).
       const existing = await this.prisma.idempotencyKey.findUnique({
