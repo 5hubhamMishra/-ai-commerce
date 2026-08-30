@@ -14,6 +14,8 @@ import type { LoginDto } from './dto/login.dto';
 import type { RegisterDto } from './dto/register.dto';
 
 const BCRYPT_ROUNDS = 12;
+const DUMMY_PASSWORD_HASH =
+  '$2b$12$wHBSjGsjUtf4.KBWX5VP..viJT6RjHbpQxdF2TiJLP2TOd56UHcva';
 
 type TokenPair = { accessToken: string; refreshToken: string };
 type PublicUser = { id: string; email: string; name: string; roles: Role[] };
@@ -102,10 +104,13 @@ export class AuthService {
       });
     };
 
-    if (!user || !user.isActive || user.deletedAt) throw invalidCredentials();
-
-    const valid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!valid) throw invalidCredentials();
+    const valid = await bcrypt.compare(
+      dto.password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
+    if (!user || !user.isActive || user.deletedAt || !valid) {
+      throw invalidCredentials();
+    }
 
     const tokens = await this.issueTokens(user.id, user.email);
     await this.audit.record({
