@@ -30,6 +30,7 @@ export class EventsService {
       source: e.source,
       entityId: e.entityId,
       metadata: (e.metadata ?? {}) as Prisma.InputJsonValue,
+      personalizationEligible: personalizationEnabled,
       schemaVersion: e.schemaVersion ?? 1,
       occurredAt: new Date(e.occurredAt),
     }));

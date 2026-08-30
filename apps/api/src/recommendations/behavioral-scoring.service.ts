@@ -56,6 +56,7 @@ export class BehavioralScoringService {
     const events = await this.prisma.behavioralEvent.findMany({
       where: {
         occurredAt: { gte: since, lt: asOf },
+        personalizationEligible: true,
         ...(identity.userId
           ? { userId: identity.userId }
           : { anonymousId: identity.anonymousId, userId: null }),

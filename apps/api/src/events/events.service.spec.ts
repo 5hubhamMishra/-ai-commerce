@@ -106,6 +106,10 @@ describe('EventsService aggregation status', () => {
       where: { id: { in: ['00000000-0000-4000-8000-000000000001'] } },
       data: { processedAt: expect.any(Date) },
     });
+    expect(prisma.behavioralEvent.createMany).toHaveBeenCalledWith({
+      data: [expect.objectContaining({ personalizationEligible: false })],
+      skipDuplicates: true,
+    });
     expect(queue.enqueue).not.toHaveBeenCalled();
   });
 

@@ -1290,6 +1290,9 @@ model BehavioralEvent {
   source        EventSource
   entityId      String?             @map("entity_id")
   metadata      Json                @default("{}")
+  // Consent is captured when the event arrives so a later preference change
+  // cannot retroactively make opted-out activity eligible for scoring.
+  personalizationEligible Boolean   @default(true) @map("personalization_eligible")
   schemaVersion Int                 @default(1) @map("schema_version")
   occurredAt    DateTime            @map("occurred_at")
   receivedAt    DateTime            @default(now()) @map("received_at")
@@ -1302,6 +1305,7 @@ model BehavioralEvent {
   @@index([anonymousId])
   @@index([sessionId])
   @@index([eventType])
+  @@index([userId, personalizationEligible, occurredAt])
   @@map("behavioral_events")
 }
 
