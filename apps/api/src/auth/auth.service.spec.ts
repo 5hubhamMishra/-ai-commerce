@@ -237,6 +237,35 @@ describe('AuthService', () => {
       );
     });
 
+    it('selects only the fields needed to issue the next token', async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt1',
+        userId: 'u1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 1_000_000),
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'a@example.com',
+        isActive: true,
+        deletedAt: null,
+      });
+
+      await expect(service.refresh('some-token')).resolves.toEqual({
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
+      });
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        select: {
+          id: true,
+          email: true,
+          isActive: true,
+          deletedAt: true,
+        },
+      });
+    });
+
     it('rejects an unrecognized token', async () => {
       prisma.refreshToken.findUnique.mockResolvedValue(null);
       await expect(service.refresh('unknown-token')).rejects.toBeInstanceOf(

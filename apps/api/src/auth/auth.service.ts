@@ -147,6 +147,12 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: record.userId },
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+        deletedAt: true,
+      },
     });
     if (!user || !user.isActive || user.deletedAt) throw invalid();
 
