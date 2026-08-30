@@ -190,6 +190,29 @@ describe('RecommendationsService verification audit', () => {
     });
   });
 
+  it('logs impressions when personalized recommendations come from cache', async () => {
+    const cached = [item('cached-product', 1)];
+    cache.get.mockResolvedValue(cached);
+
+    await expect(
+      service.getPersonalized({ userId: 'user-1' }, 1),
+    ).resolves.toEqual(cached);
+
+    expect(prisma.recommendationImpression.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: 'user-1',
+          anonymousId: undefined,
+          productId: 'cached-product',
+          context: RecommendationContext.HOMEPAGE,
+          position: 0,
+          reason: '',
+        },
+      ],
+    });
+    expect(prisma.product.findMany).not.toHaveBeenCalled();
+  });
+
   it('bypasses live cache and impression logging for historical backtests', async () => {
     const asOf = new Date('2026-08-24T12:00:00.000Z');
 

@@ -99,7 +99,14 @@ export class RecommendationsService {
     const cacheKey = `${CACHE_PREFIX.RECOMMENDATIONS}personalized:${identity.userId ?? identity.anonymousId ?? 'anon'}:${limit}`;
     if (!asOf && canUsePersonalizedCache) {
       const cached = await this.cache.get<ScoredProduct[]>(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        await this.logImpressions(
+          identity,
+          cached,
+          RecommendationContext.HOMEPAGE,
+        );
+        return cached;
+      }
     }
 
     const affinity = personalizationEnabled
