@@ -54,6 +54,11 @@ test("product detail page has no critical/serious axe violations", async ({
   await page.goto("/shop");
   await page.locator('a[href^="/products/"]').first().click();
   await expect(page).toHaveURL(/\/products\//);
+  // toHaveURL only waits for the client-side route change, not for the destination segment
+  // to finish streaming past its loading.tsx skeleton (which has no page-specific <title> yet) -
+  // wait for the real page's title before scanning, or axe intermittently catches the transient
+  // loading state instead of the settled page.
+  await expect(page).not.toHaveTitle("");
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
