@@ -126,6 +126,12 @@ export class AuthService {
     const tokenHash = this.hashToken(presentedToken);
     const record = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
+      select: {
+        id: true,
+        userId: true,
+        revokedAt: true,
+        expiresAt: true,
+      },
     });
 
     const invalid = () =>

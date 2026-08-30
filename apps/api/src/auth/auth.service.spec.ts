@@ -278,6 +278,15 @@ describe('AuthService', () => {
         accessToken: expect.any(String),
         refreshToken: expect.any(String),
       });
+      expect(prisma.refreshToken.findUnique).toHaveBeenCalledWith({
+        where: { tokenHash: expect.any(String) },
+        select: {
+          id: true,
+          userId: true,
+          revokedAt: true,
+          expiresAt: true,
+        },
+      });
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'u1' },
         select: {
