@@ -67,23 +67,26 @@ export class IdempotencyService {
       });
     }
 
+    let result: IdempotentResult<T>;
     try {
-      const result = await operation();
-      await this.prisma.idempotencyKey.update({
-        where: { userId_scope_key: { userId, scope, key } },
-        data: {
-          statusCode: result.statusCode,
-          responseBody: result.body as Prisma.InputJsonValue,
-        },
-      });
-      return { ...result, replayed: false };
+      result = await operation();
     } catch (error) {
-      // Release the claim so a genuine retry (after a transient failure) can
-      // actually re-attempt the operation instead of being stuck forever.
+      // The operation did not complete, so a retry may safely reclaim the key.
       await this.prisma.idempotencyKey
         .delete({ where: { userId_scope_key: { userId, scope, key } } })
         .catch(() => undefined);
       throw error;
     }
+
+    // Keep the claim if response persistence fails: the operation may already have
+    // committed an order, payment, or refund and must not run again on retry.
+    await this.prisma.idempotencyKey.update({
+      where: { userId_scope_key: { userId, scope, key } },
+      data: {
+        statusCode: result.statusCode,
+        responseBody: result.body as Prisma.InputJsonValue,
+      },
+    });
+    return { ...result, replayed: false };
   }
 }

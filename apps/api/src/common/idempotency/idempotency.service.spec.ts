@@ -133,6 +133,21 @@ describe('IdempotencyService', () => {
     expect(prisma.idempotencyKey.update).not.toHaveBeenCalled();
   });
 
+  it('keeps the claim when response persistence fails after the operation succeeds', async () => {
+    prisma.idempotencyKey.create.mockResolvedValue({});
+    const error = new Error('database unavailable');
+    prisma.idempotencyKey.update.mockRejectedValue(error);
+    const operation = jest
+      .fn()
+      .mockResolvedValue({ statusCode: 201, body: { orderId: 'o1' } });
+
+    await expect(
+      service.run('user1', 'order_create', 'key1', operation),
+    ).rejects.toBe(error);
+    expect(operation).toHaveBeenCalledTimes(1);
+    expect(prisma.idempotencyKey.delete).not.toHaveBeenCalled();
+  });
+
   it('rejects same-key reuse for a different request fingerprint', async () => {
     prisma.idempotencyKey.create.mockRejectedValue(uniqueViolation());
     prisma.idempotencyKey.findUnique.mockResolvedValue({
