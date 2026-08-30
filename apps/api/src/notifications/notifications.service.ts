@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { NotificationChannel } from './channels/notification-channel.types';
@@ -19,6 +19,8 @@ type CreateNotificationOptions = {
  */
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly delivery: NotificationDeliveryService,
@@ -33,23 +35,32 @@ export class NotificationsService {
     relatedId?: string,
     options: CreateNotificationOptions = {},
   ) {
-    const notification = await this.prisma.notification.create({
-      data: { userId, type, title, body, relatedType, relatedId },
-    });
-
-    if (options.channels?.length) {
-      await this.delivery.dispatch(options.channels, {
-        notificationId: notification.id,
-        userId,
-        type,
-        title,
-        body,
-        relatedType,
-        relatedId,
+    try {
+      const notification = await this.prisma.notification.create({
+        data: { userId, type, title, body, relatedType, relatedId },
       });
-    }
 
-    return notification;
+      if (options.channels?.length) {
+        await this.delivery.dispatch(options.channels, {
+          notificationId: notification.id,
+          userId,
+          type,
+          title,
+          body,
+          relatedType,
+          relatedId,
+        });
+      }
+
+      return notification;
+    } catch (error) {
+      // Notifications are a side effect of the already-committed mutation;
+      // never turn a successful order/support/seller action into an API error.
+      this.logger.warn(
+        `Failed to create notification for user ${userId}: ${String(error)}`,
+      );
+      return null;
+    }
   }
 
   async listForUser(userId: string, unreadOnly: boolean) {

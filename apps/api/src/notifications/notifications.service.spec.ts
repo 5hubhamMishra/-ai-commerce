@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -91,5 +92,26 @@ describe('NotificationsService', () => {
       relatedType: 'order',
       relatedId: 'order1',
     });
+  });
+
+  it('fails open when notification persistence is unavailable', async () => {
+    const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    prisma.notification.create.mockRejectedValue(
+      new Error('database unavailable'),
+    );
+
+    await expect(
+      service.create(
+        'user1',
+        NotificationType.ORDER_STATUS,
+        'Order placed',
+        'Your order has been placed.',
+      ),
+    ).resolves.toBeNull();
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to create notification for user user1'),
+    );
+    warnSpy.mockRestore();
   });
 });
