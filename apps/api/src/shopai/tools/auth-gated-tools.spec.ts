@@ -83,6 +83,19 @@ describe('add_to_cart input validation', () => {
     expect(cartService.addItem).not.toHaveBeenCalled();
   });
 
+  it('rejects quantities above the tool limit without calling CartService', async () => {
+    const cartService = { getCart: jest.fn(), addItem: jest.fn() };
+    const tool = new AddToCartTool(cartService as never);
+
+    const result = await tool.execute(
+      { variantId: 'v1', quantity: 100 },
+      authedContext,
+    );
+
+    expect(result.isError).toBe(true);
+    expect(cartService.addItem).not.toHaveBeenCalled();
+  });
+
   it('rejects a missing variantId without calling CartService', async () => {
     const cartService = { getCart: jest.fn(), addItem: jest.fn() };
     const tool = new AddToCartTool(cartService as never);

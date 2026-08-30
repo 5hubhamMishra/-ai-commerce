@@ -8,6 +8,8 @@ import {
   type ShopAIToolResult,
 } from './shopai-tool.interface';
 
+const MAX_QUANTITY = 99;
+
 @Injectable()
 export class AddToCartTool implements ShopAITool {
   readonly name = 'add_to_cart';
@@ -48,9 +50,13 @@ export class AddToCartTool implements ShopAITool {
     if (
       typeof quantity !== 'number' ||
       !Number.isInteger(quantity) ||
-      quantity < 1
+      quantity < 1 ||
+      quantity > MAX_QUANTITY
     ) {
-      return { content: 'quantity must be a positive integer.', isError: true };
+      return {
+        content: `quantity must be an integer from 1 to ${MAX_QUANTITY}.`,
+        isError: true,
+      };
     }
 
     try {
