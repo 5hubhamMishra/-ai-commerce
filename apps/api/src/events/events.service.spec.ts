@@ -145,6 +145,14 @@ describe('EventsService aggregation status', () => {
       where: { id: { in: ['session-1'] }, userId: null },
       data: { userId: 'user-2' },
     });
+    expect(prisma.behavioralEvent.updateMany).toHaveBeenCalledWith({
+      where: {
+        sessionId: { in: ['session-1'] },
+        userId: null,
+        session: { userId: 'user-2' },
+      },
+      data: { userId: 'user-2' },
+    });
   });
 
   it('reports unprocessed behavioral-event backlog age from receivedAt', async () => {

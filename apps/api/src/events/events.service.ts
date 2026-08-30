@@ -165,6 +165,14 @@ export class EventsService {
         where: { id: { in: [...bySessionId.keys()] }, userId: null },
         data: { userId },
       });
+      await this.prisma.behavioralEvent.updateMany({
+        where: {
+          sessionId: { in: [...bySessionId.keys()] },
+          userId: null,
+          session: { userId },
+        },
+        data: { userId },
+      });
     }
   }
 
