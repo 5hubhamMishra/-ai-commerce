@@ -40,6 +40,9 @@ export class BehavioralAggregationWorker
       this.config.get<string>('redis.url') ?? 'redis://localhost:6379',
       { maxRetriesPerRequest: null },
     );
+    this.connection.on('error', (error) => {
+      this.logger.warn(`Redis worker connection failed: ${error.message}`);
+    });
     this.worker = new Worker<AggregateJobData>(
       BEHAVIORAL_QUEUE_NAME,
       (job: Job<AggregateJobData>) =>

@@ -39,6 +39,9 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
       this.config.get<string>('redis.url') ?? 'redis://localhost:6379',
       { maxRetriesPerRequest: null },
     );
+    this.connection.on('error', (error) => {
+      this.logger.warn(`Redis queue connection failed: ${error.message}`);
+    });
     this.queue = new Queue<AggregateJobData>(BEHAVIORAL_QUEUE_NAME, {
       connection: this.connection,
       defaultJobOptions: {

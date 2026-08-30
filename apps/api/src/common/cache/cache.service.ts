@@ -10,7 +10,11 @@ import { REDIS_CLIENT } from './cache.tokens';
 export class CacheService implements OnModuleDestroy {
   private readonly logger = new Logger(CacheService.name);
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {
+    this.redis.on('error', (error) => {
+      this.logger.warn(`Redis connection failed: ${error.message}`);
+    });
+  }
 
   async get<T>(key: string): Promise<T | null> {
     try {
