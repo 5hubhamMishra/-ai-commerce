@@ -11,6 +11,7 @@ import {
   type AggregateJobData,
   BEHAVIORAL_QUEUE_NAME,
 } from '../../dist/src/events/queue/behavioral-queue.tokens';
+import { isAuthorizedCronRequest } from '../../src/common/cron-auth';
 
 /**
  * `BehavioralAggregationWorker` (src/events/queue/behavioral-aggregation.worker.ts) is a
@@ -41,7 +42,7 @@ export default async function handler(
   // without this check, the endpoint would be a public, unauthenticated way to force
   // Redis/DB load, since app.setGlobalPrefix's route table doesn't cover this path at all.
   const authHeader = req.headers['authorization'];
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCronRequest(authHeader, process.env.CRON_SECRET)) {
     res.writeHead(401, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: 'Unauthorized' }));
     return;
