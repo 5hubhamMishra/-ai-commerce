@@ -24,6 +24,7 @@ const pagesToScan = [
   { name: "privacy", path: "/privacy" },
   { name: "ai-shopping", path: "/ai-shopping" },
   { name: "checkout (empty cart)", path: "/checkout" },
+  { name: "notifications (signed out)", path: "/notifications" },
   { name: "404", path: "/__nonexistent_page_for_a11y_scan__" },
 ];
 

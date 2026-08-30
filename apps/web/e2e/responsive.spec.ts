@@ -63,6 +63,7 @@ const spotCheckPages = [
   { name: "privacy", path: "/privacy" },
   { name: "ai-shopping", path: "/ai-shopping" },
   { name: "checkout (empty cart)", path: "/checkout" },
+  { name: "notifications (signed out)", path: "/notifications" },
 ];
 
 for (const { name, path } of spotCheckPages) {
