@@ -8,6 +8,7 @@ import {
   mergeDemoProducts,
 } from "@/lib/demo-catalog";
 import ProductDetailClient from "./ProductDetailClient";
+import { safeJsonLd } from "@/lib/jsonLd";
 
 const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
 
@@ -138,11 +139,11 @@ export default async function ProductDetailPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }}
       />
       <ProductDetailClient
         initialProduct={product}

@@ -5,6 +5,7 @@ import { fromProductListItem } from "@/lib/catalog-mappers";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import Section from "@/components/Section";
 import HomeDynamicSections from "./HomeDynamicSections";
+import { safeJsonLd } from "@/lib/jsonLd";
 
 const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
 
@@ -32,7 +33,7 @@ export default function Home() {
     <div>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <Hero categories={categories} />
 
