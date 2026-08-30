@@ -207,7 +207,7 @@ export default function AdminPage() {
             <dl className="space-y-2 text-sm">
               <Metric label={`Searches (${dashboard.search.windowDays}d)`} value={dashboard.search.totalSearches.toString()} />
               <Metric label="Zero-result rate" value={`${Math.round(dashboard.search.zeroResultRate * 100)}%`} />
-              <Metric label="Semantic usage" value={`${Math.round(dashboard.search.semanticUsageRate * 100)}%`} />
+              <Metric label="Vector search usage" value={`${Math.round(dashboard.search.semanticUsageRate * 100)}%`} />
               {dashboard.search.topQueries[0] && <Metric label="Top query" value={`"${dashboard.search.topQueries[0].query}"`} />}
             </dl>
           )}
