@@ -247,7 +247,19 @@ export default function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-[var(--clr-border)]">
                   {orders.items.map((o) => (
-                    <tr key={o.id} className="hover:bg-stone-50 cursor-pointer" onClick={() => router.push(`/admin/orders/${o.id}`)}>
+                    <tr
+                      key={o.id}
+                      tabIndex={0}
+                      aria-label={`Open order ${o.id.slice(0, 8)}`}
+                      className="hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--clr-accent)] cursor-pointer"
+                      onClick={() => router.push(`/admin/orders/${o.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          router.push(`/admin/orders/${o.id}`);
+                        }
+                      }}
+                    >
                       <td className="px-4 py-3 font-mono text-xs">{o.id.slice(0, 8)}</td>
                       <td className="px-4 py-3">{new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</td>
                       <td className="px-4 py-3">
