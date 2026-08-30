@@ -215,7 +215,10 @@ export class UsersService {
    * on its own to destroy an account. See `DECISIONS.md` ADR-041 for the full reasoning.
    */
   async deleteAccount(userId: string, password: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, deletedAt: true },
+    });
     if (!user || user.deletedAt) {
       throw new NotFoundException({
         code: 'USER_NOT_FOUND',

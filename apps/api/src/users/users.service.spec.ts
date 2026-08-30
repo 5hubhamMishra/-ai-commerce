@@ -249,6 +249,10 @@ describe('UsersService', () => {
 
       await service.deleteAccount('u1', 'correct-password');
 
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        select: { passwordHash: true, deletedAt: true },
+      });
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
       const ops = prisma.$transaction.mock.calls[0][0];
       expect(Array.isArray(ops)).toBe(true);
