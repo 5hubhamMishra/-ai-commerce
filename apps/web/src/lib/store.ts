@@ -66,7 +66,7 @@ type StoreState = {
    *  `cart`/getProduct() when omitted, preserving the original fake-catalog-only behavior. */
   placeOrder: (address: string, items?: OrderItem[]) => Order;
 
-  setPersonalization: (enabled: boolean) => void;
+  setPersonalization: (enabled: boolean) => Promise<void>;
   /** Clears local activity always; additionally calls the real `DELETE /users/me/activity`
    *  when signed in, since that's the actual privacy-relevant data once events are real. */
   clearActivity: () => Promise<void>;
@@ -239,7 +239,16 @@ export const useStore = create<StoreState>()(
         return order;
       },
 
-      setPersonalization: (enabled) => set({ personalizationEnabled: enabled }),
+      setPersonalization: async (enabled) => {
+        const previous = get().personalizationEnabled;
+        set({ personalizationEnabled: enabled });
+        if (!get().user) return;
+        try {
+          await usersApi.updateProfile({ personalizationEnabled: enabled });
+        } catch {
+          set({ personalizationEnabled: previous });
+        }
+      },
       clearActivity: async () => {
         set({ events: [], recentlyViewed: [] });
         if (get().user) {
@@ -257,7 +266,8 @@ export const useStore = create<StoreState>()(
         const result = await authApi.login({ email, password });
         set({ accessToken: result.accessToken, authStatus: "authenticated" });
         const me = await authApi.me();
-        set({ user: me });
+        const profile = await usersApi.getProfile();
+        set({ user: me, personalizationEnabled: profile.personalizationEnabled });
         void get().fetchServerCart();
         void get().fetchServerWishlist();
         void get().fetchBehavioralProfile();
@@ -267,7 +277,8 @@ export const useStore = create<StoreState>()(
         const result = await authApi.register({ email, password, name });
         set({ accessToken: result.accessToken, authStatus: "authenticated" });
         const me = await authApi.me();
-        set({ user: me });
+        const profile = await usersApi.getProfile();
+        set({ user: me, personalizationEnabled: profile.personalizationEnabled });
         void get().fetchServerCart();
         void get().fetchServerWishlist();
         void get().fetchBehavioralProfile();

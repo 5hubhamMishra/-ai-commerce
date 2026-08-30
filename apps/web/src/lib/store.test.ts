@@ -88,6 +88,21 @@ describe("wishlist actions", () => {
 });
 
 describe("personalization / event tracking", () => {
+  it("persists signed-in personalization changes and rolls back on failure", async () => {
+    useStore.setState({ user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] } });
+    const fetchSpy = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      expect(init?.method).toBe("PATCH");
+      expect(JSON.parse(init?.body as string)).toEqual({ personalizationEnabled: false });
+      return { ok: false, status: 500, json: async () => ({}) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await useStore.getState().setPersonalization(false);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(useStore.getState().personalizationEnabled).toBe(true);
+  });
+
   it("does not record behavior events when personalization is disabled", () => {
     useStore.getState().setPersonalization(false);
     useStore.getState().recordView(productA);
@@ -157,6 +172,9 @@ describe("auth", () => {
           body: { accessToken: "tok-1", refreshToken: "r1", user: { id: "u1", email: "ada@example.com", name: "Ada", roles: ["CUSTOMER"] } },
         },
         "GET /api/v1/users/me": { body: publicUser },
+        "GET /api/v1/users/me/profile": {
+          body: { id: "p1", userId: "u1", personalizationEnabled: true, notificationPreferences: {} },
+        },
         "GET /api/v1/cart": { body: emptyCart },
         "GET /api/v1/wishlist": { body: emptyWishlist },
       }),
