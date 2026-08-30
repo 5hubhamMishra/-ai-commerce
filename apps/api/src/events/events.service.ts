@@ -53,9 +53,7 @@ export class EventsService {
         data: { processedAt: new Date() },
       });
     } else {
-      await Promise.all(
-        rows.map((row) => this.queue.enqueue({ eventId: row.id })),
-      );
+      await this.queue.enqueueMany(rows.map((row) => ({ eventId: row.id })));
     }
 
     return { accepted: rows.length };

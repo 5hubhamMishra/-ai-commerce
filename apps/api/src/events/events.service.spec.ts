@@ -12,7 +12,7 @@ describe('EventsService aggregation status', () => {
     };
     profile: { findUnique: jest.Mock };
   };
-  let queue: { enqueue: jest.Mock };
+  let queue: { enqueueMany: jest.Mock };
 
   beforeEach(() => {
     prisma = {
@@ -28,7 +28,7 @@ describe('EventsService aggregation status', () => {
       },
       profile: { findUnique: jest.fn() },
     };
-    queue = { enqueue: jest.fn().mockResolvedValue(undefined) };
+    queue = { enqueueMany: jest.fn().mockResolvedValue(undefined) };
 
     service = new EventsService(
       prisma as never,
@@ -47,7 +47,7 @@ describe('EventsService aggregation status', () => {
       releaseQueue = resolve;
     });
     prisma.session.upsert.mockReturnValue(sessionGate);
-    queue.enqueue.mockReturnValue(queueGate);
+    queue.enqueueMany.mockReturnValue(queueGate);
 
     const tracking = service.track(undefined, {
       events: [
@@ -74,11 +74,14 @@ describe('EventsService aggregation status', () => {
 
     await Promise.resolve();
     expect(prisma.session.upsert).toHaveBeenCalledTimes(2);
-    expect(queue.enqueue).not.toHaveBeenCalled();
+    expect(queue.enqueueMany).not.toHaveBeenCalled();
 
     releaseSessions();
     await new Promise((resolve) => setImmediate(resolve));
-    expect(queue.enqueue).toHaveBeenCalledTimes(2);
+    expect(queue.enqueueMany).toHaveBeenCalledWith([
+      { eventId: '00000000-0000-4000-8000-000000000001' },
+      { eventId: '00000000-0000-4000-8000-000000000002' },
+    ]);
 
     releaseQueue();
     await expect(tracking).resolves.toEqual({ accepted: 2 });
@@ -113,7 +116,7 @@ describe('EventsService aggregation status', () => {
       data: [expect.objectContaining({ personalizationEligible: false })],
       skipDuplicates: true,
     });
-    expect(queue.enqueue).not.toHaveBeenCalled();
+    expect(queue.enqueueMany).not.toHaveBeenCalled();
   });
 
   it('never reassigns an owned session during identity linking', async () => {

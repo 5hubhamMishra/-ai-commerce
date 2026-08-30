@@ -16,24 +16,47 @@ describe('BehavioralQueueService failure modes', () => {
     service.onModuleInit();
 
     await expect(
-      service.enqueue({ eventId: 'event-1' }),
+      service.enqueueMany([{ eventId: 'event-1' }]),
     ).resolves.toBeUndefined();
     await expect(service.onModuleDestroy()).resolves.toBeUndefined();
   });
 
-  it('does not throw into event ingestion when Redis/BullMQ enqueue fails', async () => {
+  it('does not throw into event ingestion when a bulk enqueue fails', async () => {
     const service = new BehavioralQueueService({} as ConfigService, prisma);
     (
       service as unknown as {
-        queue: { add: jest.Mock };
+        queue: { addBulk: jest.Mock };
       }
     ).queue = {
-      add: jest.fn().mockRejectedValue(new Error('redis down')),
+      addBulk: jest.fn().mockRejectedValue(new Error('redis down')),
     };
 
     await expect(
-      service.enqueue({ eventId: 'event-1' }),
+      service.enqueueMany([{ eventId: 'event-1' }, { eventId: 'event-2' }]),
     ).resolves.toBeUndefined();
+  });
+
+  it('bulk-enqueues events with stable job ids', async () => {
+    const service = new BehavioralQueueService({} as ConfigService, prisma);
+    const addBulk = jest.fn().mockResolvedValue([]);
+    (service as unknown as { queue: { addBulk: jest.Mock } }).queue = {
+      addBulk,
+    };
+
+    await service.enqueueMany([{ eventId: 'event-1' }, { eventId: 'event-2' }]);
+
+    expect(addBulk).toHaveBeenCalledWith([
+      {
+        name: 'aggregate',
+        data: { eventId: 'event-1' },
+        opts: { jobId: 'event-1' },
+      },
+      {
+        name: 'aggregate',
+        data: { eventId: 'event-2' },
+        opts: { jobId: 'event-2' },
+      },
+    ]);
   });
 
   it('requeues unprocessed events with stable job ids', async () => {

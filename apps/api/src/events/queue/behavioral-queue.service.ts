@@ -67,13 +67,19 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
    *  durably written to Postgres by the time this runs (see
    *  EventsService.track), so aggregation can always be recomputed/retried
    *  later without losing the underlying data. */
-  async enqueue(data: AggregateJobData): Promise<void> {
-    if (!this.queue) return;
+  async enqueueMany(data: AggregateJobData[]): Promise<void> {
+    if (!this.queue || data.length === 0) return;
     try {
-      await this.queue.add('aggregate', data, { jobId: data.eventId });
+      await this.queue.addBulk(
+        data.map((item) => ({
+          name: 'aggregate',
+          data: item,
+          opts: { jobId: item.eventId },
+        })),
+      );
     } catch (error) {
       this.warnRedis(
-        `Failed to enqueue aggregation for event ${data.eventId}: ${String(error)}`,
+        `Failed to enqueue ${data.length} behavioral events: ${String(error)}`,
       );
     }
   }
