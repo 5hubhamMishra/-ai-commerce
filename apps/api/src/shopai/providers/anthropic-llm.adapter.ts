@@ -11,6 +11,7 @@ import type {
 import { SHOPAI_CONFIG, type ShopAIConfig } from '../shopai.config';
 
 const MAX_RESPONSE_TOKENS = 4096;
+const ANTHROPIC_REQUEST_TIMEOUT_MS = 20_000;
 
 /**
  * Real Anthropic Messages API integration (tool calling) — the model is
@@ -29,7 +30,10 @@ export class AnthropicLLMAdapter implements LLMProvider {
   readonly model: string;
 
   constructor(@Inject(SHOPAI_CONFIG) config: ShopAIConfig) {
-    this.client = new Anthropic({ apiKey: config.anthropicApiKey });
+    this.client = new Anthropic({
+      apiKey: config.anthropicApiKey,
+      timeout: ANTHROPIC_REQUEST_TIMEOUT_MS,
+    });
     this.model = config.model;
   }
 
