@@ -6,6 +6,8 @@ import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
 // falls back to the current known deployment for local builds / before a custom domain exists.
 const BASE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
 
+export const revalidate = 3600;
+
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/", changeFrequency: "daily", priority: 1 },
   { path: "/shop", changeFrequency: "daily", priority: 0.9 },
