@@ -29,7 +29,10 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<TokenPair & { user: PublicUser }> {
     const email = dto.email.toLowerCase();
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
     if (existing) {
       throw new ConflictException({
         code: 'EMAIL_ALREADY_REGISTERED',

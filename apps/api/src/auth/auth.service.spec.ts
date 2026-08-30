@@ -67,6 +67,10 @@ describe('AuthService', () => {
           name: 'A',
         }),
       ).rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'a@example.com' },
+        select: { id: true },
+      });
     });
 
     it('hashes the password before storing it — never stores plaintext', async () => {
