@@ -185,6 +185,33 @@ describe('ShopAIService', () => {
     expect(result.conversationId).toBe('conv-1');
   });
 
+  it('does not let an authenticated caller claim an anonymous conversation', async () => {
+    prisma.shopAIConversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      userId: null,
+      anonymousId: 'victim-anon-1',
+    });
+
+    await expect(
+      service.sendMessage(
+        {
+          conversationId: 'conv-1',
+          message: 'read this',
+          anonymousId: 'victim-anon-1',
+        },
+        {
+          authenticatedUser: {
+            id: 'attacker',
+            email: 'attacker@example.com',
+            roles: [],
+          },
+        },
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(llm.complete).not.toHaveBeenCalled();
+  });
+
   it('executes a tool the model requests and feeds the result back', async () => {
     llm.complete
       .mockResolvedValueOnce(

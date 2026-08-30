@@ -236,12 +236,14 @@ export class ShopAIService {
     const conversation = await this.prisma.shopAIConversation.findUnique({
       where: { id: conversationId },
     });
-    const owns =
-      conversation &&
-      ((identity.authenticatedUser &&
-        conversation.userId === identity.authenticatedUser.id) ||
-        (identity.anonymousId &&
-          conversation.anonymousId === identity.anonymousId));
+    const owns = identity.authenticatedUser
+      ? conversation?.userId === identity.authenticatedUser.id
+      : Boolean(
+          conversation &&
+          !conversation.userId &&
+          identity.anonymousId &&
+          conversation.anonymousId === identity.anonymousId,
+        );
     if (!conversation || !owns) {
       // Same not-found response whether it's missing or belongs to someone
       // else — the OrdersService IDOR-defense pattern, applied here too.
