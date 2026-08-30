@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import { AuditService } from '../audit/audit.service';
@@ -19,6 +19,14 @@ const DUMMY_PASSWORD_HASH =
 
 type TokenPair = { accessToken: string; refreshToken: string };
 type PublicUser = { id: string; email: string; name: string; roles: Role[] };
+type RegisteredUser = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    roles: { select: { role: true } };
+  };
+}>;
 
 @Injectable()
 export class AuthService {
@@ -35,30 +43,41 @@ export class AuthService {
       where: { email },
       select: { id: true },
     });
-    if (existing) {
-      throw new ConflictException({
+    const duplicateEmail = () =>
+      new ConflictException({
         code: 'EMAIL_ALREADY_REGISTERED',
         message: 'An account with this email already exists.',
       });
-    }
+    if (existing) throw duplicateEmail();
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        name: dto.name,
-        roles: { create: { role: Role.CUSTOMER } },
-        profile: { create: {} },
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        roles: { select: { role: true } },
-      },
-    });
+    let user: RegisteredUser;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          name: dto.name,
+          roles: { create: { role: Role.CUSTOMER } },
+          profile: { create: {} },
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          roles: { select: { role: true } },
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw duplicateEmail();
+      }
+      throw error;
+    }
 
     await this.audit.record({
       actorId: user.id,

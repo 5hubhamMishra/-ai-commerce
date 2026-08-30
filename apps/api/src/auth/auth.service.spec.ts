@@ -2,7 +2,7 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -99,6 +99,26 @@ describe('AuthService', () => {
       const storedHash = prisma.user.create.mock.calls[0][0].data.passwordHash;
       expect(storedHash).not.toBe('password123');
       expect(await bcrypt.compare('password123', storedHash)).toBe(true);
+    });
+
+    it('maps a concurrent unique-email race to the duplicate-email conflict', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+
+      await expect(
+        service.register({
+          email: 'new@example.com',
+          password: 'password123',
+          name: 'New',
+        }),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'EMAIL_ALREADY_REGISTERED' }),
+      });
     });
 
     it('assigns the CUSTOMER role by default', async () => {
