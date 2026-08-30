@@ -46,7 +46,12 @@ export class EventsService {
     // Phase 1) means the raw event still lands durably — the user's own
     // activity-history view still works — but it's never fed into the
     // aggregate profile driving personalization/recommendations.
-    if (personalizationEnabled) {
+    if (!personalizationEnabled) {
+      await this.prisma.behavioralEvent.updateMany({
+        where: { id: { in: rows.map((row) => row.id) } },
+        data: { processedAt: new Date() },
+      });
+    } else {
       await Promise.all(
         rows.map((row) => this.queue.enqueue({ eventId: row.id })),
       );

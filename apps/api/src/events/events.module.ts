@@ -13,6 +13,6 @@ import { BehavioralQueueService } from './queue/behavioral-queue.service';
     BehavioralQueueService,
     BehavioralAggregationWorker,
   ],
-  exports: [CustomerProfileService],
+  exports: [CustomerProfileService, BehavioralQueueService],
 })
 export class EventsModule {}

@@ -1278,7 +1278,7 @@ model Session {
 // running). No raw IP/user-agent columns — "do not unnecessarily store
 // sensitive information" (spec) is a schema decision here, not just a
 // policy note. `processedAt` is set once the aggregation queue worker has
-// applied this event to a CustomerProfile — the guard that makes queue
+// applied or intentionally skipped this event — the guard that makes queue
 // redelivery (BullMQ is at-least-once, not exactly-once) idempotent, so a
 // retried/redelivered job can never double-count the same event.
 model BehavioralEvent {

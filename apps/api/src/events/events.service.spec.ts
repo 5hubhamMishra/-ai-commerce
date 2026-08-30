@@ -8,7 +8,9 @@ describe('EventsService aggregation status', () => {
       count: jest.Mock;
       aggregate: jest.Mock;
       createMany: jest.Mock;
+      updateMany: jest.Mock;
     };
+    profile: { findUnique: jest.Mock };
   };
   let queue: { enqueue: jest.Mock };
 
@@ -19,7 +21,9 @@ describe('EventsService aggregation status', () => {
         count: jest.fn().mockResolvedValue(10),
         aggregate: jest.fn(),
         createMany: jest.fn().mockResolvedValue({ count: 2 }),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
       },
+      profile: { findUnique: jest.fn() },
     };
     queue = { enqueue: jest.fn().mockResolvedValue(undefined) };
 
@@ -75,6 +79,34 @@ describe('EventsService aggregation status', () => {
 
     releaseQueue();
     await expect(tracking).resolves.toEqual({ accepted: 2 });
+  });
+
+  it('marks opted-out events handled without enqueueing them', async () => {
+    prisma.profile.findUnique.mockResolvedValue({
+      personalizationEnabled: false,
+    });
+
+    await expect(
+      service.track('user-1', {
+        events: [
+          {
+            eventId: '00000000-0000-4000-8000-000000000001',
+            eventType: 'PRODUCT_VIEWED',
+            anonymousId: 'anonymous-1',
+            sessionId: 'session-1',
+            source: 'WEB',
+            entityId: 'product-1',
+            occurredAt: new Date().toISOString(),
+          },
+        ],
+      } as never),
+    ).resolves.toEqual({ accepted: 1 });
+
+    expect(prisma.behavioralEvent.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['00000000-0000-4000-8000-000000000001'] } },
+      data: { processedAt: expect.any(Date) },
+    });
+    expect(queue.enqueue).not.toHaveBeenCalled();
   });
 
   it('reports unprocessed behavioral-event backlog age from receivedAt', async () => {

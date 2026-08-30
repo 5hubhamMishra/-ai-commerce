@@ -1,12 +1,17 @@
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma/prisma.service';
 import { BehavioralQueueService } from './behavioral-queue.service';
 
 describe('BehavioralQueueService failure modes', () => {
+  const prisma = {
+    behavioralEvent: { findMany: jest.fn() },
+  } as unknown as PrismaService;
+
   it('does not create a Redis queue when Redis is disabled', async () => {
     const config = {
       get: jest.fn().mockReturnValue(undefined),
     } as unknown as ConfigService;
-    const service = new BehavioralQueueService(config);
+    const service = new BehavioralQueueService(config, prisma);
 
     service.onModuleInit();
 
@@ -17,7 +22,7 @@ describe('BehavioralQueueService failure modes', () => {
   });
 
   it('does not throw into event ingestion when Redis/BullMQ enqueue fails', async () => {
-    const service = new BehavioralQueueService({} as ConfigService);
+    const service = new BehavioralQueueService({} as ConfigService, prisma);
     (
       service as unknown as {
         queue: { add: jest.Mock };
@@ -29,5 +34,31 @@ describe('BehavioralQueueService failure modes', () => {
     await expect(
       service.enqueue({ eventId: 'event-1' }),
     ).resolves.toBeUndefined();
+  });
+
+  it('requeues unprocessed events with stable job ids', async () => {
+    prisma.behavioralEvent.findMany = jest
+      .fn()
+      .mockResolvedValue([{ id: 'event-1' }, { id: 'event-2' }]);
+    const service = new BehavioralQueueService({} as ConfigService, prisma);
+    const addBulk = jest.fn().mockResolvedValue([]);
+    (service as unknown as { queue: { addBulk: jest.Mock } }).queue = {
+      addBulk,
+    };
+
+    await expect(service.enqueuePending()).resolves.toBe(2);
+
+    expect(addBulk).toHaveBeenCalledWith([
+      {
+        name: 'aggregate',
+        data: { eventId: 'event-1' },
+        opts: { jobId: 'event-1' },
+      },
+      {
+        name: 'aggregate',
+        data: { eventId: 'event-2' },
+        opts: { jobId: 'event-2' },
+      },
+    ]);
   });
 });

@@ -11,6 +11,7 @@ import {
   type AggregateJobData,
   BEHAVIORAL_QUEUE_NAME,
 } from './behavioral-queue.tokens';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * The producer side of the real "event queue" the spec asks for (PROMPT 07 —
@@ -33,7 +34,10 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
   private connection!: IORedis;
   private queue!: Queue<AggregateJobData>;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   onModuleInit() {
     const url = this.config.get<string>('redis.url');
@@ -71,6 +75,36 @@ export class BehavioralQueueService implements OnModuleInit, OnModuleDestroy {
       this.warnRedis(
         `Failed to enqueue aggregation for event ${data.eventId}: ${String(error)}`,
       );
+    }
+  }
+
+  /** Requeues durable events whose original enqueue happened during a Redis outage. */
+  async enqueuePending(limit = 1000): Promise<number> {
+    // ponytail: replay 1,000 per cron run; add cursor pagination if backlog volume outgrows drain capacity.
+    if (!this.queue) return 0;
+
+    try {
+      const pending = await this.prisma.behavioralEvent.findMany({
+        where: { processedAt: null },
+        orderBy: { receivedAt: 'asc' },
+        take: limit,
+        select: { id: true },
+      });
+      if (pending.length === 0) return 0;
+
+      await this.queue.addBulk(
+        pending.map(({ id }) => ({
+          name: 'aggregate',
+          data: { eventId: id },
+          opts: { jobId: id },
+        })),
+      );
+      return pending.length;
+    } catch (error) {
+      this.warnRedis(
+        `Failed to requeue ${pending.length} pending behavioral events: ${String(error)}`,
+      );
+      return 0;
     }
   }
 

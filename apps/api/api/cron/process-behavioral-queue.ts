@@ -11,6 +11,7 @@ import {
   type AggregateJobData,
   BEHAVIORAL_QUEUE_NAME,
 } from '../../dist/src/events/queue/behavioral-queue.tokens';
+import { BehavioralQueueService } from '../../dist/src/events/queue/behavioral-queue.service';
 import { isAuthorizedCronRequest } from '../../src/common/cron-auth';
 
 /**
@@ -66,6 +67,8 @@ export default async function handler(
   });
 
   try {
+    const queue = appContext.get(BehavioralQueueService);
+    await queue.enqueuePending();
     const customerProfiles = appContext.get(CustomerProfileService);
     const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
