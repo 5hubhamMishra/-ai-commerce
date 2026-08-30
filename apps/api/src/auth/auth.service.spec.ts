@@ -117,6 +117,13 @@ describe('AuthService', () => {
       expect(prisma.user.create.mock.calls[0][0].data.roles).toEqual({
         create: { role: Role.CUSTOMER },
       });
+      expect(prisma.user.create.mock.calls[0][0].include).toBeUndefined();
+      expect(prisma.user.create.mock.calls[0][0].select).toEqual({
+        id: true,
+        email: true,
+        name: true,
+        roles: { select: { role: true } },
+      });
     });
   });
 

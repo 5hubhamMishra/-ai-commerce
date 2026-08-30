@@ -47,7 +47,12 @@ export class AuthService {
         roles: { create: { role: Role.CUSTOMER } },
         profile: { create: {} },
       },
-      include: { roles: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        roles: { select: { role: true } },
+      },
     });
 
     await this.audit.record({
