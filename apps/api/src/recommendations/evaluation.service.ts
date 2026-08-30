@@ -113,7 +113,10 @@ export class EvaluationService {
 
     const pairs = new Map<string, Date>(); // "identity|productId" -> earliest impression time
     for (const imp of impressions) {
-      const identity = imp.userId ?? imp.anonymousId ?? 'unknown';
+      // An impression without either identity can still contribute to catalog
+      // coverage, but it cannot be safely attributed to a later event.
+      const identity = imp.userId ?? imp.anonymousId;
+      if (!identity) continue;
       const key = `${identity}|${imp.productId}`;
       const existing = pairs.get(key);
       if (!existing || imp.createdAt < existing) pairs.set(key, imp.createdAt);
