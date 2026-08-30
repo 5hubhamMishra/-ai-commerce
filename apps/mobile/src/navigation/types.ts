@@ -29,6 +29,7 @@ export type WishlistStackParamList = ProductStackParamList & {
 export type AccountStackParamList = OrderStackParamList & {
   AccountHome: undefined;
   OrderList: undefined;
+  Notifications: undefined;
 };
 
 export type ShopAIStackParamList = {

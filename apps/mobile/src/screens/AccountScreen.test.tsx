@@ -46,4 +46,13 @@ describe('AccountScreen', () => {
 
     expect(navigate).toHaveBeenCalledWith('OrderList');
   });
+
+  it('navigates to notifications when pressed', async () => {
+    mockStore({ name: 'Ada Lovelace', email: 'ada@example.com' });
+
+    const { getByLabelText } = await render(<AccountScreen navigation={navigation} route={{} as never} />);
+    await fireEvent.press(getByLabelText('Notifications'));
+
+    expect(navigate).toHaveBeenCalledWith('Notifications');
+  });
 });

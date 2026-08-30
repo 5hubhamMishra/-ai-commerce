@@ -31,6 +31,14 @@ export default function AccountScreen({ navigation }: Props) {
         <Text style={styles.ordersButtonText}>My Orders</Text>
       </Pressable>
       <Pressable
+        style={styles.ordersButton}
+        onPress={() => navigation.navigate('Notifications')}
+        accessibilityRole="button"
+        accessibilityLabel="Notifications"
+      >
+        <Text style={styles.ordersButtonText}>Notifications</Text>
+      </Pressable>
+      <Pressable
         style={styles.button}
         onPress={() => void logout()}
         accessibilityRole="button"
