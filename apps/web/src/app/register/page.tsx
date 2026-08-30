@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { safeRedirectPath } from "@/lib/safeRedirect";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -27,7 +28,7 @@ function RegisterForm() {
     setSubmitting(true);
     try {
       await register(email, password, name);
-      router.push(params.get("redirect") || "/");
+      router.push(safeRedirectPath(params.get("redirect")));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {

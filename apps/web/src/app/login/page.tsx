@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { safeRedirectPath } from "@/lib/safeRedirect";
 
 function LoginForm() {
   const router = useRouter();
@@ -20,7 +21,7 @@ function LoginForm() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push(params.get("redirect") || "/");
+      router.push(safeRedirectPath(params.get("redirect")));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
