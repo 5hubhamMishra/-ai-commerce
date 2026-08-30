@@ -306,7 +306,7 @@ export default function AiShoppingPage() {
                   className="w-full text-left rounded-2xl border border-[var(--clr-border)] px-4 py-3 text-sm font-medium hover:border-[var(--clr-accent)] hover:text-[var(--clr-accent-text)] hover:bg-[var(--clr-accent-subtle)] transition-all duration-150 flex justify-between items-center"
                   style={{ color: "var(--clr-text-primary)" }}
                 >
-                  <span>{s}</span>
+                  <span className="min-w-0">{s}</span>
                   <span style={{ color: "var(--clr-text-disabled)" }}>›</span>
                 </button>
               ))}
@@ -453,7 +453,7 @@ export default function AiShoppingPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask ShopAI anything..."
-              className="flex-1 px-3 py-2 text-sm outline-none bg-transparent"
+              className="min-w-0 flex-1 px-3 py-2 text-sm outline-none bg-transparent"
               style={{ color: "var(--clr-text-primary)" }}
             />
             <button
