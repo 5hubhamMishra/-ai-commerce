@@ -1,6 +1,16 @@
 import { useMemo } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react-native-webview';
+
+// originWhitelist stays permissive (see below) because real payment authorization
+// (3D Secure/bank OTP) redirects to whichever bank domain the card issuer uses - there's no
+// fixed list to allow-list in advance. What we *can* safely reject regardless of domain is
+// non-http(s) URI schemes: javascript:/data:/file: navigation is never part of a legitimate
+// Razorpay or bank redirect, only ever a script/local-file-injection attempt, so blocking
+// them can't break a real checkout flow.
+function isSafeNavigation({ url }: WebViewNavigation): boolean {
+  return url.startsWith('https://') || url.startsWith('http://') || url === 'about:blank';
+}
 
 export type RazorpaySuccessResult = {
   razorpayPaymentId: string;
@@ -86,6 +96,7 @@ export default function RazorpayCheckout({ visible, keyId, orderId, amount, curr
         <WebView
           testID="razorpay-webview"
           originWhitelist={['*']}
+          onShouldStartLoadWithRequest={isSafeNavigation}
           source={{ html }}
           onMessage={handleMessage}
         />
