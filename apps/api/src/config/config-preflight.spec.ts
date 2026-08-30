@@ -34,6 +34,16 @@ describe('config preflight', () => {
     ]);
   });
 
+  it('requires an explicit browser origin allow-list', () => {
+    const withoutWebOrigin: Record<string, unknown> = { ...validConfig };
+    delete withoutWebOrigin.WEB_ORIGIN;
+
+    expect(validateConfigPreflight(withoutWebOrigin)).toContainEqual({
+      key: 'WEB_ORIGIN',
+      reason: 'is required',
+    });
+  });
+
   it('requires DIRECT_URL for build preflight before Prisma migrations run', () => {
     const withoutDirectUrl: Record<string, unknown> = { ...validConfig };
     delete withoutDirectUrl.DIRECT_URL;

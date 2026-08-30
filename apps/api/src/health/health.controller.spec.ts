@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
@@ -29,6 +29,6 @@ describe('HealthController', () => {
       response: {
         code: 'NOT_READY',
       },
-    } satisfies Partial<HttpException>);
+    });
   });
 });

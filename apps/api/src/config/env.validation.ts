@@ -39,9 +39,8 @@ class EnvironmentVariables {
   })
   JWT_REFRESH_SECRET!: string;
 
-  @IsOptional()
   @IsString()
-  WEB_ORIGIN?: string;
+  WEB_ORIGIN!: string;
 
   @IsString()
   @MinLength(1, { message: 'ANTHROPIC_API_KEY is required for ShopAI' })

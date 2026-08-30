@@ -4,7 +4,7 @@ export default () => ({
   // Comma-separated allow-list, not a single origin — local dev legitimately needs more
   // than one (npm run dev:web on 3000, apps/web's Playwright suite building+serving its
   // own instance on 3100 to avoid dev-mode compile latency under parallel workers).
-  webOrigin: (process.env.WEB_ORIGIN ?? 'http://localhost:3000')
+  webOrigin: (process.env.WEB_ORIGIN ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),

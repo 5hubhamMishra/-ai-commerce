@@ -53,7 +53,7 @@ export function validateConfigPreflight(
   optionalUrl(issues, config, 'REDIS_URL', ['redis:', 'rediss:']);
   secret(issues, config, 'JWT_ACCESS_SECRET', 32);
   secret(issues, config, 'JWT_REFRESH_SECRET', 32);
-  originList(issues, config, 'WEB_ORIGIN');
+  originList(issues, config, 'WEB_ORIGIN', true);
   requiredString(issues, config, 'ANTHROPIC_API_KEY');
   optionalNonEmptyString(issues, config, 'ANTHROPIC_MODEL');
   positiveInteger(issues, config, 'SHOPAI_MAX_TOOL_ITERATIONS', {
@@ -212,9 +212,13 @@ function originList(
   issues: PreflightIssue[],
   config: Record<string, unknown>,
   key: string,
+  required = false,
 ) {
   const value = getOptionalString(config, key);
-  if (!value) return;
+  if (!value) {
+    if (required) issues.push({ key, reason: 'is required' });
+    return;
+  }
   for (const origin of value.split(',').map((entry) => entry.trim())) {
     if (!origin) continue;
     try {
