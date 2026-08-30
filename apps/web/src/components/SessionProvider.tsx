@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { authApi, refreshAccessToken } from "@ai-commerce/api-client";
+import { authApi, refreshAccessToken, usersApi } from "@ai-commerce/api-client";
 import { useStore } from "@/lib/store";
 
 /**
@@ -28,8 +28,13 @@ export default function SessionProvider() {
         if (!accessToken) throw new Error("Session restore failed");
         useStore.setState({ accessToken });
         const me = await authApi.me();
+        const profile = await usersApi.getProfile();
         if (cancelled) return;
-        useStore.setState({ user: me, authStatus: "authenticated" });
+        useStore.setState({
+          user: me,
+          personalizationEnabled: profile.personalizationEnabled,
+          authStatus: "authenticated",
+        });
         void useStore.getState().fetchServerCart();
         void useStore.getState().fetchServerWishlist();
         void useStore.getState().fetchBehavioralProfile();
