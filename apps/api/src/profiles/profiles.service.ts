@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { CACHE_PREFIX } from '../common/cache/cache-keys';
+import { CacheService } from '../common/cache/cache.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   async getForUser(userId: string) {
     return this.prisma.profile.upsert({
@@ -23,10 +28,16 @@ export class ProfilesService {
       notificationPreferences: dto.notificationPreferences as
         Prisma.InputJsonValue | undefined,
     };
-    return this.prisma.profile.upsert({
+    const profile = await this.prisma.profile.upsert({
       where: { userId },
       update: data,
       create: { userId, ...data },
     });
+    if (dto.personalizationEnabled !== undefined) {
+      await this.cache.delByPrefix(
+        `${CACHE_PREFIX.RECOMMENDATIONS}personalized:${userId}:`,
+      );
+    }
+    return profile;
   }
 }
