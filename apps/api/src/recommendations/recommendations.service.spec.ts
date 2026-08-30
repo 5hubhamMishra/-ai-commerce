@@ -105,7 +105,15 @@ describe('RecommendationsService verification audit', () => {
     categoryId: 'category-1',
     brandId: 'brand-1',
     createdAt: new Date('2025-01-01T00:00:00.000Z'),
-    variants: [{ price: 100, compareAtPrice: null }],
+    variants: [
+      {
+        price: 100,
+        compareAtPrice: null,
+        inventory: [
+          { quantityOnHand: 1, quantityReserved: 0, quantityCommitted: 0 },
+        ],
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -198,7 +206,22 @@ describe('RecommendationsService verification audit', () => {
       { productId: 'draft-product', similarity: 0.95 },
       { productId: 'active-product', similarity: 0.8 },
     ]);
-    prisma.product.findMany.mockResolvedValue([{ id: 'active-product' }]);
+    prisma.product.findMany.mockResolvedValue([
+      {
+        id: 'active-product',
+        variants: [
+          {
+            inventory: [
+              {
+                quantityOnHand: 1,
+                quantityReserved: 0,
+                quantityCommitted: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
 
     const result = await service.getSimilar(
       { anonymousId: 'anon-1' },
@@ -212,7 +235,21 @@ describe('RecommendationsService verification audit', () => {
         status: 'ACTIVE',
         deletedAt: null,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        variants: {
+          where: { isActive: true, deletedAt: null },
+          include: {
+            inventory: {
+              select: {
+                quantityOnHand: true,
+                quantityReserved: true,
+                quantityCommitted: true,
+              },
+            },
+          },
+        },
+      },
     });
     expect(result).toEqual([
       {
@@ -233,6 +270,88 @@ describe('RecommendationsService verification audit', () => {
         },
       ],
     });
+  });
+
+  it('excludes similar products with no available inventory', async () => {
+    embeddings.findSimilar.mockResolvedValue([
+      { productId: 'out-of-stock', similarity: 0.95 },
+      { productId: 'in-stock', similarity: 0.8 },
+    ]);
+    prisma.product.findMany.mockResolvedValue([
+      {
+        id: 'out-of-stock',
+        variants: [
+          {
+            inventory: [
+              {
+                quantityOnHand: 1,
+                quantityReserved: 1,
+                quantityCommitted: 0,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'in-stock',
+        variants: [
+          {
+            inventory: [
+              {
+                quantityOnHand: 1,
+                quantityReserved: 0,
+                quantityCommitted: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    await expect(
+      service.getSimilar({ anonymousId: 'anon-1' }, 'seed', 4),
+    ).resolves.toEqual([
+      {
+        productId: 'in-stock',
+        score: 0.8,
+        reasons: ['Similar to this product'],
+      },
+    ]);
+  });
+
+  it('keeps a product when a later active variant has available inventory', async () => {
+    embeddings.findSimilar.mockResolvedValue([
+      { productId: 'multi-variant', similarity: 0.9 },
+    ]);
+    prisma.product.findMany.mockResolvedValue([
+      {
+        id: 'multi-variant',
+        variants: [
+          {
+            inventory: [
+              {
+                quantityOnHand: 1,
+                quantityReserved: 1,
+                quantityCommitted: 0,
+              },
+            ],
+          },
+          {
+            inventory: [
+              {
+                quantityOnHand: 1,
+                quantityReserved: 0,
+                quantityCommitted: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    await expect(
+      service.getSimilar({ anonymousId: 'anon-1' }, 'seed', 4),
+    ).resolves.toHaveLength(1);
   });
 
   it('keeps recommendation reads successful when impression logging fails', async () => {

@@ -49,6 +49,19 @@ const purchasableWhere = {
   deletedAt: null,
 } as const;
 
+const purchasableVariantInclude = {
+  where: { isActive: true, deletedAt: null },
+  include: {
+    inventory: {
+      select: {
+        quantityOnHand: true,
+        quantityReserved: true,
+        quantityCommitted: true,
+      },
+    },
+  },
+} as const;
+
 @Injectable()
 export class RecommendationsService {
   constructor(
@@ -92,12 +105,13 @@ export class RecommendationsService {
       ? await this.behavioralScoring.getAffinity(identity, asOf)
       : null;
 
-    const catalog = await this.prisma.product.findMany({
+    const catalogRows = await this.prisma.product.findMany({
       where: purchasableWhere,
       include: {
-        variants: { where: { isActive: true, deletedAt: null }, take: 1 },
+        variants: purchasableVariantInclude,
       },
     });
+    const catalog = catalogRows.filter(hasAvailableVariant);
     if (catalog.length === 0) return [];
 
     const [popularity, viewsLast7Days, contentScores, collaborativeScores] =
@@ -144,7 +158,7 @@ export class RecommendationsService {
           affinity.priceRangeMin !== null &&
           affinity.priceRangeMax !== null
         ) {
-          const price = Number(product.variants[0]?.price ?? 0);
+          const price = Number(firstAvailableVariant(product)?.price ?? 0);
           const inRange =
             price >= affinity.priceRangeMin * 0.7 &&
             price <= affinity.priceRangeMax * 1.2;
@@ -157,7 +171,7 @@ export class RecommendationsService {
 
       const ruleMatches = applyRules({
         createdAt: product.createdAt,
-        hasDiscount: hasDiscount(product.variants[0]),
+        hasDiscount: hasDiscount(firstAvailableVariant(product)),
         viewsLast7Days: viewsLast7Days.get(product.id) ?? 0,
       });
       for (const rule of ruleMatches) {
@@ -277,15 +291,18 @@ export class RecommendationsService {
             id: { notIn: [...existingIds, productId] },
             category: { name: { in: targetCategories } },
           },
-          take: limit - result.length,
+          include: { variants: purchasableVariantInclude },
         });
         result = [
           ...result,
-          ...fallbackCandidates.map((p) => ({
-            productId: p.id,
-            score: 0.3,
-            reasons: ['Often paired with this product'],
-          })),
+          ...fallbackCandidates
+            .filter(hasAvailableVariant)
+            .slice(0, limit - result.length)
+            .map((p) => ({
+              productId: p.id,
+              score: 0.3,
+              reasons: ['Often paired with this product'],
+            })),
         ];
       }
     }
@@ -311,16 +328,17 @@ export class RecommendationsService {
         this.getRecentViewCounts(TRENDING_LOOKBACK_DAYS),
         this.getPopularityScores(),
       ]);
-      const catalog = await this.prisma.product.findMany({
+      const catalogRows = await this.prisma.product.findMany({
         where: purchasableWhere,
         include: {
-          variants: { where: { isActive: true, deletedAt: null }, take: 1 },
+          variants: purchasableVariantInclude,
         },
       });
+      const catalog = catalogRows.filter(hasAvailableVariant);
       const scored = catalog.map((product) => {
         const ruleMatches = applyRules({
           createdAt: product.createdAt,
-          hasDiscount: hasDiscount(product.variants[0]),
+          hasDiscount: hasDiscount(firstAvailableVariant(product)),
           viewsLast7Days: viewsLast7Days.get(product.id) ?? 0,
         });
         const reasons = ruleMatches.map((r) => r.reason);
@@ -469,9 +487,14 @@ export class RecommendationsService {
     if (productIds.length === 0) return new Set();
     const rows = await this.prisma.product.findMany({
       where: { id: { in: productIds }, ...purchasableWhere },
-      select: { id: true },
+      select: {
+        id: true,
+        variants: {
+          ...purchasableVariantInclude,
+        },
+      },
     });
-    return new Set(rows.map((r) => r.id));
+    return new Set(rows.filter(hasAvailableVariant).map((r) => r.id));
   }
 
   private async logImpressions(
@@ -500,6 +523,35 @@ function hasDiscount(
 ): boolean {
   if (!variant?.compareAtPrice) return false;
   return Number(variant.compareAtPrice) > Number(variant.price);
+}
+
+function firstAvailableVariant<
+  T extends {
+    inventory: readonly {
+      quantityOnHand: number;
+      quantityReserved: number;
+      quantityCommitted: number;
+    }[];
+  },
+>(product: { variants: readonly T[] }): T | undefined {
+  return product.variants.find((variant) =>
+    variant.inventory.some(
+      (row) =>
+        row.quantityOnHand - row.quantityReserved - row.quantityCommitted > 0,
+    ),
+  );
+}
+
+function hasAvailableVariant(product: {
+  variants: readonly {
+    inventory: readonly {
+      quantityOnHand: number;
+      quantityReserved: number;
+      quantityCommitted: number;
+    }[];
+  }[];
+}): boolean {
+  return Boolean(firstAvailableVariant(product));
 }
 
 /** Round-robin by category so the top-K isn't dominated by one category —
