@@ -47,9 +47,9 @@ export class EventsService {
     // activity-history view still works — but it's never fed into the
     // aggregate profile driving personalization/recommendations.
     if (personalizationEnabled) {
-      for (const row of rows) {
-        await this.queue.enqueue({ eventId: row.id });
-      }
+      await Promise.all(
+        rows.map((row) => this.queue.enqueue({ eventId: row.id })),
+      );
     }
 
     return { accepted: rows.length };
@@ -136,22 +136,24 @@ export class EventsService {
         source: e.source,
       });
     }
-    for (const [sessionId, info] of bySessionId) {
-      await this.prisma.session.upsert({
-        where: { id: sessionId },
-        create: {
-          id: sessionId,
-          anonymousId: info.anonymousId,
-          userId,
-          source: info.source,
-        },
-        // Identity resolution: once a session is known to belong to a real
-        // user, every subsequent touch keeps it linked — but a session
-        // already linked to a user is never unlinked back to anonymous by a
-        // later anonymous-looking call (e.g. a stale client retry).
-        update: { lastSeenAt: new Date(), ...(userId ? { userId } : {}) },
-      });
-    }
+    await Promise.all(
+      [...bySessionId].map(([sessionId, info]) =>
+        this.prisma.session.upsert({
+          where: { id: sessionId },
+          create: {
+            id: sessionId,
+            anonymousId: info.anonymousId,
+            userId,
+            source: info.source,
+          },
+          // Identity resolution: once a session is known to belong to a real
+          // user, every subsequent touch keeps it linked — but a session
+          // already linked to a user is never unlinked back to anonymous by a
+          // later anonymous-looking call (e.g. a stale client retry).
+          update: { lastSeenAt: new Date(), ...(userId ? { userId } : {}) },
+        }),
+      ),
+    );
   }
 
   private async isPersonalizationEnabled(
