@@ -54,6 +54,8 @@ test("machine-readable public resources are available", async ({ request }) => {
   expect(sitemap.status()).toBe(200);
   const sitemapXml = await sitemap.text();
   expect(sitemapXml).toContain("<urlset");
+  expect(sitemapXml).toContain("/category/");
+  expect(sitemapXml).toContain("/products/");
   expect(sitemapXml).not.toContain("/search");
   expect(sitemapXml).not.toContain("/recommendations");
 

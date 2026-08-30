@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { catalogApi } from "@ai-commerce/api-client";
+import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
 
 // Vercel sets this automatically to the production domain (no scheme) on every deploy —
 // falls back to the current known deployment for local builds / before a custom domain exists.
@@ -55,6 +56,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticEntries, ...categoryEntries, ...productEntries];
   } catch {
-    return staticEntries;
+    return [
+      ...staticEntries,
+      ...demoCategories.map((category) => ({
+        url: `${BASE_URL}/category/${category.slug}`,
+        changeFrequency: "daily" as const,
+        priority: 0.8,
+      })),
+      ...listDemoProducts({ pageSize: 100 }).items.map((product) => ({
+        url: `${BASE_URL}/products/${product.slug}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+    ];
   }
 }
