@@ -22,6 +22,9 @@ const pagesToScan = [
   { name: "about", path: "/about" },
   { name: "contact", path: "/contact" },
   { name: "privacy", path: "/privacy" },
+  { name: "ai-shopping", path: "/ai-shopping" },
+  { name: "checkout (empty cart)", path: "/checkout" },
+  { name: "404", path: "/__nonexistent_page_for_a11y_scan__" },
 ];
 
 for (const { name, path } of pagesToScan) {
