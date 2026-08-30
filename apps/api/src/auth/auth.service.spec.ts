@@ -203,6 +203,18 @@ describe('AuthService', () => {
       expect(result.accessToken).toEqual(expect.any(String));
       expect(result.refreshToken).toEqual(expect.any(String));
       expect(prisma.refreshToken.create).toHaveBeenCalled();
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'a@example.com' },
+        select: {
+          id: true,
+          email: true,
+          passwordHash: true,
+          name: true,
+          isActive: true,
+          deletedAt: true,
+          roles: { select: { role: true } },
+        },
+      });
     });
   });
 

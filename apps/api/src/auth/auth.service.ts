@@ -70,7 +70,15 @@ export class AuthService {
     const email = dto.email.toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { roles: true },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        name: true,
+        isActive: true,
+        deletedAt: true,
+        roles: { select: { role: true } },
+      },
     });
 
     // Same error for "no such account" and "wrong password" — never reveal account existence.
