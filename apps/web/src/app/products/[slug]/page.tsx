@@ -76,6 +76,10 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
   const product = await fetchProduct(slug);
+  // Deliberately no sibling loading.tsx for this route - see category/[slug]/page.tsx's
+  // notFound() comment: a route-level loading.tsx makes Next commit a 200 for its fallback
+  // before this notFound() call ever runs, and no 404 status can be recovered after that.
+  // Verified live by directly toggling the file: 200 with it present, correct 404 without it.
   if (!product) notFound();
   const initialSimilarProducts = await fetchSimilarProducts(product);
 

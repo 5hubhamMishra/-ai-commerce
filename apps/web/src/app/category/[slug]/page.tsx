@@ -59,9 +59,21 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const category = await fetchCategory(slug);
+  // Independent fetches - fetchCategoryProducts only ever needs the URL's own slug (see its
+  // signature above), never anything derived from the category record - so there's no reason
+  // to wait for fetchCategory before starting it.
+  const [category, initialResult] = await Promise.all([
+    fetchCategory(slug),
+    fetchCategoryProducts(slug),
+  ]);
+  // Deliberately no sibling loading.tsx for this route: a route-level loading.tsx makes Next
+  // stream a 200 status for its fallback the instant this component suspends, before this
+  // notFound() call ever runs - by the time it throws, the 200 is already committed and can't
+  // be changed. Verified live (curl a nonexistent category slug and check the actual status
+  // code, not just the rendered body) across both a page-component-only and a
+  // generateMetadata-based notFound() call - neither survives a sibling loading.tsx. Confirmed
+  // by directly removing the file: 200 with it present, correct 404 without it.
   if (!category) notFound();
-  const initialResult = await fetchCategoryProducts(category.slug);
 
   const jsonLd = {
     "@context": "https://schema.org",

@@ -48,6 +48,21 @@ test("missing pages return a real 404 with recovery links", async ({
   expect(html).toContain("Shop catalog");
 });
 
+test("nonexistent category and product slugs return a real 404, not a silent 200", async ({
+  request,
+}) => {
+  // Regression test: these routes must never grow a sibling loading.tsx again. A route-level
+  // loading.tsx makes Next commit a 200 status for its fallback the instant the page component
+  // suspends - by the time notFound() throws (from anywhere in the segment, including
+  // generateMetadata), that 200 is already sent and can't be changed. Verified live by directly
+  // toggling the file during development: 200 with it present, correct 404 without it.
+  const category = await request.get("/category/__missing_veloura_category__");
+  expect(category.status()).toBe(404);
+
+  const product = await request.get("/products/__missing_veloura_product__");
+  expect(product.status()).toBe(404);
+});
+
 test("machine-readable public resources are available", async ({ request }) => {
   const robots = await request.get("/robots.txt");
   const sitemap = await request.get("/sitemap.xml");

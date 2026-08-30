@@ -10,9 +10,16 @@ async function loadCatalogIndex() {
   const first = await catalogApi.listProducts({ page: 1, pageSize: 100 });
   for (const product of first.items) index.set(product.id, product);
 
+  // Remaining pages don't depend on each other - only their count (known once page 1 responds)
+  // - so fetch them all at once instead of awaiting one round trip per page. Harmless today at
+  // ~112 products (1 extra page), but scales badly as a sequential loop once the catalog grows.
   const totalPages = Math.max(1, Math.ceil(first.total / first.pageSize));
-  for (let page = 2; page <= totalPages; page += 1) {
-    const result = await catalogApi.listProducts({ page, pageSize: 100 });
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) =>
+      catalogApi.listProducts({ page: i + 2, pageSize: 100 }),
+    ),
+  );
+  for (const result of remainingPages) {
     for (const product of result.items) index.set(product.id, product);
   }
 
