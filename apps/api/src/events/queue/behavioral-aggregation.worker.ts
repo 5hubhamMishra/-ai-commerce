@@ -38,7 +38,10 @@ export class BehavioralAggregationWorker
 
   onModuleInit() {
     const url = this.config.get<string>('redis.url');
-    if (!url) return;
+    // Vercel's cron handler owns a bounded worker for each invocation. Starting
+    // this continuous worker there would create a second consumer in the same
+    // function instance and keep a serverless invocation alive unnecessarily.
+    if (!url || process.env.VERCEL === '1') return;
     this.connection = new IORedis(url, { maxRetriesPerRequest: null });
     this.connection.on('error', (error) => {
       if (Date.now() - this.lastRedisWarningAt < 30_000) return;
