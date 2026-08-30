@@ -35,6 +35,14 @@ export class CustomerProfileService {
     });
     if (!event || event.processedAt) return; // already applied, or retried after deletion (privacy erase) — nothing to do.
 
+    if (!event.personalizationEligible) {
+      await this.prisma.behavioralEvent.update({
+        where: { id: event.id },
+        data: { processedAt: new Date() },
+      });
+      return;
+    }
+
     if (event.userId) {
       const profileSettings = await this.prisma.profile.findUnique({
         where: { userId: event.userId },

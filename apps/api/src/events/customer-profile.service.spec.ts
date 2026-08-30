@@ -11,6 +11,7 @@ describe('CustomerProfileService failure modes', () => {
       entityId: null,
       occurredAt: new Date('2026-08-25T00:00:00.000Z'),
       processedAt: null,
+      personalizationEligible: true,
     };
     const profile = {
       id: 'profile-1',
@@ -71,6 +72,7 @@ describe('CustomerProfileService failure modes', () => {
       entityId: null,
       occurredAt: new Date('2026-08-25T00:00:00.000Z'),
       processedAt: null,
+      personalizationEligible: true,
     };
     const profile = {
       id: 'profile-1',
@@ -121,6 +123,35 @@ describe('CustomerProfileService failure modes', () => {
       userId: 'user-1',
       anonymousId: 'anon-1',
       processedAt: null,
+      personalizationEligible: false,
+    };
+    const prisma = {
+      behavioralEvent: {
+        findUnique: jest.fn().mockResolvedValue(event),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      profile: { findUnique: jest.fn() },
+      $transaction: jest.fn(),
+    };
+    const service = new CustomerProfileService(prisma as never);
+
+    await service.applyEvent('event-1');
+
+    expect(prisma.behavioralEvent.update).toHaveBeenCalledWith({
+      where: { id: 'event-1' },
+      data: { processedAt: expect.any(Date) },
+    });
+    expect(prisma.profile.findUnique).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('does not aggregate an event captured while personalization was disabled', async () => {
+    const event = {
+      id: 'event-1',
+      userId: 'user-1',
+      anonymousId: 'anon-1',
+      processedAt: null,
+      personalizationEligible: false,
     };
     const prisma = {
       behavioralEvent: {
@@ -129,7 +160,7 @@ describe('CustomerProfileService failure modes', () => {
       },
       profile: {
         findUnique: jest.fn().mockResolvedValue({
-          personalizationEnabled: false,
+          personalizationEnabled: true,
         }),
       },
       $transaction: jest.fn(),
@@ -142,6 +173,7 @@ describe('CustomerProfileService failure modes', () => {
       where: { id: 'event-1' },
       data: { processedAt: expect.any(Date) },
     });
+    expect(prisma.profile.findUnique).not.toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });
