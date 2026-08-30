@@ -1,4 +1,10 @@
-import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -12,12 +18,14 @@ export class HealthController {
 
   @Public()
   @Get('health')
+  @Header('Cache-Control', 'no-store')
   health() {
     return { status: 'ok' };
   }
 
   @Public()
   @Get('ready')
+  @Header('Cache-Control', 'no-store')
   async ready() {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
