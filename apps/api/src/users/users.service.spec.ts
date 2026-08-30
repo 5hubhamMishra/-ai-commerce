@@ -15,6 +15,7 @@ describe('UsersService', () => {
       count: jest.Mock;
     };
     order: { findMany: jest.Mock };
+    session: { updateMany: jest.Mock };
     cart: { findUnique: jest.Mock; deleteMany: jest.Mock };
     wishlistItem: { findMany: jest.Mock; deleteMany: jest.Mock };
     behavioralEvent: { findMany: jest.Mock; deleteMany: jest.Mock };
@@ -52,6 +53,7 @@ describe('UsersService', () => {
         count: jest.fn().mockResolvedValue(1),
       },
       order: { findMany: jest.fn().mockResolvedValue([]) },
+      session: { updateMany: jest.fn() },
       cart: {
         findUnique: jest.fn().mockResolvedValue(null),
         deleteMany: jest.fn(),
@@ -264,6 +266,10 @@ describe('UsersService', () => {
           data: expect.objectContaining({ line1: '[deleted]' }),
         }),
       );
+      expect(prisma.session.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+        data: { userId: null },
+      });
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
         where: { userId: 'u1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },

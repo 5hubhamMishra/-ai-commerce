@@ -226,6 +226,10 @@ export class UsersService {
 
     await this.prisma.$transaction([
       this.prisma.behavioralEvent.deleteMany({ where: { userId } }),
+      this.prisma.session.updateMany({
+        where: { userId },
+        data: { userId: null },
+      }),
       this.prisma.customerProfile.deleteMany({ where: { userId } }),
       // Cascades to ShopAIMessage at the DB level (Cascade FK on the conversation).
       this.prisma.shopAIConversation.deleteMany({ where: { userId } }),
