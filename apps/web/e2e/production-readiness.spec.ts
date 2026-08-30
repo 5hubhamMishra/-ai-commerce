@@ -46,6 +46,7 @@ test("machine-readable public resources are available", async ({ request }) => {
   const robots = await request.get("/robots.txt");
   const sitemap = await request.get("/sitemap.xml");
   const llms = await request.get("/llms.txt");
+  const manifest = await request.get("/manifest.webmanifest");
 
   expect(robots.status()).toBe(200);
   expect(await robots.text()).toContain("Sitemap:");
@@ -58,6 +59,22 @@ test("machine-readable public resources are available", async ({ request }) => {
 
   expect(llms.status()).toBe(200);
   expect(await llms.text()).toContain("Veloura");
+
+  expect(manifest.status()).toBe(200);
+  const webManifest = await manifest.json();
+  expect(webManifest).toMatchObject({
+    name: "Veloura",
+    id: "/",
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+  });
+  expect(webManifest.icons).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ src: "/icon-192.svg", purpose: "any maskable" }),
+      expect.objectContaining({ src: "/icon-512.svg", purpose: "any maskable" }),
+    ]),
+  );
 });
 
 test("homepage JSON-LD is valid and truthful to visible content", async ({
