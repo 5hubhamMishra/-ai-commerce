@@ -21,12 +21,18 @@ export class CatalogCacheInvalidationListener {
 
   @OnEvent(CATALOG_EVENTS.PRODUCT_CHANGED)
   async onProductChanged() {
-    await this.cache.delByPrefix(CACHE_PREFIX.PRODUCTS);
+    await Promise.all([
+      this.cache.delByPrefix(CACHE_PREFIX.PRODUCTS),
+      this.cache.delByPrefix(CACHE_PREFIX.RECOMMENDATIONS),
+    ]);
   }
 
   @OnEvent(CATALOG_EVENTS.INVENTORY_CHANGED)
   async onInventoryChanged() {
     // Inventory changes affect availability shown on product list/detail responses.
-    await this.cache.delByPrefix(CACHE_PREFIX.PRODUCTS);
+    await Promise.all([
+      this.cache.delByPrefix(CACHE_PREFIX.PRODUCTS),
+      this.cache.delByPrefix(CACHE_PREFIX.RECOMMENDATIONS),
+    ]);
   }
 }
