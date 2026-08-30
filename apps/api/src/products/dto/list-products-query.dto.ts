@@ -1,5 +1,5 @@
 import { ProductStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -10,6 +10,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { parseBooleanQueryParam } from '../../common/validation/query-transformers';
 
 export const PRODUCT_SORT_OPTIONS = ['newest', 'name_asc', 'featured'] as const;
 export type ProductSort = (typeof PRODUCT_SORT_OPTIONS)[number];
@@ -55,7 +56,7 @@ export class ListProductsQueryDto {
   maxPrice?: number;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => parseBooleanQueryParam(value))
   @IsBoolean()
   featured?: boolean;
 

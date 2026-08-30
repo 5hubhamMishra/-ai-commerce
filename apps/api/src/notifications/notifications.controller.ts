@@ -1,13 +1,14 @@
 import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
+import { parseBooleanQueryParam } from '../common/validation/query-transformers';
 import { NotificationsService } from './notifications.service';
 
 class ListNotificationsQueryDto {
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => parseBooleanQueryParam(value))
   @IsBoolean()
   unreadOnly?: boolean;
 }

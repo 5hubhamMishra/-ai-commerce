@@ -1,9 +1,10 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { parseBooleanQueryParam } from '../../common/validation/query-transformers';
 
 export class ListBrandsQueryDto {
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => parseBooleanQueryParam(value))
   @IsBoolean()
   includeInactive?: boolean;
 
