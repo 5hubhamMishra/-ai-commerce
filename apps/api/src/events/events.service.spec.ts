@@ -3,7 +3,7 @@ import { EventsService } from './events.service';
 describe('EventsService aggregation status', () => {
   let service: EventsService;
   let prisma: {
-    session: { upsert: jest.Mock };
+    session: { upsert: jest.Mock; updateMany: jest.Mock };
     behavioralEvent: {
       count: jest.Mock;
       aggregate: jest.Mock;
@@ -16,7 +16,10 @@ describe('EventsService aggregation status', () => {
 
   beforeEach(() => {
     prisma = {
-      session: { upsert: jest.fn().mockResolvedValue({}) },
+      session: {
+        upsert: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
       behavioralEvent: {
         count: jest.fn().mockResolvedValue(10),
         aggregate: jest.fn(),
@@ -111,6 +114,37 @@ describe('EventsService aggregation status', () => {
       skipDuplicates: true,
     });
     expect(queue.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('never reassigns an owned session during identity linking', async () => {
+    await service.track('user-2', {
+      events: [
+        {
+          eventId: '00000000-0000-4000-8000-000000000001',
+          eventType: 'PRODUCT_VIEWED',
+          anonymousId: 'anonymous-1',
+          sessionId: 'session-1',
+          source: 'WEB',
+          entityId: 'product-1',
+          occurredAt: new Date().toISOString(),
+        },
+      ],
+    } as never);
+
+    expect(prisma.session.upsert).toHaveBeenCalledWith({
+      where: { id: 'session-1' },
+      create: {
+        id: 'session-1',
+        anonymousId: 'anonymous-1',
+        userId: 'user-2',
+        source: 'WEB',
+      },
+      update: { lastSeenAt: expect.any(Date) },
+    });
+    expect(prisma.session.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['session-1'] }, userId: null },
+      data: { userId: 'user-2' },
+    });
   });
 
   it('reports unprocessed behavioral-event backlog age from receivedAt', async () => {

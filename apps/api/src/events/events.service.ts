@@ -156,10 +156,16 @@ export class EventsService {
           // user, every subsequent touch keeps it linked — but a session
           // already linked to a user is never unlinked back to anonymous by a
           // later anonymous-looking call (e.g. a stale client retry).
-          update: { lastSeenAt: new Date(), ...(userId ? { userId } : {}) },
+          update: { lastSeenAt: new Date() },
         }),
       ),
     );
+    if (userId && bySessionId.size > 0) {
+      await this.prisma.session.updateMany({
+        where: { id: { in: [...bySessionId.keys()] }, userId: null },
+        data: { userId },
+      });
+    }
   }
 
   private async isPersonalizationEnabled(
