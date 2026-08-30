@@ -267,10 +267,15 @@ export class PaymentsService {
           : undefined;
       const [updatedPayment, transition] = await this.prisma.$transaction(
         async (tx) => {
-          const updatedPayment = await tx.payment.update({
-            where: { id: payment.id },
+          const claimed = await tx.payment.updateMany({
+            where: { id: payment.id, status: PaymentStatus.PENDING },
             data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef },
           });
+          const updatedPayment = await tx.payment.findUniqueOrThrow({
+            where: { id: payment.id },
+          });
+          if (claimed.count === 0) return [updatedPayment, null] as const;
+
           const transition = await this.ordersService.confirmPaymentTransition(
             tx,
             payment.orderId,
@@ -279,6 +284,7 @@ export class PaymentsService {
           return [updatedPayment, transition] as const;
         },
       );
+      if (!transition) return updatedPayment;
       await this.audit.record({
         actorId,
         action: 'PAYMENT_SUCCEEDED',
@@ -294,13 +300,17 @@ export class PaymentsService {
       return updatedPayment;
     }
 
-    const updatedPayment = await this.prisma.payment.update({
-      where: { id: payment.id },
+    const claimed = await this.prisma.payment.updateMany({
+      where: { id: payment.id, status: PaymentStatus.PENDING },
       data: {
         status: PaymentStatus.FAILED,
         failureReason: confirmResult.failureReason,
       },
     });
+    const updatedPayment = await this.prisma.payment.findUniqueOrThrow({
+      where: { id: payment.id },
+    });
+    if (claimed.count === 0) return updatedPayment;
     await this.audit.record({
       actorId,
       action: 'PAYMENT_FAILED',
