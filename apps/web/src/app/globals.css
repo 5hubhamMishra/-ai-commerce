@@ -432,13 +432,3 @@ body {
   border: 2px dashed var(--clr-border);
   border-radius: var(--radius-2xl);
 }
-
-/* Recharts overrides */
-.recharts-tooltip-wrapper { z-index: 50; }
-.recharts-default-tooltip {
-  background: var(--clr-surface) !important;
-  border: 1px solid var(--clr-border) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-modal) !important;
-  font-size: 12px !important;
-}
