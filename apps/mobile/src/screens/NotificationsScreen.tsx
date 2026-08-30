@@ -1,7 +1,11 @@
 import { startTransition, useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Notification } from '@ai-commerce/types';
 import { notificationsApi } from '@ai-commerce/api-client';
+import type { AccountStackParamList } from '../navigation/types';
+
+type Props = NativeStackScreenProps<AccountStackParamList, 'Notifications'>;
 
 const notificationDate = new Intl.DateTimeFormat('en-IN', {
   day: 'numeric',
@@ -11,7 +15,7 @@ const notificationDate = new Intl.DateTimeFormat('en-IN', {
   minute: '2-digit',
 });
 
-export default function NotificationsScreen() {
+export default function NotificationsScreen({ navigation }: Props) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -107,6 +111,15 @@ export default function NotificationsScreen() {
             </View>
             <Text style={styles.body}>{item.body}</Text>
             <Text style={styles.date}>{notificationDate.format(new Date(item.createdAt))}</Text>
+            {item.relatedType === 'order' && item.relatedId && (
+              <Pressable
+                onPress={() => navigation.navigate('OrderDetail', { id: item.relatedId! })}
+                accessibilityRole="button"
+                accessibilityLabel="View order"
+              >
+                <Text style={styles.orderText}>View order</Text>
+              </Pressable>
+            )}
             {!item.readAt && (
               <Pressable onPress={() => void markRead(item.id)} accessibilityRole="button" accessibilityLabel={`Mark ${item.title} as read`}>
                 <Text style={styles.readText}>Mark as read</Text>
@@ -138,6 +151,7 @@ const styles = StyleSheet.create({
   date: { color: '#9ca3af', fontSize: 11 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#b45309' },
   readText: { alignSelf: 'flex-start', color: '#6b7280', fontSize: 13, textDecorationLine: 'underline' },
+  orderText: { alignSelf: 'flex-start', color: '#b45309', fontSize: 13, fontWeight: '700' },
   emptyText: { color: '#6b7280', textAlign: 'center' },
   errorText: { color: '#dc2626', textAlign: 'center' },
   retryButton: { marginTop: 14, backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 18, paddingVertical: 10 },
