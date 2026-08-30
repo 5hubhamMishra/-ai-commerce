@@ -28,7 +28,16 @@ export type BusinessInsight = {
   metrics: Record<string, number | null>;
 };
 
-const INSIGHTS_LOOKUP_LIMIT = 1000; // generous at this catalog's real scale — see analytics-config.ts precedent
+export const INSIGHTS_LOOKUP_LIMIT = 1000; // generous at this catalog's real scale — see analytics-config.ts precedent
+
+type InsightInputs = {
+  segmentationReport: SegmentationReport;
+  forecasts: Awaited<ReturnType<DemandForecastingService['forecastAll']>>;
+  stockoutRisks: StockoutRiskList;
+  recEval: Awaited<ReturnType<EvaluationService['evaluate']>>;
+  searchReport: Awaited<ReturnType<SearchAnalyticsService['getReport']>>;
+  shopaiReport: Awaited<ReturnType<ShopAIAnalyticsService['getReport']>>;
+};
 
 /**
  * "AI business insights" — PROMPT 11's own bullet. Deliberately not an LLM
@@ -54,30 +63,41 @@ export class BusinessInsightsService {
     private readonly shopaiAnalytics: ShopAIAnalyticsService,
   ) {}
 
-  async generate(): Promise<BusinessInsight[]> {
-    const [
-      segmentationReport,
-      forecasts,
-      stockoutRisks,
-      recEval,
-      searchReport,
-      shopaiReport,
-    ] = await Promise.all([
-      this.segmentation.getReport(),
-      this.demand.forecastAll({ limit: INSIGHTS_LOOKUP_LIMIT }),
-      this.inventory.getStockoutRisks({ limit: INSIGHTS_LOOKUP_LIMIT }),
-      this.recommendationsEval.evaluate(),
-      this.searchAnalytics.getReport(),
-      this.shopaiAnalytics.getReport(),
-    ]);
+  async generate(inputs?: InsightInputs): Promise<BusinessInsight[]> {
+    const reports =
+      inputs ??
+      (await Promise.all([
+        this.segmentation.getReport(),
+        this.demand.forecastAll({ limit: INSIGHTS_LOOKUP_LIMIT }),
+        this.inventory.getStockoutRisks({ limit: INSIGHTS_LOOKUP_LIMIT }),
+        this.recommendationsEval.evaluate(),
+        this.searchAnalytics.getReport(),
+        this.shopaiAnalytics.getReport(),
+      ]).then(
+        ([
+          segmentationReport,
+          forecasts,
+          stockoutRisks,
+          recEval,
+          searchReport,
+          shopaiReport,
+        ]) => ({
+          segmentationReport,
+          forecasts,
+          stockoutRisks,
+          recEval,
+          searchReport,
+          shopaiReport,
+        }),
+      ));
 
     return [
-      ...this.customerInsights(segmentationReport),
-      ...this.demandInsights(forecasts),
-      ...this.inventoryInsights(stockoutRisks),
-      ...this.recommendationInsights(recEval),
-      ...this.searchInsights(searchReport),
-      ...this.shopaiInsights(shopaiReport),
+      ...this.customerInsights(reports.segmentationReport),
+      ...this.demandInsights(reports.forecasts),
+      ...this.inventoryInsights(reports.stockoutRisks),
+      ...this.recommendationInsights(reports.recEval),
+      ...this.searchInsights(reports.searchReport),
+      ...this.shopaiInsights(reports.shopaiReport),
     ];
   }
 
@@ -335,3 +355,5 @@ export class BusinessInsightsService {
 type StockoutRiskList = Awaited<
   ReturnType<InventoryPredictionService['getStockoutRisks']>
 >;
+
+type SegmentationReport = Awaited<ReturnType<SegmentationService['getReport']>>;

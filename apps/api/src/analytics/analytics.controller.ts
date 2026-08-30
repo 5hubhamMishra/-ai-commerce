@@ -10,7 +10,10 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { EvaluationService } from '../recommendations/evaluation.service';
 import { SearchAnalyticsService } from '../search/search-analytics.service';
 import { ShopAIAnalyticsService } from '../shopai/shopai-analytics.service';
-import { BusinessInsightsService } from './business-insights.service';
+import {
+  BusinessInsightsService,
+  INSIGHTS_LOOKUP_LIMIT,
+} from './business-insights.service';
 import { DemandForecastQueryDto } from './dto/demand-forecast-query.dto';
 import { InventoryRiskQueryDto } from './dto/inventory-risk-query.dto';
 import { VariantForecastQueryDto } from './dto/variant-forecast-query.dto';
@@ -95,23 +98,31 @@ export class AnalyticsController {
   async getDashboard() {
     const [
       segmentation,
+      forecasts,
       stockoutRisks,
       recommendations,
       search,
       shopai,
-      insights,
     ] = await Promise.all([
       this.segmentation.getReport(),
-      this.inventory.getStockoutRisks({ limit: 10 }),
+      this.demand.forecastAll({ limit: INSIGHTS_LOOKUP_LIMIT }),
+      this.inventory.getStockoutRisks({ limit: INSIGHTS_LOOKUP_LIMIT }),
       this.recommendationsEval.evaluate(),
       this.searchAnalytics.getReport(),
       this.shopaiAnalytics.getReport(),
-      this.insights.generate(),
     ]);
+    const insights = await this.insights.generate({
+      segmentationReport: segmentation,
+      forecasts,
+      stockoutRisks,
+      recEval: recommendations,
+      searchReport: search,
+      shopaiReport: shopai,
+    });
 
     return {
       segmentation,
-      topStockoutRisks: stockoutRisks,
+      topStockoutRisks: stockoutRisks.slice(0, 10),
       recommendations,
       search,
       shopai,
