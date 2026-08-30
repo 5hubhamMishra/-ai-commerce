@@ -93,14 +93,15 @@ export class RecommendationsService {
     limit = DEFAULT_RECOMMENDATION_LIMIT,
     asOf?: Date,
   ): Promise<ScoredProduct[]> {
+    const personalizationEnabled =
+      await this.isPersonalizationEnabled(identity);
+    const canUsePersonalizedCache = !identity.userId || personalizationEnabled;
     const cacheKey = `${CACHE_PREFIX.RECOMMENDATIONS}personalized:${identity.userId ?? identity.anonymousId ?? 'anon'}:${limit}`;
-    if (!asOf) {
+    if (!asOf && canUsePersonalizedCache) {
       const cached = await this.cache.get<ScoredProduct[]>(cacheKey);
       if (cached) return cached;
     }
 
-    const personalizationEnabled =
-      await this.isPersonalizationEnabled(identity);
     const affinity = personalizationEnabled
       ? await this.behavioralScoring.getAffinity(identity, asOf)
       : null;
@@ -210,7 +211,13 @@ export class RecommendationsService {
         ranked,
         RecommendationContext.HOMEPAGE,
       );
-      await this.cache.set(cacheKey, ranked, RECOMMENDATION_CACHE_TTL_SECONDS);
+      if (canUsePersonalizedCache) {
+        await this.cache.set(
+          cacheKey,
+          ranked,
+          RECOMMENDATION_CACHE_TTL_SECONDS,
+        );
+      }
     }
     return ranked;
   }

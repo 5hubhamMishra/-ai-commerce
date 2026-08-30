@@ -162,10 +162,13 @@ describe('RecommendationsService verification audit', () => {
       userId: 'user-1',
       personalizationEnabled: false,
     });
+    cache.get.mockResolvedValue([item('cached-product', 1)]);
 
     const result = await service.getPersonalized({ userId: 'user-1' }, 1);
 
     expect(behavioralScoring.getAffinity).not.toHaveBeenCalled();
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
     expect(result).toEqual([
       {
         productId: 'product-1',
