@@ -197,7 +197,6 @@ describe('ShopAIService', () => {
         {
           conversationId: 'conv-1',
           message: 'read this',
-          anonymousId: 'victim-anon-1',
         },
         {
           authenticatedUser: {
@@ -205,6 +204,9 @@ describe('ShopAIService', () => {
             email: 'attacker@example.com',
             roles: [],
           },
+          // The attack: an authenticated caller also sends the victim's anonymousId,
+          // hoping an OR-based ownership check accepts either match.
+          anonymousId: 'victim-anon-1',
         },
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
