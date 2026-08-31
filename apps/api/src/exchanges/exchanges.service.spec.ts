@@ -2,6 +2,49 @@ import { ExchangeStatus, RefundStatus } from '@prisma/client';
 import { ExchangesService } from './exchanges.service';
 
 describe('ExchangesService refund reference', () => {
+  it('claims an awaiting-payment exchange before confirming payment', async () => {
+    const exchange = {
+      id: 'exchange-1',
+      returnRequestId: 'return-1',
+      orderId: 'order-1',
+      originalVariantId: 'old-variant',
+      newVariantId: 'new-variant',
+      quantity: 1,
+      priceDifference: 100,
+      status: ExchangeStatus.AWAITING_PAYMENT,
+      carrier: null,
+      trackingNumber: null,
+      createdAt: new Date(),
+    };
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const prisma = {
+      exchange: {
+        findUnique: jest.fn().mockResolvedValue(exchange),
+        updateMany,
+      },
+    };
+    const service = new ExchangesService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      { record: jest.fn() } as never,
+    );
+
+    const result = await service.confirmPaymentReceived(
+      'admin-1',
+      'exchange-1',
+    );
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'exchange-1',
+        status: ExchangeStatus.AWAITING_PAYMENT,
+      },
+      data: { status: ExchangeStatus.APPROVED },
+    });
+    expect(result.status).toBe(ExchangeStatus.APPROVED);
+  });
+
   it('uses the confirmed payment reference for lower-priced exchanges', async () => {
     const payment = {
       providerRef: 'order_ref_1',

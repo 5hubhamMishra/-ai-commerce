@@ -129,10 +129,18 @@ export class ExchangesService {
     const exchange = await this.getRow(exchangeId);
     assertTransition(exchange.status, ExchangeStatus.APPROVED);
 
-    const updated = await this.prisma.exchange.update({
-      where: { id: exchangeId },
+    const claimed = await this.prisma.exchange.updateMany({
+      where: { id: exchangeId, status: exchange.status },
       data: { status: ExchangeStatus.APPROVED },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'EXCHANGE_STATUS_CHANGED',
+        message:
+          'The exchange changed before payment confirmation could be applied.',
+      });
+    }
+    const updated = { ...exchange, status: ExchangeStatus.APPROVED };
     await this.audit.record({
       actorId,
       action: 'EXCHANGE_PAYMENT_CONFIRMED',
