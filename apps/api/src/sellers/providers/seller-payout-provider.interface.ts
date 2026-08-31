@@ -2,6 +2,7 @@ export type PayoutInput = {
   sellerId: string;
   amount: number;
   currency: string;
+  idempotencyKey: string;
 };
 
 export type PayoutResult = {

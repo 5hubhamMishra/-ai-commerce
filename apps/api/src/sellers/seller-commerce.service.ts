@@ -1,10 +1,11 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, PayoutStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PaginationQueryDto } from './dto/pagination-query.dto';
 import {
   SELLER_PAYOUT_PROVIDER,
+  type PayoutResult,
   type SellerPayoutProvider,
 } from './providers/seller-payout-provider.interface';
 import { SellersService } from './sellers.service';
@@ -153,48 +154,81 @@ export class SellerCommerceService {
   /** Sums every earning that's eligible (its order has reached DELIVERED,
    *  and it isn't already part of another payout), calls the payout
    *  provider once for the batch total, and links every covered earning to
-   *  the resulting SellerPayout in one transaction. */
+   *  the resulting SellerPayout. Earnings are claimed before the provider
+   *  call so concurrent payout requests cannot pay the same batch twice. */
   async createPayout(actorId: string, sellerId: string) {
-    const eligible = await this.prisma.sellerEarning.findMany({
-      where: {
-        sellerId,
-        payoutId: null,
-        orderItem: { order: { status: OrderStatus.DELIVERED } },
-      },
-    });
-    if (eligible.length === 0) {
-      throw new ConflictException({
-        code: 'NO_ELIGIBLE_EARNINGS',
-        message: 'This seller has no delivered, unpaid earnings to pay out.',
+    const claim = await this.prisma.$transaction(async (tx) => {
+      const eligible = await tx.sellerEarning.findMany({
+        where: {
+          sellerId,
+          payoutId: null,
+          orderItem: { order: { status: OrderStatus.DELIVERED } },
+        },
       });
-    }
-    const currency = eligible[0].currency;
-    const amount = eligible.reduce((sum, e) => sum + Number(e.netAmount), 0);
-
-    const result = await this.payoutProvider.payout({
-      sellerId,
-      amount,
-      currency,
-    });
-
-    const payout = await this.prisma.$transaction(async (tx) => {
+      if (eligible.length === 0) {
+        throw new ConflictException({
+          code: 'NO_ELIGIBLE_EARNINGS',
+          message: 'This seller has no delivered, unpaid earnings to pay out.',
+        });
+      }
+      const currency = eligible[0].currency;
+      const amount = eligible.reduce((sum, e) => sum + Number(e.netAmount), 0);
       const created = await tx.sellerPayout.create({
         data: {
           sellerId,
           amount,
           currency,
-          status: result.success ? 'PAID' : 'FAILED',
+          status: PayoutStatus.PROCESSING,
+        },
+      });
+      const claimed = await tx.sellerEarning.updateMany({
+        where: { id: { in: eligible.map((e) => e.id) }, payoutId: null },
+        data: { payoutId: created.id },
+      });
+      if (claimed.count !== eligible.length) {
+        throw new ConflictException({
+          code: 'PAYOUT_ALREADY_IN_PROGRESS',
+          message: 'Another payout already claimed these earnings.',
+        });
+      }
+      return { payout: created, amount, currency };
+    });
+
+    let result: PayoutResult;
+    try {
+      result = await this.payoutProvider.payout({
+        sellerId,
+        amount: claim.amount,
+        currency: claim.currency,
+        idempotencyKey: `seller-payout-${claim.payout.id}`,
+      });
+    } catch (error) {
+      result = {
+        success: false,
+        raw: {},
+        failureReason:
+          error instanceof Error
+            ? error.message
+            : 'Payout provider request failed.',
+      };
+    }
+
+    const payout = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.sellerPayout.update({
+        where: { id: claim.payout.id },
+        data: {
+          status: result.success ? PayoutStatus.PAID : PayoutStatus.FAILED,
           providerRef: result.providerRef,
           failureReason: result.failureReason,
         },
       });
-      if (result.success) {
+      if (!result.success) {
         await tx.sellerEarning.updateMany({
-          where: { id: { in: eligible.map((e) => e.id) } },
-          data: { payoutId: created.id },
+          where: { payoutId: claim.payout.id },
+          data: { payoutId: null },
         });
       }
-      return created;
+      return updated;
     });
 
     await this.audit.record({
@@ -202,7 +236,12 @@ export class SellerCommerceService {
       action: 'SELLER_PAYOUT_CREATED',
       entityType: 'seller_payout',
       entityId: payout.id,
-      metadata: { sellerId, amount, currency, success: result.success },
+      metadata: {
+        sellerId,
+        amount: claim.amount,
+        currency: claim.currency,
+        success: result.success,
+      },
     });
 
     return payout;
