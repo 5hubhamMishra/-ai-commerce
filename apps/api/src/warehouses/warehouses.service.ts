@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateWarehouseDto } from './dto/create-warehouse.dto';
@@ -35,9 +36,23 @@ export class WarehousesService {
   // warehouse a verified seller gets — see DECISIONS.md ADR-020.
   async create(dto: CreateWarehouseDto, actorId: string, sellerId?: string) {
     await this.assertCodeAvailable(dto.code);
-    const warehouse = await this.prisma.warehouse.create({
-      data: { ...dto, sellerId, isActive: dto.isActive ?? true },
-    });
+    let warehouse: Awaited<ReturnType<typeof this.prisma.warehouse.create>>;
+    try {
+      warehouse = await this.prisma.warehouse.create({
+        data: { ...dto, sellerId, isActive: dto.isActive ?? true },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'WAREHOUSE_CODE_TAKEN',
+          message: 'A warehouse with this code already exists.',
+        });
+      }
+      throw error;
+    }
     await this.audit.record({
       actorId,
       action: 'WAREHOUSE_CREATED',
@@ -51,10 +66,24 @@ export class WarehousesService {
   async update(id: string, dto: UpdateWarehouseDto, actorId: string) {
     await this.findById(id);
     if (dto.code) await this.assertCodeAvailable(dto.code, id);
-    const warehouse = await this.prisma.warehouse.update({
-      where: { id },
-      data: dto,
-    });
+    let warehouse: Awaited<ReturnType<typeof this.prisma.warehouse.update>>;
+    try {
+      warehouse = await this.prisma.warehouse.update({
+        where: { id },
+        data: dto,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'WAREHOUSE_CODE_TAKEN',
+          message: 'A warehouse with this code already exists.',
+        });
+      }
+      throw error;
+    }
     await this.audit.record({
       actorId,
       action: 'WAREHOUSE_UPDATED',
