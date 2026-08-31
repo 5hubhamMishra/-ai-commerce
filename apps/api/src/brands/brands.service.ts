@@ -9,6 +9,7 @@ import { CacheService } from '../common/cache/cache.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { slugify } from '../common/utils/slugify';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import type { CreateBrandDto } from './dto/create-brand.dto';
 import type { UpdateBrandDto } from './dto/update-brand.dto';
 
@@ -90,15 +91,29 @@ export class BrandsService {
     const slug = dto.slug ? slugify(dto.slug) : slugify(dto.name);
     await this.assertSlugAvailable(slug);
 
-    const brand = await this.prisma.brand.create({
-      data: {
-        name: dto.name,
-        slug,
-        description: dto.description,
-        logoUrl: dto.logoUrl,
-        isActive: dto.isActive ?? true,
-      },
-    });
+    let brand: Awaited<ReturnType<typeof this.prisma.brand.create>>;
+    try {
+      brand = await this.prisma.brand.create({
+        data: {
+          name: dto.name,
+          slug,
+          description: dto.description,
+          logoUrl: dto.logoUrl,
+          isActive: dto.isActive ?? true,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'BRAND_SLUG_TAKEN',
+          message: 'A brand with this slug already exists.',
+        });
+      }
+      throw error;
+    }
 
     await this.audit.record({
       actorId,
@@ -116,16 +131,30 @@ export class BrandsService {
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
 
-    const brand = await this.prisma.brand.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        slug,
-        description: dto.description,
-        logoUrl: dto.logoUrl,
-        isActive: dto.isActive,
-      },
-    });
+    let brand: Awaited<ReturnType<typeof this.prisma.brand.update>>;
+    try {
+      brand = await this.prisma.brand.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          slug,
+          description: dto.description,
+          logoUrl: dto.logoUrl,
+          isActive: dto.isActive,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'BRAND_SLUG_TAKEN',
+          message: 'A brand with this slug already exists.',
+        });
+      }
+      throw error;
+    }
 
     await this.audit.record({
       actorId,
