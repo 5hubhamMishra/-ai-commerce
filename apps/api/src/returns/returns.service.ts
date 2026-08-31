@@ -221,10 +221,16 @@ export class ReturnsService {
     assertReturnTransition(existing.status, ReturnStatus.CANCELLED);
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.returnRequest.update({
-        where: { id: returnId },
+      const claimed = await tx.returnRequest.updateMany({
+        where: { id: returnId, status: existing.status },
         data: { status: ReturnStatus.CANCELLED },
       });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'RETURN_STATUS_CHANGED',
+          message: 'The return changed before cancellation could be applied.',
+        });
+      }
       await this.ordersService.markReturnClosed(
         tx,
         existing.orderId,
@@ -254,10 +260,16 @@ export class ReturnsService {
   async approve(actorId: string, returnId: string) {
     const existing = await this.getRow(returnId);
     assertReturnTransition(existing.status, ReturnStatus.APPROVED);
-    await this.prisma.returnRequest.update({
-      where: { id: returnId },
+    const claimed = await this.prisma.returnRequest.updateMany({
+      where: { id: returnId, status: existing.status },
       data: { status: ReturnStatus.APPROVED },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'RETURN_STATUS_CHANGED',
+        message: 'The return changed before approval could be applied.',
+      });
+    }
     await this.audit.record({
       actorId,
       action: 'RETURN_APPROVED',
@@ -280,10 +292,16 @@ export class ReturnsService {
     assertReturnTransition(existing.status, ReturnStatus.REJECTED);
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.returnRequest.update({
-        where: { id: returnId },
+      const claimed = await tx.returnRequest.updateMany({
+        where: { id: returnId, status: existing.status },
         data: { status: ReturnStatus.REJECTED, rejectReason: dto.reason },
       });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'RETURN_STATUS_CHANGED',
+          message: 'The return changed before rejection could be applied.',
+        });
+      }
       await this.ordersService.markReturnClosed(
         tx,
         existing.orderId,
@@ -352,10 +370,16 @@ export class ReturnsService {
   ) {
     const existing = await this.getRow(returnId);
     assertReturnTransition(existing.status, toStatus);
-    await this.prisma.returnRequest.update({
-      where: { id: returnId },
+    const claimed = await this.prisma.returnRequest.updateMany({
+      where: { id: returnId, status: existing.status },
       data: { status: toStatus },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'RETURN_STATUS_CHANGED',
+        message: 'The return changed before this update could be applied.',
+      });
+    }
     await this.audit.record({
       actorId,
       action: auditAction,

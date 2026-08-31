@@ -224,6 +224,43 @@ describe('ReturnsService', () => {
     expect(markReturned).not.toHaveBeenCalled();
   });
 
+  it('does not close a return when another request wins cancellation', async () => {
+    const markReturnClosed = jest.fn();
+    const returnUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback({ returnRequest: { updateMany: returnUpdateMany } }),
+      ),
+    };
+    const service = new ReturnsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      { markReturnClosed } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    (service as unknown as { getOwnedRow: jest.Mock }).getOwnedRow = jest
+      .fn()
+      .mockResolvedValue({
+        id: 'return-1',
+        userId: 'user-1',
+        orderId: 'order-1',
+        status: ReturnStatus.REQUESTED,
+      });
+
+    await expect(
+      service.cancel({ id: 'user-1' } as never, 'return-1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RETURN_STATUS_CHANGED' }),
+    });
+    expect(markReturnClosed).not.toHaveBeenCalled();
+  });
+
   it('maps a concurrent active-return race to the duplicate conflict', async () => {
     const create = jest.fn().mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
