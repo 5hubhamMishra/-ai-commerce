@@ -2,6 +2,23 @@ import { PaymentStatus, Prisma } from '@prisma/client';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
+  it('rejects a malformed signed Razorpay payload as a bad request', async () => {
+    const service = new PaymentsService(
+      {} as never,
+      { verifyWebhookSignature: jest.fn().mockReturnValue(true) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.handleRazorpayWebhook('{', 'valid-signature'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVALID_WEBHOOK_PAYLOAD' }),
+    });
+  });
+
   it('maps a concurrent pending-payment race to a conflict', async () => {
     const paymentCreate = jest.fn().mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {

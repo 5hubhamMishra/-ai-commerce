@@ -241,7 +241,15 @@ export class PaymentsService {
       });
     }
 
-    const envelope = JSON.parse(rawBody) as RazorpayWebhookEnvelope;
+    let envelope: RazorpayWebhookEnvelope;
+    try {
+      envelope = JSON.parse(rawBody) as RazorpayWebhookEnvelope;
+    } catch {
+      throw new BadRequestException({
+        code: 'INVALID_WEBHOOK_PAYLOAD',
+        message: 'Webhook payload is invalid.',
+      });
+    }
     const paymentEntity = envelope.payload?.payment?.entity;
     if (!paymentEntity) {
       // No payment entity to act on (a webhook event type this app doesn't care about) —
