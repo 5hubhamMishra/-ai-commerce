@@ -740,10 +740,16 @@ export class OrdersService {
       });
     }
     assertTransition(order.status, toStatus);
-    await tx.order.update({
-      where: { id: orderId },
+    const claimed = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
       data: { status: toStatus },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'ORDER_STATUS_CHANGED',
+        message: 'The order changed before this update could be applied.',
+      });
+    }
     await tx.orderStateHistory.create({
       data: {
         orderId,

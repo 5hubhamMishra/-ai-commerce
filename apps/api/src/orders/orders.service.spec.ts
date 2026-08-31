@@ -248,4 +248,40 @@ describe('OrdersService state claims', () => {
     });
     expect(shipCommitted).not.toHaveBeenCalled();
   });
+
+  it('rejects a stale transaction-scoped order transition', async () => {
+    const orderStateHistory = { create: jest.fn() };
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const tx = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'order-1',
+          userId: 'user-1',
+          status: OrderStatus.DELIVERED,
+        }),
+        updateMany,
+      },
+      orderStateHistory,
+    };
+    const service = new OrdersService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.markReturnRequested(tx as never, 'order-1', 'admin-1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ORDER_STATUS_CHANGED' }),
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'order-1', status: OrderStatus.DELIVERED },
+      data: { status: OrderStatus.RETURN_REQUESTED },
+    });
+    expect(orderStateHistory.create).not.toHaveBeenCalled();
+  });
 });
