@@ -2,6 +2,86 @@ import { OrderStatus } from '@prisma/client';
 import { OrdersService } from './orders.service';
 
 describe('OrdersService state claims', () => {
+  it('rejects a mixed-currency cart before reserving inventory', async () => {
+    const reserveForOrder = jest.fn();
+    const tx = {
+      cart: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'cart-1',
+          items: [
+            {
+              variantId: 'variant-1',
+              quantity: 1,
+              variant: {
+                currency: 'INR',
+                price: 100,
+                deletedAt: null,
+                isActive: true,
+                product: {
+                  name: 'Product 1',
+                  deletedAt: null,
+                  status: 'ACTIVE',
+                  seller: null,
+                },
+              },
+            },
+            {
+              variantId: 'variant-2',
+              quantity: 1,
+              variant: {
+                currency: 'USD',
+                price: 100,
+                deletedAt: null,
+                isActive: true,
+                product: {
+                  name: 'Product 2',
+                  deletedAt: null,
+                  status: 'ACTIVE',
+                  seller: null,
+                },
+              },
+            },
+          ],
+        }),
+      },
+    };
+    const service = new OrdersService(
+      {
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
+        ),
+      } as never,
+      { reserveForOrder } as never,
+      {
+        quoteForCart: jest
+          .fn()
+          .mockResolvedValue([{ method: 'STANDARD', fee: 10 }]),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const createOrderTransactional = (
+      service as unknown as {
+        createOrderTransactional: (
+          userId: string,
+          dto: unknown,
+        ) => Promise<unknown>;
+      }
+    ).createOrderTransactional;
+
+    await expect(
+      createOrderTransactional.call(service, 'user-1', {
+        addressId: 'address-1',
+        shippingMethod: 'STANDARD',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'MIXED_CURRENCY_CART' }),
+    });
+    expect(reserveForOrder).not.toHaveBeenCalled();
+  });
+
   it('does not release inventory when another request wins the status claim', async () => {
     const releaseReserved = jest.fn();
     const tx = {

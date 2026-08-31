@@ -127,6 +127,13 @@ export class OrdersService {
             message: 'Your cart is empty.',
           });
         }
+        const currency = items[0].variant.currency;
+        if (items.some((item) => item.variant.currency !== currency)) {
+          throw new BadRequestException({
+            code: 'MIXED_CURRENCY_CART',
+            message: 'All items in an order must use the same currency.',
+          });
+        }
 
         // Re-validate purchasability inside the transaction — closes the gap
         // between the shipping-quote read above and this write.
@@ -159,7 +166,6 @@ export class OrdersService {
         );
         const shippingFee = methodQuote.fee;
         const total = subtotal + shippingFee;
-        const currency = items[0].variant.currency;
 
         const created = await tx.order.create({
           data: {
