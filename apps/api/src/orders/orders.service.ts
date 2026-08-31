@@ -590,10 +590,17 @@ export class OrdersService {
     }
 
     assertTransition(order.status, OrderStatus.PAID);
-    await tx.order.update({
-      where: { id: orderId },
+    const claimed = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
       data: { status: OrderStatus.PAID },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'ORDER_STATUS_CHANGED',
+        message:
+          'The order changed before payment confirmation could be applied.',
+      });
+    }
     await tx.orderStateHistory.create({
       data: {
         orderId,

@@ -284,4 +284,45 @@ describe('OrdersService state claims', () => {
     });
     expect(orderStateHistory.create).not.toHaveBeenCalled();
   });
+
+  it('does not confirm payment after the order status changes', async () => {
+    const commitReserved = jest.fn();
+    const orderStateHistory = { create: jest.fn() };
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const tx = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'order-1',
+          userId: 'user-1',
+          status: OrderStatus.PENDING_PAYMENT,
+          items: [
+            { variantId: 'variant-1', warehouseId: 'warehouse-1', quantity: 1 },
+          ],
+        }),
+        updateMany,
+      },
+      orderStateHistory,
+    };
+    const service = new OrdersService(
+      {} as never,
+      { commitReserved } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.confirmPaymentTransition(tx as never, 'order-1', null),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ORDER_STATUS_CHANGED' }),
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'order-1', status: OrderStatus.PENDING_PAYMENT },
+      data: { status: OrderStatus.PAID },
+    });
+    expect(commitReserved).not.toHaveBeenCalled();
+    expect(orderStateHistory.create).not.toHaveBeenCalled();
+  });
 });
