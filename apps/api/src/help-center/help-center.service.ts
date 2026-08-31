@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { slugify } from '../common/utils/slugify';
 import { PrismaService } from '../prisma/prisma.service';
@@ -46,16 +47,30 @@ export class HelpCenterService {
     const slug = dto.slug ? slugify(dto.slug) : slugify(dto.title);
     await this.assertSlugAvailable(slug);
 
-    const article = await this.prisma.helpArticle.create({
-      data: {
-        title: dto.title,
-        slug,
-        body: dto.body,
-        category: dto.category,
-        sortOrder: dto.sortOrder ?? 0,
-        isPublished: dto.isPublished ?? true,
-      },
-    });
+    let article: Awaited<ReturnType<typeof this.prisma.helpArticle.create>>;
+    try {
+      article = await this.prisma.helpArticle.create({
+        data: {
+          title: dto.title,
+          slug,
+          body: dto.body,
+          category: dto.category,
+          sortOrder: dto.sortOrder ?? 0,
+          isPublished: dto.isPublished ?? true,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'HELP_ARTICLE_SLUG_TAKEN',
+          message: 'A help article with this slug already exists.',
+        });
+      }
+      throw error;
+    }
     await this.audit.record({
       actorId,
       action: 'HELP_ARTICLE_CREATED',
@@ -71,17 +86,31 @@ export class HelpCenterService {
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
 
-    const article = await this.prisma.helpArticle.update({
-      where: { id },
-      data: {
-        title: dto.title,
-        slug,
-        body: dto.body,
-        category: dto.category,
-        sortOrder: dto.sortOrder,
-        isPublished: dto.isPublished,
-      },
-    });
+    let article: Awaited<ReturnType<typeof this.prisma.helpArticle.update>>;
+    try {
+      article = await this.prisma.helpArticle.update({
+        where: { id },
+        data: {
+          title: dto.title,
+          slug,
+          body: dto.body,
+          category: dto.category,
+          sortOrder: dto.sortOrder,
+          isPublished: dto.isPublished,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'HELP_ARTICLE_SLUG_TAKEN',
+          message: 'A help article with this slug already exists.',
+        });
+      }
+      throw error;
+    }
     await this.audit.record({
       actorId,
       action: 'HELP_ARTICLE_UPDATED',
