@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma, type SellerRating } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import type { CreateRatingDto } from './dto/create-rating.dto';
@@ -61,15 +61,29 @@ export class SellerRatingsService {
       });
     }
 
-    const rating = await this.prisma.sellerRating.create({
-      data: {
-        sellerId,
-        userId: user.id,
-        orderId: dto.orderId,
-        rating: dto.rating,
-        comment: dto.comment,
-      },
-    });
+    let rating: SellerRating;
+    try {
+      rating = await this.prisma.sellerRating.create({
+        data: {
+          sellerId,
+          userId: user.id,
+          orderId: dto.orderId,
+          rating: dto.rating,
+          comment: dto.comment,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'ALREADY_RATED',
+          message: 'You have already rated this seller for this order.',
+        });
+      }
+      throw error;
+    }
     return rating;
   }
 
