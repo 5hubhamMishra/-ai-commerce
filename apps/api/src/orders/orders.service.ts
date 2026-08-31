@@ -368,20 +368,33 @@ export class OrdersService {
         warehouseId: i.warehouseId,
         quantity: i.quantity,
       }));
+      const cancelledAt = new Date();
+      const claimed = await tx.order.updateMany({
+        where: { id: orderId, status: existing.status },
+        data: {
+          status: OrderStatus.CANCELLED,
+          cancelReason: dto.reason,
+          cancelledAt,
+        },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'ORDER_NOT_CANCELLABLE',
+          message: 'The order changed before cancellation could be completed.',
+        });
+      }
       if (existing.status === OrderStatus.PENDING_PAYMENT) {
         await this.inventory.releaseReserved(tx, lines);
       } else {
         await this.inventory.releaseCommitted(tx, lines);
       }
 
-      const updated = await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: OrderStatus.CANCELLED,
-          cancelReason: dto.reason,
-          cancelledAt: new Date(),
-        },
-      });
+      const updated = {
+        ...existing,
+        status: OrderStatus.CANCELLED,
+        cancelReason: dto.reason,
+        cancelledAt,
+      };
       await tx.orderStateHistory.create({
         data: {
           orderId,
