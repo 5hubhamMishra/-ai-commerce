@@ -3,6 +3,7 @@ import {
   Prisma,
   ReturnReason,
   ReturnResolution,
+  ReturnStatus,
 } from '@prisma/client';
 import { ReturnsService } from './returns.service';
 
@@ -145,6 +146,82 @@ describe('ReturnsService', () => {
       response: expect.objectContaining({ code: 'REFUND_FAILED' }),
     });
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('does not restock when another completion wins the return claim', async () => {
+    const restockReturnedItems = jest.fn();
+    const markReturned = jest.fn();
+    const returnUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback({
+          returnRequest: { updateMany: returnUpdateMany },
+          returnRequestItem: { update: jest.fn() },
+        }),
+      ),
+    };
+    const service = new ReturnsService(
+      prisma as never,
+      {} as never,
+      { restockReturnedItems } as never,
+      { markReturned } as never,
+      {
+        requestProviderRefund: jest.fn().mockResolvedValue({
+          success: true,
+          providerRefundRef: 'refund-1',
+          raw: {},
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const internals = service as unknown as {
+      getRow: jest.Mock;
+      findSucceededPayment: jest.Mock;
+    };
+    internals.getRow = jest.fn().mockResolvedValue({
+      id: 'return-1',
+      userId: 'user-1',
+      status: ReturnStatus.INSPECTING,
+      resolution: ReturnResolution.REFUND,
+      order: { id: 'order-1', currency: 'INR' },
+      items: [
+        {
+          id: 'return-item-1',
+          quantity: 1,
+          orderItem: {
+            variantId: 'variant-1',
+            warehouseId: 'warehouse-1',
+            unitPrice: 100,
+          },
+        },
+      ],
+    });
+    internals.findSucceededPayment = jest.fn().mockResolvedValue({
+      id: 'payment-1',
+      providerPaymentRef: 'pay-1',
+      providerRef: 'order-ref-1',
+      currency: 'INR',
+    });
+
+    await expect(
+      service.complete('admin-1', 'return-1', {
+        items: [
+          {
+            returnRequestItemId: 'return-item-1',
+            condition: 'sealed',
+            isDamaged: false,
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RETURN_STATUS_CHANGED' }),
+    });
+    expect(restockReturnedItems).not.toHaveBeenCalled();
+    expect(markReturned).not.toHaveBeenCalled();
   });
 
   it('maps a concurrent active-return race to the duplicate conflict', async () => {

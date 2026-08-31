@@ -453,6 +453,16 @@ export class ReturnsService {
     }
 
     const outcome = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.returnRequest.updateMany({
+        where: { id: returnId, status: ReturnStatus.INSPECTING },
+        data: { status: ReturnStatus.COMPLETED },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'RETURN_STATUS_CHANGED',
+          message: 'The return changed before completion could be applied.',
+        });
+      }
       for (const item of existing.items) {
         const inspected = inspectedById.get(item.id)!;
         await tx.returnRequestItem.update({
@@ -462,10 +472,6 @@ export class ReturnsService {
       }
       await this.inventoryService.restockReturnedItems(tx, restockLines);
 
-      await tx.returnRequest.update({
-        where: { id: returnId },
-        data: { status: ReturnStatus.COMPLETED },
-      });
       await this.ordersService.markReturned(tx, existing.orderId, actorId);
 
       if (existing.resolution === ReturnResolution.REFUND) {
