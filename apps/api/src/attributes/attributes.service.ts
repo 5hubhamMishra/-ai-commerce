@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { slugify } from '../common/utils/slugify';
 import type { CreateAttributeDto } from './dto/create-attribute.dto';
@@ -37,17 +38,45 @@ export class AttributesService {
   async create(dto: CreateAttributeDto) {
     const slug = dto.slug ? slugify(dto.slug) : slugify(dto.name);
     await this.assertSlugAvailable(slug);
-    return this.prisma.attribute.create({ data: { name: dto.name, slug } });
+    try {
+      return await this.prisma.attribute.create({
+        data: { name: dto.name, slug },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'ATTRIBUTE_SLUG_TAKEN',
+          message: 'An attribute with this slug already exists.',
+        });
+      }
+      throw error;
+    }
   }
 
   async update(id: string, dto: UpdateAttributeDto) {
     await this.findById(id);
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
-    return this.prisma.attribute.update({
-      where: { id },
-      data: { name: dto.name, slug },
-    });
+    try {
+      return await this.prisma.attribute.update({
+        where: { id },
+        data: { name: dto.name, slug },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'ATTRIBUTE_SLUG_TAKEN',
+          message: 'An attribute with this slug already exists.',
+        });
+      }
+      throw error;
+    }
   }
 
   async remove(id: string): Promise<void> {
@@ -67,9 +96,22 @@ export class AttributesService {
         message: 'This value already exists for the attribute.',
       });
     }
-    return this.prisma.attributeValue.create({
-      data: { attributeId, value: dto.value, slug },
-    });
+    try {
+      return await this.prisma.attributeValue.create({
+        data: { attributeId, value: dto.value, slug },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'ATTRIBUTE_VALUE_ALREADY_EXISTS',
+          message: 'This value already exists for the attribute.',
+        });
+      }
+      throw error;
+    }
   }
 
   async removeValue(attributeId: string, valueId: string): Promise<void> {
