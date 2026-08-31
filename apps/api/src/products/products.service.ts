@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProductStatus } from '@prisma/client';
+import { Prisma, ProductStatus, type Product } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { CACHE_PREFIX } from '../common/cache/cache-keys';
 import { CacheService } from '../common/cache/cache.service';
@@ -254,18 +254,32 @@ export class ProductsService {
     const slug = dto.slug ? slugify(dto.slug) : slugify(dto.name);
     await this.assertSlugAvailable(slug);
 
-    const product = await this.prisma.product.create({
-      data: {
-        name: dto.name,
-        slug,
-        description: dto.description,
-        categoryId: dto.categoryId,
-        brandId: dto.brandId,
-        sellerId,
-        status: dto.status ?? ProductStatus.DRAFT,
-        isFeatured: dto.isFeatured ?? false,
-      },
-    });
+    let product: Product;
+    try {
+      product = await this.prisma.product.create({
+        data: {
+          name: dto.name,
+          slug,
+          description: dto.description,
+          categoryId: dto.categoryId,
+          brandId: dto.brandId,
+          sellerId,
+          status: dto.status ?? ProductStatus.DRAFT,
+          isFeatured: dto.isFeatured ?? false,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'PRODUCT_SLUG_TAKEN',
+          message: 'A product with this slug already exists.',
+        });
+      }
+      throw error;
+    }
 
     await this.audit.record({
       actorId,
@@ -285,18 +299,31 @@ export class ProductsService {
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
 
-    await this.prisma.product.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        slug,
-        description: dto.description,
-        categoryId: dto.categoryId,
-        brandId: dto.brandId,
-        status: dto.status,
-        isFeatured: dto.isFeatured,
-      },
-    });
+    try {
+      await this.prisma.product.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          slug,
+          description: dto.description,
+          categoryId: dto.categoryId,
+          brandId: dto.brandId,
+          status: dto.status,
+          isFeatured: dto.isFeatured,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'PRODUCT_SLUG_TAKEN',
+          message: 'A product with this slug already exists.',
+        });
+      }
+      throw error;
+    }
 
     await this.audit.record({
       actorId,

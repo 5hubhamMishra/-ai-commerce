@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { ProductStatus } from '@prisma/client';
+import { Prisma, ProductStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { CacheService } from '../common/cache/cache.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
@@ -108,6 +108,29 @@ describe('ProductsService', () => {
         'actor1',
       ),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('maps a concurrent product slug race to the duplicate conflict', async () => {
+    prisma.category.findUnique.mockResolvedValue({
+      id: 'cat1',
+      deletedAt: null,
+    });
+    prisma.product.findUnique.mockResolvedValue(null);
+    prisma.product.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.create(
+        { name: 'Widget', slug: 'widget', categoryId: 'cat1' },
+        'actor1',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_SLUG_TAKEN' }),
+    });
   });
 
   it('always scopes the public listing to ACTIVE status, ignoring any status filter', async () => {
