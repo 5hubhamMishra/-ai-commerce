@@ -1,5 +1,6 @@
 import { ConflictException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { CacheService } from '../common/cache/cache.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { AuditService } from '../audit/audit.service';
@@ -76,6 +77,22 @@ describe('CategoriesService', () => {
       service.create({ name: 'Laptops', slug: 'laptops' }, 'actor1'),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(prisma.category.create).not.toHaveBeenCalled();
+  });
+
+  it('maps a concurrent category slug race to the duplicate conflict', async () => {
+    prisma.category.findUnique.mockResolvedValue(null);
+    prisma.category.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.create({ name: 'Laptops', slug: 'laptops' }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'CATEGORY_SLUG_TAKEN' }),
+    });
   });
 
   it('refuses to make a category its own parent', async () => {
