@@ -2,6 +2,52 @@ import { PayoutStatus } from '@prisma/client';
 import { SellerCommerceService } from './seller-commerce.service';
 
 describe('SellerCommerceService payouts', () => {
+  it('does not show earnings as paid while the payout is processing', async () => {
+    const prisma = {
+      sellerEarning: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'earning-1',
+            grossAmount: 500,
+            commissionAmount: 50,
+            netAmount: 450,
+            currency: 'INR',
+            payoutId: 'payout-1',
+            payout: { status: PayoutStatus.PROCESSING },
+            orderItem: {
+              productName: 'Product 1',
+              sku: 'SKU-1',
+              order: { id: 'order-1', status: 'DELIVERED' },
+            },
+          },
+        ]),
+        count: jest.fn().mockResolvedValue(1),
+      },
+    };
+    const service = new SellerCommerceService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const listEarningsForSeller = (
+      service as unknown as {
+        listEarningsForSeller: (
+          sellerId: string,
+          query: unknown,
+        ) => Promise<unknown>;
+      }
+    ).listEarningsForSeller;
+
+    const result = (await listEarningsForSeller.call(
+      service,
+      'seller-1',
+      {},
+    )) as { items: { status: string }[] };
+
+    expect(result.items[0].status).toBe('PENDING');
+  });
+
   it('claims earnings before paying and passes a stable provider key', async () => {
     const processingPayout = {
       id: 'payout-1',

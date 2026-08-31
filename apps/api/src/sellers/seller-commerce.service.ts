@@ -91,6 +91,7 @@ export class SellerCommerceService {
               order: { select: { id: true, status: true } },
             },
           },
+          payout: { select: { status: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
@@ -109,8 +110,10 @@ export class SellerCommerceService {
         netAmount: Number(row.netAmount),
         currency: row.currency,
         // Derived, not stored — see schema.prisma's SellerEarning doc comment.
-        status: row.payoutId
-          ? 'PAID'
+        status: row.payout
+          ? row.payout.status === PayoutStatus.PAID
+            ? 'PAID'
+            : 'PENDING'
           : row.orderItem.order.status === OrderStatus.DELIVERED
             ? 'AVAILABLE'
             : 'PENDING',
