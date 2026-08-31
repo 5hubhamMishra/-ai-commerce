@@ -559,7 +559,11 @@ export class ReturnsService {
     });
     await this.notifications.create(
       existing.userId,
-      NotificationType.RETURN,
+      {
+        REFUND: NotificationType.REFUND,
+        REPLACEMENT: NotificationType.REPLACEMENT,
+        EXCHANGE: NotificationType.EXCHANGE,
+      }[outcome.type],
       'Return completed',
       `Your return has been processed as a ${outcome.type.toLowerCase()}.`,
       'return_request',
