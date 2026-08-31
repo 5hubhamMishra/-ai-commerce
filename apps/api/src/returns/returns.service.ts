@@ -112,7 +112,15 @@ export class ReturnsService {
     }
 
     const orderItemsById = new Map(order.items.map((i) => [i.id, i]));
+    const seenOrderItemIds = new Set<string>();
     for (const line of dto.items) {
+      if (seenOrderItemIds.has(line.orderItemId)) {
+        throw new BadRequestException({
+          code: 'RETURN_ITEM_DUPLICATE',
+          message: `Order item ${line.orderItemId} may only appear once in a return request.`,
+        });
+      }
+      seenOrderItemIds.add(line.orderItemId);
       const orderItem = orderItemsById.get(line.orderItemId);
       if (!orderItem) {
         throw new BadRequestException({

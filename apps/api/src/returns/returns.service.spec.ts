@@ -7,6 +7,46 @@ import {
 import { ReturnsService } from './returns.service';
 
 describe('ReturnsService', () => {
+  it('rejects duplicate order items before creating a return', async () => {
+    const prisma = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'order-1',
+          userId: 'user-1',
+          status: OrderStatus.DELIVERED,
+          items: [{ id: 'item-1', quantity: 2, variantId: 'variant-1' }],
+        }),
+      },
+      returnRequest: { findFirst: jest.fn().mockResolvedValue(null) },
+    };
+    const service = new ReturnsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.create({ id: 'user-1' } as never, {
+        orderId: 'order-1',
+        reason: ReturnReason.OTHER,
+        resolution: ReturnResolution.REFUND,
+        items: [
+          { orderItemId: 'item-1', quantity: 1 },
+          { orderItemId: 'item-1', quantity: 1 },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RETURN_ITEM_DUPLICATE' }),
+    });
+  });
+
   it('keeps a return retryable when the refund provider declines it', async () => {
     const prisma = { $transaction: jest.fn() };
     const service = new ReturnsService(
