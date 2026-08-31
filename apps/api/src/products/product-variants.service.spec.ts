@@ -1,4 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Test } from '@nestjs/testing';
 import { AuditService } from '../audit/audit.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
@@ -92,6 +93,23 @@ describe('ProductVariantsService', () => {
       service.create('p1', { sku: 'DUPLICATE', price: 100 }, 'actor1'),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(prisma.productVariant.create).not.toHaveBeenCalled();
+  });
+
+  it('maps a concurrent SKU race to the duplicate conflict', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue(null);
+    prisma.productVariant.count.mockResolvedValue(0);
+    prisma.productVariant.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.create('p1', { sku: 'RACE-SKU', price: 100 }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SKU_ALREADY_EXISTS' }),
+    });
   });
 
   it('throws not-found when updating a variant that belongs to a different product', async () => {

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -36,25 +37,38 @@ export class ProductVariantsService {
       const existingCount = await tx.productVariant.count({
         where: { productId, deletedAt: null },
       });
-      return tx.productVariant.create({
-        data: {
-          productId,
-          sku: dto.sku,
-          price: dto.price,
-          compareAtPrice: dto.compareAtPrice,
-          currency: dto.currency ?? 'INR',
-          weightGrams: dto.weightGrams,
-          isDefault: dto.isDefault ?? existingCount === 0,
-          isActive: dto.isActive ?? true,
-          attributeValues: dto.attributeValueIds
-            ? {
-                create: dto.attributeValueIds.map((attributeValueId) => ({
-                  attributeValueId,
-                })),
-              }
-            : undefined,
-        },
-      });
+      try {
+        return await tx.productVariant.create({
+          data: {
+            productId,
+            sku: dto.sku,
+            price: dto.price,
+            compareAtPrice: dto.compareAtPrice,
+            currency: dto.currency ?? 'INR',
+            weightGrams: dto.weightGrams,
+            isDefault: dto.isDefault ?? existingCount === 0,
+            isActive: dto.isActive ?? true,
+            attributeValues: dto.attributeValueIds
+              ? {
+                  create: dto.attributeValueIds.map((attributeValueId) => ({
+                    attributeValueId,
+                  })),
+                }
+              : undefined,
+          },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException({
+            code: 'SKU_ALREADY_EXISTS',
+            message: 'A variant with this SKU already exists.',
+          });
+        }
+        throw error;
+      }
     });
 
     await this.audit.record({
@@ -90,25 +104,38 @@ export class ProductVariantsService {
       if (dto.attributeValueIds) {
         await tx.variantAttributeValue.deleteMany({ where: { variantId } });
       }
-      await tx.productVariant.update({
-        where: { id: variantId },
-        data: {
-          sku: dto.sku,
-          price: dto.price,
-          compareAtPrice: dto.compareAtPrice,
-          currency: dto.currency,
-          weightGrams: dto.weightGrams,
-          isDefault: dto.isDefault,
-          isActive: dto.isActive,
-          attributeValues: dto.attributeValueIds
-            ? {
-                create: dto.attributeValueIds.map((attributeValueId) => ({
-                  attributeValueId,
-                })),
-              }
-            : undefined,
-        },
-      });
+      try {
+        await tx.productVariant.update({
+          where: { id: variantId },
+          data: {
+            sku: dto.sku,
+            price: dto.price,
+            compareAtPrice: dto.compareAtPrice,
+            currency: dto.currency,
+            weightGrams: dto.weightGrams,
+            isDefault: dto.isDefault,
+            isActive: dto.isActive,
+            attributeValues: dto.attributeValueIds
+              ? {
+                  create: dto.attributeValueIds.map((attributeValueId) => ({
+                    attributeValueId,
+                  })),
+                }
+              : undefined,
+          },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException({
+            code: 'SKU_ALREADY_EXISTS',
+            message: 'A variant with this SKU already exists.',
+          });
+        }
+        throw error;
+      }
     });
 
     await this.audit.record({
