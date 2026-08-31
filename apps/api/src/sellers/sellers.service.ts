@@ -314,9 +314,18 @@ export class SellersService {
         message: 'Only a suspended seller can be reinstated.',
       });
     }
-    const updated = await this.prisma.seller.update({
-      where: { id },
+    const claimed = await this.prisma.seller.updateMany({
+      where: { id, status: SellerStatus.SUSPENDED },
       data: { status: SellerStatus.VERIFIED, suspendReason: null },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'SELLER_STATUS_CHANGED',
+        message: 'The seller changed before reinstatement could be applied.',
+      });
+    }
+    const updated = await this.prisma.seller.findUniqueOrThrow({
+      where: { id },
     });
     await this.audit.record({
       actorId,

@@ -77,4 +77,33 @@ describe('SellersService', () => {
     });
     expect(productUpdateMany).not.toHaveBeenCalled();
   });
+
+  it('rejects reinstatement when another moderation update wins', async () => {
+    const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      seller: { updateMany: sellerUpdateMany },
+    };
+    const service = new SellersService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    (service as unknown as { getRow: jest.Mock }).getRow = jest
+      .fn()
+      .mockResolvedValue({ id: 'seller-1', status: SellerStatus.SUSPENDED });
+
+    await expect(
+      service.reinstate('admin-1', 'seller-1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SELLER_STATUS_CHANGED' }),
+    });
+    expect(sellerUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'seller-1', status: SellerStatus.SUSPENDED },
+      data: { status: SellerStatus.VERIFIED, suspendReason: null },
+    });
+  });
 });
