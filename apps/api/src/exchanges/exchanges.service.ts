@@ -87,12 +87,11 @@ export class ExchangesService {
     });
 
     if (owesRefund && params.paymentId) {
+      const payment = await tx.payment.findUniqueOrThrow({
+        where: { id: params.paymentId },
+      });
       const result = await this.provider.refund({
-        providerRef: (
-          await tx.payment.findUniqueOrThrow({
-            where: { id: params.paymentId },
-          })
-        ).providerRef!,
+        providerRef: payment.providerPaymentRef ?? payment.providerRef!,
         amount: Math.abs(params.priceDifference),
         currency: params.currency,
         reason: 'Exchange price difference (lower-priced item)',
