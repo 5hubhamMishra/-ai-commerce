@@ -469,6 +469,16 @@ export class OrdersService {
           warehouseId: i.warehouseId,
           quantity: i.quantity,
         }));
+        const claimed = await tx.order.updateMany({
+          where: { id: orderId, status: existing.status },
+          data: { status: dto.status },
+        });
+        if (claimed.count === 0) {
+          throw new ConflictException({
+            code: 'ORDER_STATUS_CHANGED',
+            message: 'The order changed before this update could be completed.',
+          });
+        }
         if (dto.status === OrderStatus.SHIPPED) {
           await this.inventory.shipCommitted(tx, lines);
           await tx.shipment.update({
@@ -501,10 +511,7 @@ export class OrdersService {
           });
         }
 
-        const updated = await tx.order.update({
-          where: { id: orderId },
-          data: { status: dto.status },
-        });
+        const updated = { ...existing, status: dto.status };
         await tx.orderStateHistory.create({
           data: {
             orderId,
