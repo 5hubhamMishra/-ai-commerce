@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { OrderStatus, ProductStatus } from '@prisma/client';
+import { OrderStatus, Prisma, ProductStatus } from '@prisma/client';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProductReviewsService } from './product-reviews.service';
@@ -166,6 +166,23 @@ describe('ProductReviewsService', () => {
     await expect(
       service.create(user, 'velvet-bag', { orderId: 'order1', rating: 5 }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('maps a concurrent unique review race to the duplicate conflict', async () => {
+    prisma.productReview.findUnique.mockResolvedValue(null);
+    prisma.productReview.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.create(user, 'velvet-bag', { orderId: 'order1', rating: 5 }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'REVIEW_ALREADY_EXISTS' }),
+    });
+    expect(events.productChanged).not.toHaveBeenCalled();
   });
 
   it('lists public reviews with an aggregate summary', async () => {

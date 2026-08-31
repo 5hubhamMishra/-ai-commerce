@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, ProductStatus } from '@prisma/client';
+import { OrderStatus, Prisma, ProductStatus } from '@prisma/client';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { PrismaService } from '../prisma/prisma.service';
@@ -118,17 +118,31 @@ export class ProductReviewsService {
       });
     }
 
-    const review = await this.reviews.create({
-      data: {
-        productId: product.id,
-        userId: user.id,
-        orderId: dto.orderId,
-        rating: dto.rating,
-        title: dto.title,
-        body: dto.body,
-      },
-      include: { user: { select: { name: true } } },
-    });
+    let review: ProductReviewRow;
+    try {
+      review = await this.reviews.create({
+        data: {
+          productId: product.id,
+          userId: user.id,
+          orderId: dto.orderId,
+          rating: dto.rating,
+          title: dto.title,
+          body: dto.body,
+        },
+        include: { user: { select: { name: true } } },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'REVIEW_ALREADY_EXISTS',
+          message: 'You have already reviewed this product for this order.',
+        });
+      }
+      throw error;
+    }
 
     this.events.productChanged(product.id, 'updated');
     return toReviewResponse(review);
