@@ -1,4 +1,4 @@
-import { PaymentStatus, Prisma } from '@prisma/client';
+import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
@@ -29,8 +29,15 @@ describe('PaymentsService settlement race', () => {
     const prisma = {
       payment: {
         findFirst: jest.fn().mockResolvedValue(null),
-        create: paymentCreate,
       },
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback({
+          order: {
+            updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          },
+          payment: { create: paymentCreate },
+        }),
+      ),
     };
     const createIntent = jest.fn().mockResolvedValue({ providerRef: 'ref-1' });
     const service = new PaymentsService(
@@ -72,6 +79,61 @@ describe('PaymentsService settlement race', () => {
       currency: 'INR',
       idempotencyKey: 'payment-order1',
     });
+  });
+
+  it('does not create a payment after the order is cancelled', async () => {
+    const paymentCreate = jest.fn();
+    const orderUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      payment: { findFirst: jest.fn().mockResolvedValue(null) },
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback({
+          order: { updateMany: orderUpdateMany },
+          payment: { create: paymentCreate },
+        }),
+      ),
+    };
+    const service = new PaymentsService(
+      prisma as never,
+      {
+        type: 'DEVELOPMENT',
+        createIntent: jest.fn().mockResolvedValue({ providerRef: 'ref-1' }),
+      } as never,
+      {
+        assertOwnership: jest.fn().mockResolvedValue({
+          status: OrderStatus.PENDING_PAYMENT,
+          total: 100,
+          currency: 'INR',
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const createInternal = (
+      service as unknown as {
+        createPaymentInternal: (
+          userId: string,
+          orderId: string,
+          key: string,
+        ) => Promise<unknown>;
+      }
+    ).createPaymentInternal;
+
+    await expect(
+      createInternal.call(service, 'user1', 'order1', 'key1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ORDER_NOT_PAYABLE' }),
+    });
+    expect(orderUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'order1',
+        userId: 'user1',
+        status: OrderStatus.PENDING_PAYMENT,
+      },
+      data: { updatedAt: expect.any(Date) },
+    });
+    expect(paymentCreate).not.toHaveBeenCalled();
   });
 
   it('does not transition the order when another request already claimed payment', async () => {

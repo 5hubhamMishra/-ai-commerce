@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PaymentStatus, Prisma } from '@prisma/client';
+import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import type { Payment } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { OrderEventsService } from '../common/events/order-events.service';
@@ -100,16 +100,32 @@ export class PaymentsService {
 
     let payment: Awaited<ReturnType<typeof this.prisma.payment.create>>;
     try {
-      payment = await this.prisma.payment.create({
-        data: {
-          orderId,
-          provider: this.provider.type,
-          providerRef: intent.providerRef,
-          status: PaymentStatus.PENDING,
-          amount,
-          currency: order.currency,
-          idempotencyKey,
-        },
+      payment = await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.order.updateMany({
+          where: {
+            id: orderId,
+            userId,
+            status: OrderStatus.PENDING_PAYMENT,
+          },
+          data: { updatedAt: new Date() },
+        });
+        if (claimed.count === 0) {
+          throw new ConflictException({
+            code: 'ORDER_NOT_PAYABLE',
+            message: 'The order changed before payment could be created.',
+          });
+        }
+        return tx.payment.create({
+          data: {
+            orderId,
+            provider: this.provider.type,
+            providerRef: intent.providerRef,
+            status: PaymentStatus.PENDING,
+            amount,
+            currency: order.currency,
+            idempotencyKey,
+          },
+        });
       });
     } catch (error) {
       if (

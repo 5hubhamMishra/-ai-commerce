@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   OrderStatus,
+  PaymentStatus,
   Prisma,
   Role,
   ShipmentEventStatus,
@@ -390,6 +391,10 @@ export class OrdersService {
         });
       }
       if (existing.status === OrderStatus.PENDING_PAYMENT) {
+        await tx.payment.updateMany({
+          where: { orderId, status: PaymentStatus.PENDING },
+          data: { status: PaymentStatus.CANCELLED },
+        });
         await this.inventory.releaseReserved(tx, lines);
       } else {
         await this.inventory.releaseCommitted(tx, lines);

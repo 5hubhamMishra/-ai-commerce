@@ -1,4 +1,4 @@
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
 import { OrdersService } from './orders.service';
 
 describe('OrdersService state claims', () => {
@@ -128,6 +128,78 @@ describe('OrdersService state claims', () => {
       },
     });
     expect(releaseReserved).not.toHaveBeenCalled();
+  });
+
+  it('cancels pending payment attempts with a pending-payment order', async () => {
+    const releaseReserved = jest.fn();
+    const paymentUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const tx = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'order-1',
+          userId: 'user-1',
+          status: OrderStatus.PENDING_PAYMENT,
+          items: [
+            { variantId: 'variant-1', warehouseId: 'warehouse-1', quantity: 1 },
+          ],
+        }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      payment: { updateMany: paymentUpdateMany },
+      orderStateHistory: { create: jest.fn() },
+    };
+    const service = new OrdersService(
+      {
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
+        ),
+      } as never,
+      { releaseReserved } as never,
+      {} as never,
+      {} as never,
+      { record: jest.fn() } as never,
+      { orderStatusChanged: jest.fn() } as never,
+      {} as never,
+    );
+    (service as unknown as { getDetailRow: jest.Mock }).getDetailRow = jest
+      .fn()
+      .mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.CANCELLED,
+        subtotal: 100,
+        shippingFee: 0,
+        discountTotal: 0,
+        taxTotal: 0,
+        total: 100,
+        currency: 'INR',
+        shippingMethod: 'STANDARD',
+        cancelReason: 'Changed my mind',
+        cancelledAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        address: {
+          line1: '1 Main St',
+          line2: null,
+          city: 'Mumbai',
+          state: 'MH',
+          postalCode: '400001',
+          country: 'IN',
+        },
+        items: [],
+        shipment: null,
+        payments: [],
+        stateHistory: [],
+      });
+
+    await service.cancel({ id: 'user-1', roles: [] } as never, 'order-1', {
+      reason: 'Changed my mind',
+    });
+
+    expect(paymentUpdateMany).toHaveBeenCalledWith({
+      where: { orderId: 'order-1', status: PaymentStatus.PENDING },
+      data: { status: PaymentStatus.CANCELLED },
+    });
+    expect(releaseReserved).toHaveBeenCalled();
   });
 
   it('does not ship inventory when another request wins a fulfillment claim', async () => {
