@@ -104,8 +104,8 @@ export class SupportService {
     // reply doesn't change status either way (avoids surprising status churn
     // from ordinary back-and-forth conversation).
     if (isStaff && ticket.status === TicketStatus.OPEN) {
-      await this.prisma.supportTicket.update({
-        where: { id: ticketId },
+      await this.prisma.supportTicket.updateMany({
+        where: { id: ticketId, status: TicketStatus.OPEN },
         data: { status: TicketStatus.IN_PROGRESS },
       });
     }
@@ -139,11 +139,17 @@ export class SupportService {
     const ticket = await this.getRow(ticketId);
     assertTransition(ticket.status, dto.status);
 
-    const updated = await this.prisma.supportTicket.update({
-      where: { id: ticketId },
+    const claimed = await this.prisma.supportTicket.updateMany({
+      where: { id: ticketId, status: ticket.status },
       data: { status: dto.status },
-      include: ticketDetailInclude,
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'TICKET_STATUS_CHANGED',
+        message: 'The ticket changed before this update could be applied.',
+      });
+    }
+    const updated = await this.getRow(ticketId);
     await this.audit.record({
       actorId,
       action: 'SUPPORT_TICKET_STATUS_UPDATED',
