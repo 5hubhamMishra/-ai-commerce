@@ -32,11 +32,12 @@ describe('PaymentsService settlement race', () => {
         create: paymentCreate,
       },
     };
+    const createIntent = jest.fn().mockResolvedValue({ providerRef: 'ref-1' });
     const service = new PaymentsService(
       prisma as never,
       {
         type: 'DEVELOPMENT',
-        createIntent: jest.fn().mockResolvedValue({ providerRef: 'ref-1' }),
+        createIntent,
       } as never,
       {
         assertOwnership: jest.fn().mockResolvedValue({
@@ -65,6 +66,12 @@ describe('PaymentsService settlement race', () => {
       response: expect.objectContaining({ code: 'PAYMENT_ALREADY_PENDING' }),
     });
     expect(paymentCreate).toHaveBeenCalled();
+    expect(createIntent).toHaveBeenCalledWith({
+      orderId: 'order1',
+      amount: 100,
+      currency: 'INR',
+      idempotencyKey: 'payment-order1',
+    });
   });
 
   it('does not transition the order when another request already claimed payment', async () => {

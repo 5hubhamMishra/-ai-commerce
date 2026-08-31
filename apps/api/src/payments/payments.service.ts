@@ -93,7 +93,9 @@ export class PaymentsService {
       orderId,
       amount,
       currency: order.currency,
-      idempotencyKey,
+      // Different client keys can race for the same order; the provider must
+      // still see one logical intent rather than one intent per request.
+      idempotencyKey: `payment-${orderId}`,
     });
 
     let payment: Awaited<ReturnType<typeof this.prisma.payment.create>>;
