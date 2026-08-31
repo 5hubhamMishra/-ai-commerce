@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   NotificationType,
   ProductStatus,
+  Prisma,
   Role,
   SellerStatus,
 } from '@prisma/client';
@@ -64,31 +65,36 @@ export class SellersService {
     }
 
     const slug = await this.generateUniqueSlug(dto.businessName);
-    const seller = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.seller.create({
-        data: {
-          ownerUserId: userId,
-          businessName: dto.businessName,
-          slug,
-          description: dto.description,
-          commissionRateBps: this.config.get<number>(
-            'marketplace.defaultCommissionRateBps',
-          )!,
-        },
+    let seller: Awaited<ReturnType<typeof this.prisma.seller.create>>;
+    try {
+      seller = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.seller.create({
+          data: {
+            ownerUserId: userId,
+            businessName: dto.businessName,
+            slug,
+            description: dto.description,
+            commissionRateBps: this.config.get<number>(
+              'marketplace.defaultCommissionRateBps',
+            )!,
+          },
+        });
+        await tx.sellerStaff.create({
+          data: { sellerId: created.id, userId, isOwner: true },
+        });
+        // Roles are re-read from the database on every request (ADR-007), so
+        // this takes effect on the caller's very next request without them
+        // needing to log in again — no separate "SELLER" grant step exists.
+        await tx.userRole.upsert({
+          where: { userId_role: { userId, role: Role.SELLER } },
+          create: { userId, role: Role.SELLER },
+          update: {},
+        });
+        return created;
       });
-      await tx.sellerStaff.create({
-        data: { sellerId: created.id, userId, isOwner: true },
-      });
-      // Roles are re-read from the database on every request (ADR-007), so
-      // this takes effect on the caller's very next request without them
-      // needing to log in again — no separate "SELLER" grant step exists.
-      await tx.userRole.upsert({
-        where: { userId_role: { userId, role: Role.SELLER } },
-        create: { userId, role: Role.SELLER },
-        update: {},
-      });
-      return created;
-    });
+    } catch (error) {
+      this.rethrowUniqueConflict(error);
+    }
 
     const result = await this.verificationProvider.verify({
       sellerId: seller.id,
@@ -119,16 +125,21 @@ export class SellersService {
         ? await this.generateUniqueSlug(dto.businessName, seller.id)
         : undefined;
 
-    const updated = await this.prisma.seller.update({
-      where: { id: seller.id },
-      data: {
-        businessName: dto.businessName,
-        slug,
-        description: dto.description,
-        logoUrl: dto.logoUrl,
-        bannerUrl: dto.bannerUrl,
-      },
-    });
+    let updated: Awaited<ReturnType<typeof this.prisma.seller.update>>;
+    try {
+      updated = await this.prisma.seller.update({
+        where: { id: seller.id },
+        data: {
+          businessName: dto.businessName,
+          slug,
+          description: dto.description,
+          logoUrl: dto.logoUrl,
+          bannerUrl: dto.bannerUrl,
+        },
+      });
+    } catch (error) {
+      this.rethrowUniqueConflict(error);
+    }
 
     await this.audit.record({
       actorId: userId,
@@ -424,6 +435,26 @@ export class SellersService {
       suffix += 1;
       candidate = `${base}-${suffix}`;
     }
+  }
+
+  private rethrowUniqueConflict(error: unknown): never {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      const target = error.meta?.target;
+      const targets = Array.isArray(target) ? target : [target];
+      const ownerConflict = targets.some(
+        (field) => field === 'ownerUserId' || field === 'owner_user_id',
+      );
+      throw new ConflictException({
+        code: ownerConflict ? 'SELLER_ACCOUNT_EXISTS' : 'SELLER_SLUG_TAKEN',
+        message: ownerConflict
+          ? 'You already operate a seller account.'
+          : 'A seller with this slug already exists.',
+      });
+    }
+    throw error;
   }
 
   private async getOwnedRow(userId: string) {
