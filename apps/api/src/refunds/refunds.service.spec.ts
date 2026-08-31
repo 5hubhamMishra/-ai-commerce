@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { RefundStatus } from '@prisma/client';
+import { Prisma, RefundStatus } from '@prisma/client';
 import { RefundsService } from './refunds.service';
 
 describe('RefundsService', () => {
@@ -122,6 +122,26 @@ describe('RefundsService', () => {
       reason: 'Return completed',
       idempotencyKey: 'return-return-1',
     });
+  });
+
+  it('maps a concurrent refund serialization conflict to a retryable error', async () => {
+    prisma.$transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Write conflict', {
+        code: 'P2034',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.createStandalone(
+        'admin-1',
+        { orderId: order.id, amount: 100, reason: 'Goodwill credit' },
+        'refund-conflict-1',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'REFUND_CONFLICT' }),
+    });
+    expect(provider.refund).not.toHaveBeenCalled();
   });
 
   it('claims idempotency, reserves the refund, and passes the key to the provider', async () => {

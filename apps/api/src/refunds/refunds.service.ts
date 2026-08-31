@@ -149,37 +149,51 @@ export class RefundsService {
       });
     }
 
-    const refund = await this.prisma.$transaction(
-      async (tx) => {
-        const alreadyClaimed = await tx.refund.aggregate({
-          where: {
-            paymentId: payment.id,
-            status: { not: RefundStatus.FAILED },
-          },
-          _sum: { amount: true },
-        });
-        const refundable =
-          Number(payment.amount) - Number(alreadyClaimed._sum.amount ?? 0);
-        if (dto.amount > refundable) {
-          throw new BadRequestException({
-            code: 'REFUND_EXCEEDS_REMAINING_AMOUNT',
-            message: `This payment has ${refundable.toFixed(2)} left refundable.`,
+    let refund: Awaited<ReturnType<typeof this.prisma.refund.create>>;
+    try {
+      refund = await this.prisma.$transaction(
+        async (tx) => {
+          const alreadyClaimed = await tx.refund.aggregate({
+            where: {
+              paymentId: payment.id,
+              status: { not: RefundStatus.FAILED },
+            },
+            _sum: { amount: true },
           });
-        }
+          const refundable =
+            Number(payment.amount) - Number(alreadyClaimed._sum.amount ?? 0);
+          if (dto.amount > refundable) {
+            throw new BadRequestException({
+              code: 'REFUND_EXCEEDS_REMAINING_AMOUNT',
+              message: `This payment has ${refundable.toFixed(2)} left refundable.`,
+            });
+          }
 
-        return tx.refund.create({
-          data: {
-            orderId: dto.orderId,
-            paymentId: payment.id,
-            amount: dto.amount,
-            currency: payment.currency,
-            reason: dto.reason,
-            status: RefundStatus.PROCESSING,
-          },
+          return tx.refund.create({
+            data: {
+              orderId: dto.orderId,
+              paymentId: payment.id,
+              amount: dto.amount,
+              currency: payment.currency,
+              reason: dto.reason,
+              status: RefundStatus.PROCESSING,
+            },
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2034'
+      ) {
+        throw new ConflictException({
+          code: 'REFUND_CONFLICT',
+          message: 'Another refund changed this payment. Please retry.',
         });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+      }
+      throw error;
+    }
 
     let result: RefundResult;
     try {
