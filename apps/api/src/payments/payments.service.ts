@@ -5,8 +5,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PaymentStatus, Prisma } from '@prisma/client';
 import type { Payment } from '@prisma/client';
-import { PaymentStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { OrderEventsService } from '../common/events/order-events.service';
 import { IdempotencyService } from '../common/idempotency/idempotency.service';
@@ -74,6 +74,16 @@ export class PaymentsService {
         message: `Order is in status ${order.status} and cannot accept a new payment.`,
       });
     }
+    const existingPayment = await this.prisma.payment.findFirst({
+      where: { orderId, status: PaymentStatus.PENDING },
+      select: { id: true },
+    });
+    if (existingPayment) {
+      throw new ConflictException({
+        code: 'PAYMENT_ALREADY_PENDING',
+        message: 'This order already has a payment attempt in progress.',
+      });
+    }
 
     // The amount comes entirely from the order the backend already computed —
     // there is no client-supplied amount anywhere in this path (spec: never
@@ -86,17 +96,31 @@ export class PaymentsService {
       idempotencyKey,
     });
 
-    const payment = await this.prisma.payment.create({
-      data: {
-        orderId,
-        provider: this.provider.type,
-        providerRef: intent.providerRef,
-        status: PaymentStatus.PENDING,
-        amount,
-        currency: order.currency,
-        idempotencyKey,
-      },
-    });
+    let payment: Awaited<ReturnType<typeof this.prisma.payment.create>>;
+    try {
+      payment = await this.prisma.payment.create({
+        data: {
+          orderId,
+          provider: this.provider.type,
+          providerRef: intent.providerRef,
+          status: PaymentStatus.PENDING,
+          amount,
+          currency: order.currency,
+          idempotencyKey,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'PAYMENT_ALREADY_PENDING',
+          message: 'This order already has a payment attempt in progress.',
+        });
+      }
+      throw error;
+    }
 
     return {
       paymentId: payment.id,

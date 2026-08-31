@@ -640,6 +640,8 @@ model Payment {
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   refunds Refund[]
 
+  // The partial unique index in the migration allows failed attempts to remain
+  // in history while enforcing one active payment attempt per order.
   @@unique([orderId, idempotencyKey])
   @@index([orderId])
   @@map("payments")

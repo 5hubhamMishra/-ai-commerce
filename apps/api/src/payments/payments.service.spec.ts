@@ -1,7 +1,55 @@
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, Prisma } from '@prisma/client';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
+  it('maps a concurrent pending-payment race to a conflict', async () => {
+    const paymentCreate = jest.fn().mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+    const prisma = {
+      payment: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: paymentCreate,
+      },
+    };
+    const service = new PaymentsService(
+      prisma as never,
+      {
+        type: 'DEVELOPMENT',
+        createIntent: jest.fn().mockResolvedValue({ providerRef: 'ref-1' }),
+      } as never,
+      {
+        assertOwnership: jest.fn().mockResolvedValue({
+          status: 'PENDING_PAYMENT',
+          total: 100,
+          currency: 'INR',
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const createInternal = (
+      service as unknown as {
+        createPaymentInternal: (
+          userId: string,
+          orderId: string,
+          key: string,
+        ) => Promise<unknown>;
+      }
+    ).createPaymentInternal;
+
+    await expect(
+      createInternal.call(service, 'user1', 'order1', 'key1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PAYMENT_ALREADY_PENDING' }),
+    });
+    expect(paymentCreate).toHaveBeenCalled();
+  });
+
   it('does not transition the order when another request already claimed payment', async () => {
     const payment = {
       id: 'payment-1',
