@@ -45,6 +45,54 @@ describe('ExchangesService refund reference', () => {
     expect(result.status).toBe(ExchangeStatus.APPROVED);
   });
 
+  it('does not dispatch when another request wins the exchange status claim', async () => {
+    const exchange = {
+      id: 'exchange-1',
+      returnRequestId: 'return-1',
+      orderId: 'order-1',
+      originalVariantId: 'old-variant',
+      newVariantId: 'new-variant',
+      quantity: 1,
+      priceDifference: 0,
+      status: ExchangeStatus.APPROVED,
+      carrier: null,
+      trackingNumber: null,
+      createdAt: new Date(),
+    };
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      exchange: {
+        findUnique: jest.fn().mockResolvedValue(exchange),
+        updateMany,
+      },
+    };
+    const audit = { record: jest.fn() };
+    const service = new ExchangesService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      audit as never,
+    );
+
+    await expect(
+      service.dispatch('admin-1', 'exchange-1', {
+        carrier: 'DHL',
+        trackingNumber: 'TRACK-1',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'EXCHANGE_STATUS_CHANGED' }),
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'exchange-1', status: ExchangeStatus.APPROVED },
+      data: {
+        status: ExchangeStatus.SHIPPED,
+        carrier: 'DHL',
+        trackingNumber: 'TRACK-1',
+      },
+    });
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
   it('uses the confirmed payment reference for lower-priced exchanges', async () => {
     const payment = {
       providerRef: 'order_ref_1',

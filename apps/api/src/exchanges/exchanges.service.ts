@@ -158,14 +158,26 @@ export class ExchangesService {
     const exchange = await this.getRow(exchangeId);
     assertTransition(exchange.status, ExchangeStatus.SHIPPED);
 
-    const updated = await this.prisma.exchange.update({
-      where: { id: exchangeId },
+    const claimed = await this.prisma.exchange.updateMany({
+      where: { id: exchangeId, status: exchange.status },
       data: {
         status: ExchangeStatus.SHIPPED,
         carrier: dto.carrier,
         trackingNumber: dto.trackingNumber,
       },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'EXCHANGE_STATUS_CHANGED',
+        message: 'The exchange changed before dispatch could be applied.',
+      });
+    }
+    const updated = {
+      ...exchange,
+      status: ExchangeStatus.SHIPPED,
+      carrier: dto.carrier,
+      trackingNumber: dto.trackingNumber,
+    };
     await this.audit.record({
       actorId,
       action: 'EXCHANGE_DISPATCHED',
@@ -180,10 +192,17 @@ export class ExchangesService {
     const exchange = await this.getRow(exchangeId);
     assertTransition(exchange.status, ExchangeStatus.DELIVERED);
 
-    const updated = await this.prisma.exchange.update({
-      where: { id: exchangeId },
+    const claimed = await this.prisma.exchange.updateMany({
+      where: { id: exchangeId, status: exchange.status },
       data: { status: ExchangeStatus.DELIVERED },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'EXCHANGE_STATUS_CHANGED',
+        message: 'The exchange changed before delivery could be applied.',
+      });
+    }
+    const updated = { ...exchange, status: ExchangeStatus.DELIVERED };
     await this.audit.record({
       actorId,
       action: 'EXCHANGE_DELIVERED',
