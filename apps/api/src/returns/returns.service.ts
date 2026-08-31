@@ -410,6 +410,7 @@ export class ReturnsService {
         amount,
         payment.currency,
         'Return completed',
+        `return-${returnId}`,
       );
       refundContext = {
         paymentId: payment.id,

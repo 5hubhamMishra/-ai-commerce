@@ -96,6 +96,7 @@ export class ExchangesService {
         amount: Math.abs(params.priceDifference),
         currency: params.currency,
         reason: 'Exchange price difference (lower-priced item)',
+        idempotencyKey: `exchange-${params.returnRequestId}`,
       });
       await tx.refund.create({
         data: {

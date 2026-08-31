@@ -106,6 +106,24 @@ describe('RefundsService', () => {
     expect(idempotency.run).not.toHaveBeenCalled();
   });
 
+  it('passes provider idempotency keys through to refund requests', async () => {
+    await service.requestProviderRefund(
+      'pay_1',
+      100,
+      'INR',
+      'Return completed',
+      'return-return-1',
+    );
+
+    expect(provider.refund).toHaveBeenCalledWith({
+      providerRef: 'pay_1',
+      amount: 100,
+      currency: 'INR',
+      reason: 'Return completed',
+      idempotencyKey: 'return-return-1',
+    });
+  });
+
   it('claims idempotency, reserves the refund, and passes the key to the provider', async () => {
     const result = await service.createStandalone(
       'admin-1',
