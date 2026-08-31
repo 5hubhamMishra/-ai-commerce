@@ -70,14 +70,26 @@ export class ReplacementsService {
     const replacement = await this.getRow(replacementId);
     assertTransition(replacement.status, ReplacementStatus.SHIPPED);
 
-    const updated = await this.prisma.replacement.update({
-      where: { id: replacementId },
+    const claimed = await this.prisma.replacement.updateMany({
+      where: { id: replacementId, status: replacement.status },
       data: {
         status: ReplacementStatus.SHIPPED,
         carrier: dto.carrier,
         trackingNumber: dto.trackingNumber,
       },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'REPLACEMENT_STATUS_CHANGED',
+        message: 'The replacement changed before dispatch could be applied.',
+      });
+    }
+    const updated = {
+      ...replacement,
+      status: ReplacementStatus.SHIPPED,
+      carrier: dto.carrier,
+      trackingNumber: dto.trackingNumber,
+    };
     await this.audit.record({
       actorId,
       action: 'REPLACEMENT_DISPATCHED',
@@ -92,10 +104,17 @@ export class ReplacementsService {
     const replacement = await this.getRow(replacementId);
     assertTransition(replacement.status, ReplacementStatus.DELIVERED);
 
-    const updated = await this.prisma.replacement.update({
-      where: { id: replacementId },
+    const claimed = await this.prisma.replacement.updateMany({
+      where: { id: replacementId, status: replacement.status },
       data: { status: ReplacementStatus.DELIVERED },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'REPLACEMENT_STATUS_CHANGED',
+        message: 'The replacement changed before delivery could be applied.',
+      });
+    }
+    const updated = { ...replacement, status: ReplacementStatus.DELIVERED };
     await this.audit.record({
       actorId,
       action: 'REPLACEMENT_DELIVERED',
