@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InventoryService } from '../inventory/inventory.service';
 import type { SetInventoryDto } from '../inventory/dto/set-inventory.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -174,6 +178,16 @@ export class SellerCatalogService {
    *  warehouseId in the route, since sellers don't manage multiple this
    *  phase (see DECISIONS.md ADR-020). */
   async setInventory(userId: string, variantId: string, dto: SetInventoryDto) {
+    if (
+      dto.quantityReserved !== undefined ||
+      dto.quantityCommitted !== undefined
+    ) {
+      throw new BadRequestException({
+        code: 'INVENTORY_BUCKET_READ_ONLY',
+        message:
+          'Reserved and committed quantities are managed by order workflows.',
+      });
+    }
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.sellers.assertVerifiedSeller(sellerId);
     await this.assertOwnsVariant(sellerId, variantId);
