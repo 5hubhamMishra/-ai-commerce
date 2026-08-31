@@ -595,6 +595,19 @@ export class ReturnsService {
     inspected: { returnRequestItemId: string }[],
   ) {
     const inspectedIds = new Set(inspected.map((i) => i.returnRequestItemId));
+    if (inspectedIds.size !== inspected.length) {
+      throw new BadRequestException({
+        code: 'INSPECTION_ITEM_DUPLICATE',
+        message: 'Each returned line item may only be inspected once.',
+      });
+    }
+    const itemIds = new Set(items.map((i) => i.id));
+    if ([...inspectedIds].some((id) => !itemIds.has(id))) {
+      throw new BadRequestException({
+        code: 'INSPECTION_ITEM_NOT_FOUND',
+        message: 'Inspection results must belong to this return request.',
+      });
+    }
     const missing = items.filter((i) => !inspectedIds.has(i.id));
     if (missing.length > 0) {
       throw new BadRequestException({

@@ -7,6 +7,40 @@ import {
 import { ReturnsService } from './returns.service';
 
 describe('ReturnsService', () => {
+  it('rejects duplicate inspection entries', () => {
+    const service = new ReturnsService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const assertAllItemsInspected = (
+      service as unknown as {
+        assertAllItemsInspected: (
+          items: { id: string }[],
+          inspected: { returnRequestItemId: string }[],
+        ) => void;
+      }
+    ).assertAllItemsInspected;
+
+    expect(() =>
+      assertAllItemsInspected.call(
+        service,
+        [{ id: 'return-item-1' }],
+        [
+          { returnRequestItemId: 'return-item-1' },
+          { returnRequestItemId: 'return-item-1' },
+        ],
+      ),
+    ).toThrow();
+  });
+
   it('rejects duplicate order items before creating a return', async () => {
     const prisma = {
       order: {
