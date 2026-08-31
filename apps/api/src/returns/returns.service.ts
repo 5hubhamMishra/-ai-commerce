@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   NotificationType,
   OrderStatus,
+  Prisma,
   ReturnResolution,
   ReturnStatus,
 } from '@prisma/client';
@@ -142,22 +143,36 @@ export class ReturnsService {
     await this.assertWithinReturnWindow(order.id, dto.items, orderItemsById);
 
     const returnRequest = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.returnRequest.create({
-        data: {
-          orderId: dto.orderId,
-          userId: user.id,
-          reason: dto.reason,
-          reasonNote: dto.reasonNote,
-          resolution: dto.resolution,
-          desiredVariantId: dto.desiredVariantId,
-          items: {
-            create: dto.items.map((i) => ({
-              orderItemId: i.orderItemId,
-              quantity: i.quantity,
-            })),
+      let created: Awaited<ReturnType<typeof this.prisma.returnRequest.create>>;
+      try {
+        created = await tx.returnRequest.create({
+          data: {
+            orderId: dto.orderId,
+            userId: user.id,
+            reason: dto.reason,
+            reasonNote: dto.reasonNote,
+            resolution: dto.resolution,
+            desiredVariantId: dto.desiredVariantId,
+            items: {
+              create: dto.items.map((i) => ({
+                orderItemId: i.orderItemId,
+                quantity: i.quantity,
+              })),
+            },
           },
-        },
-      });
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException({
+            code: 'RETURN_ALREADY_IN_PROGRESS',
+            message: 'A return is already in progress for this order.',
+          });
+        }
+        throw error;
+      }
       await this.ordersService.markReturnRequested(tx, dto.orderId, user.id);
       return created;
     });

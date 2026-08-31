@@ -838,6 +838,8 @@ model ReturnRequest {
   replacement    Replacement?
   exchange       Exchange?
 
+  // The partial unique index in the migration allows rejected/cancelled
+  // requests to remain in history while enforcing one active return per order.
   @@index([orderId])
   @@index([userId])
   @@map("return_requests")
