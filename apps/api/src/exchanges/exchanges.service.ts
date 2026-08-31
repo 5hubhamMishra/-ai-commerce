@@ -97,6 +97,13 @@ export class ExchangesService {
         reason: 'Exchange price difference (lower-priced item)',
         idempotencyKey: `exchange-${params.returnRequestId}`,
       });
+      if (!result.success) {
+        throw new ConflictException({
+          code: 'REFUND_FAILED',
+          message:
+            'The refund provider did not complete the refund. Try completing the return again.',
+        });
+      }
       await tx.refund.create({
         data: {
           orderId: params.orderId,

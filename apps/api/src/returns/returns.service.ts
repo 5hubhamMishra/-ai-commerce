@@ -412,6 +412,13 @@ export class ReturnsService {
         'Return completed',
         `return-${returnId}`,
       );
+      if (!result.success) {
+        throw new ConflictException({
+          code: 'REFUND_FAILED',
+          message:
+            'The refund provider did not complete the refund. Try completing the return again.',
+        });
+      }
       refundContext = {
         paymentId: payment.id,
         amount,
