@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, SellerStatus } from '@prisma/client';
 import { SellersService } from './sellers.service';
 
 describe('SellersService', () => {
@@ -34,5 +34,47 @@ describe('SellersService', () => {
       response: expect.objectContaining({ code: 'SELLER_SLUG_TAKEN' }),
     });
     expect(create).toHaveBeenCalled();
+  });
+
+  it('does not deactivate listings when suspension loses its status claim', async () => {
+    const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const productUpdateMany = jest.fn();
+    const prisma = {
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback({
+          seller: { updateMany: sellerUpdateMany },
+          product: { updateMany: productUpdateMany },
+        }),
+      ),
+    };
+    const service = new SellersService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    (service as unknown as { getRow: jest.Mock }).getRow = jest
+      .fn()
+      .mockResolvedValue({
+        id: 'seller-1',
+        status: SellerStatus.VERIFIED,
+      });
+
+    await expect(
+      service.suspend('admin-1', 'seller-1', { reason: 'Policy violation' }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SELLER_STATUS_CHANGED' }),
+    });
+    expect(sellerUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'seller-1', status: SellerStatus.VERIFIED },
+      data: {
+        status: SellerStatus.SUSPENDED,
+        suspendReason: 'Policy violation',
+      },
+    });
+    expect(productUpdateMany).not.toHaveBeenCalled();
   });
 });

@@ -271,10 +271,17 @@ export class SellersService {
   async suspend(actorId: string, id: string, dto: SuspendSellerDto) {
     const seller = await this.getRow(id);
     const updated = await this.prisma.$transaction(async (tx) => {
-      const result = await tx.seller.update({
-        where: { id },
+      const claimed = await tx.seller.updateMany({
+        where: { id, status: seller.status },
         data: { status: SellerStatus.SUSPENDED, suspendReason: dto.reason },
       });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'SELLER_STATUS_CHANGED',
+          message: 'The seller changed before suspension could be applied.',
+        });
+      }
+      const result = await tx.seller.findUniqueOrThrow({ where: { id } });
       await tx.product.updateMany({
         where: { sellerId: id, status: ProductStatus.ACTIVE },
         data: { status: ProductStatus.DRAFT },
