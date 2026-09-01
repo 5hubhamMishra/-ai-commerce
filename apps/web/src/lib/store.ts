@@ -273,24 +273,34 @@ export const useStore = create<StoreState>()(
 
       login: async (email, password) => {
         const result = await authApi.login({ email, password });
-        set({ accessToken: result.accessToken, authStatus: "authenticated" });
-        const me = await authApi.me();
-        const profile = await usersApi.getProfile();
-        set({ user: me, personalizationEnabled: profile.personalizationEnabled });
-        void get().fetchServerCart();
-        void get().fetchServerWishlist();
-        void get().fetchBehavioralProfile();
+        set({ accessToken: result.accessToken, authStatus: "checking" });
+        try {
+          const me = await authApi.me();
+          const profile = await usersApi.getProfile();
+          set({ user: me, personalizationEnabled: profile.personalizationEnabled, authStatus: "authenticated" });
+          void get().fetchServerCart();
+          void get().fetchServerWishlist();
+          void get().fetchBehavioralProfile();
+        } catch (error) {
+          get().clearSession();
+          throw error;
+        }
       },
 
       register: async (email, password, name) => {
         const result = await authApi.register({ email, password, name });
-        set({ accessToken: result.accessToken, authStatus: "authenticated" });
-        const me = await authApi.me();
-        const profile = await usersApi.getProfile();
-        set({ user: me, personalizationEnabled: profile.personalizationEnabled });
-        void get().fetchServerCart();
-        void get().fetchServerWishlist();
-        void get().fetchBehavioralProfile();
+        set({ accessToken: result.accessToken, authStatus: "checking" });
+        try {
+          const me = await authApi.me();
+          const profile = await usersApi.getProfile();
+          set({ user: me, personalizationEnabled: profile.personalizationEnabled, authStatus: "authenticated" });
+          void get().fetchServerCart();
+          void get().fetchServerWishlist();
+          void get().fetchBehavioralProfile();
+        } catch (error) {
+          get().clearSession();
+          throw error;
+        }
       },
 
       logout: async () => {

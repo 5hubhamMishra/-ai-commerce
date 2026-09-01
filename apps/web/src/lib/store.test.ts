@@ -213,6 +213,21 @@ describe("auth", () => {
     expect(useStore.getState().authStatus).not.toBe("authenticated");
   });
 
+  it("clears a partial session when login hydration fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetch({
+        "POST /api/v1/auth/login": { body: { accessToken: "tok-1", refreshToken: "r1", user: { id: "u1", email: "ada@example.com", name: "Ada", roles: ["CUSTOMER"] } } },
+        "GET /api/v1/users/me": { status: 503, body: {} },
+      }),
+    );
+
+    await expect(useStore.getState().login("ada@example.com", "password123")).rejects.toThrow();
+    expect(useStore.getState().user).toBeNull();
+    expect(useStore.getState().accessToken).toBeNull();
+    expect(useStore.getState().authStatus).toBe("unauthenticated");
+  });
+
   it("logout clears the session", async () => {
     vi.stubGlobal("fetch", mockFetch({ "POST /api/v1/auth/logout": { status: 204 } }));
     useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
