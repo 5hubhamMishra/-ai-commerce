@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Notification } from "@ai-commerce/types";
 import { notificationsApi } from "@ai-commerce/api-client";
@@ -33,14 +33,18 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [actionError, setActionError] = useState(false);
+  const notificationOperation = useRef(0);
 
   const loadNotifications = useCallback(async () => {
+    const operation = ++notificationOperation.current;
     setStatus("loading");
     try {
-      setNotifications(await notificationsApi.list());
+      const next = await notificationsApi.list();
+      if (operation !== notificationOperation.current) return;
+      setNotifications(next);
       setStatus("idle");
     } catch {
-      setStatus("error");
+      if (operation === notificationOperation.current) setStatus("error");
     }
   }, []);
 
@@ -48,27 +52,34 @@ export default function NotificationsPage() {
     if (authStatus !== "authenticated") return;
     startTransition(() => void loadNotifications());
     const interval = window.setInterval(() => void loadNotifications(), 60_000);
-    return () => window.clearInterval(interval);
+    return () => {
+      notificationOperation.current++;
+      window.clearInterval(interval);
+    };
   }, [authStatus, loadNotifications]);
 
   async function markRead(id: string) {
+    const operation = ++notificationOperation.current;
     setActionError(false);
     try {
       const updated = await notificationsApi.markRead(id);
+      if (operation !== notificationOperation.current) return;
       setNotifications((current) =>
         current.map((notification) =>
           notification.id === id ? { ...notification, readAt: updated.readAt } : notification,
         ),
       );
     } catch {
-      setActionError(true);
+      if (operation === notificationOperation.current) setActionError(true);
     }
   }
 
   async function markAllRead() {
+    const operation = ++notificationOperation.current;
     setActionError(false);
     try {
       await notificationsApi.markAllRead();
+      if (operation !== notificationOperation.current) return;
       setNotifications((current) =>
         current.map((notification) => ({
           ...notification,
@@ -76,7 +87,7 @@ export default function NotificationsPage() {
         })),
       );
     } catch {
-      setActionError(true);
+      if (operation === notificationOperation.current) setActionError(true);
     }
   }
 
