@@ -150,6 +150,7 @@ export default async function ProductDetailPage({
         dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }}
       />
       <ProductDetailClient
+        key={product.id}
         initialProduct={product}
         initialSimilarProducts={initialSimilarProducts}
       />
