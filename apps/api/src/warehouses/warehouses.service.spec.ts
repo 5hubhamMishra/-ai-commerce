@@ -27,4 +27,29 @@ describe('WarehousesService', () => {
     });
     expect(create).toHaveBeenCalled();
   });
+
+  it('rejects a stale warehouse update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    const warehouseUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      warehouse: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'warehouse-1',
+          updatedAt,
+        }),
+        updateMany: warehouseUpdateMany,
+      },
+    };
+    const service = new WarehousesService(prisma as never, {} as never);
+
+    await expect(
+      service.update('warehouse-1', { name: 'New name' }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'WAREHOUSE_CHANGED' }),
+    });
+    expect(warehouseUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'warehouse-1', updatedAt },
+      data: { name: 'New name' },
+    });
+  });
 });

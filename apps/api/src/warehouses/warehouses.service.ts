@@ -64,13 +64,24 @@ export class WarehousesService {
   }
 
   async update(id: string, dto: UpdateWarehouseDto, actorId: string) {
-    await this.findById(id);
+    const existing = await this.findById(id);
     if (dto.code) await this.assertCodeAvailable(dto.code, id);
-    let warehouse: Awaited<ReturnType<typeof this.prisma.warehouse.update>>;
+    let warehouse: Awaited<
+      ReturnType<typeof this.prisma.warehouse.findUniqueOrThrow>
+    >;
     try {
-      warehouse = await this.prisma.warehouse.update({
-        where: { id },
+      const claimed = await this.prisma.warehouse.updateMany({
+        where: { id, updatedAt: existing.updatedAt },
         data: dto,
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'WAREHOUSE_CHANGED',
+          message: 'The warehouse changed before this update could be applied.',
+        });
+      }
+      warehouse = await this.prisma.warehouse.findUniqueOrThrow({
+        where: { id },
       });
     } catch (error) {
       if (
