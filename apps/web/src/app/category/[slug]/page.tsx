@@ -101,6 +101,7 @@ export default async function CategoryPage({
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <CategoryPageClient
+        key={category.id}
         initialCategory={category}
         initialResult={initialResult}
       />
