@@ -175,7 +175,7 @@ export class BrandsService {
   }
 
   async remove(id: string, actorId: string): Promise<void> {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
     const productCount = await this.prisma.product.count({
       where: { brandId: id, deletedAt: null },
@@ -188,10 +188,16 @@ export class BrandsService {
       });
     }
 
-    await this.prisma.brand.update({
-      where: { id },
+    const claimed = await this.prisma.brand.updateMany({
+      where: { id, updatedAt: existing.updatedAt },
       data: { deletedAt: new Date() },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'BRAND_CHANGED',
+        message: 'The brand changed before deletion could be applied.',
+      });
+    }
 
     await this.audit.record({
       actorId,
