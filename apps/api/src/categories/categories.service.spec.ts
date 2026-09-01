@@ -16,6 +16,7 @@ describe('CategoriesService', () => {
       findFirst: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
+      updateMany: jest.Mock;
       count: jest.Mock;
     };
     product: { count: jest.Mock };
@@ -30,6 +31,7 @@ describe('CategoriesService', () => {
         findFirst: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
         count: jest.fn(),
       },
       product: { count: jest.fn() },
@@ -111,6 +113,35 @@ describe('CategoriesService', () => {
     await expect(service.remove('c1', 'actor1')).rejects.toBeInstanceOf(
       ConflictException,
     );
+    expect(prisma.category.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects a stale category update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.category.findUnique.mockResolvedValue({
+      id: 'category-1',
+      deletedAt: null,
+      updatedAt,
+    });
+    prisma.category.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.update('category-1', { name: 'New name' }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'CATEGORY_CHANGED' }),
+    });
+    expect(prisma.category.updateMany).toHaveBeenCalledWith({
+      where: { id: 'category-1', updatedAt },
+      data: {
+        name: 'New name',
+        slug: undefined,
+        description: undefined,
+        imageUrl: undefined,
+        parentId: undefined,
+        sortOrder: undefined,
+        isActive: undefined,
+      },
+    });
     expect(prisma.category.update).not.toHaveBeenCalled();
   });
 

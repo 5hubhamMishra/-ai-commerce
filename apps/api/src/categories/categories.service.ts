@@ -140,7 +140,7 @@ export class CategoriesService {
   }
 
   async update(id: string, dto: UpdateCategoryDto, actorId: string) {
-    await this.findById(id);
+    const existing = await this.findById(id);
     if (dto.parentId) {
       if (dto.parentId === id) {
         throw new ConflictException({
@@ -155,8 +155,8 @@ export class CategoriesService {
 
     let category: Category;
     try {
-      category = await this.prisma.category.update({
-        where: { id },
+      const claimed = await this.prisma.category.updateMany({
+        where: { id, updatedAt: existing.updatedAt },
         data: {
           name: dto.name,
           slug,
@@ -166,6 +166,15 @@ export class CategoriesService {
           sortOrder: dto.sortOrder,
           isActive: dto.isActive,
         },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'CATEGORY_CHANGED',
+          message: 'The category changed before this update could be applied.',
+        });
+      }
+      category = await this.prisma.category.findUniqueOrThrow({
+        where: { id },
       });
     } catch (error) {
       if (
