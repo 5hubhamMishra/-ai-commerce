@@ -343,11 +343,17 @@ export class ProductsService {
   }
 
   async remove(id: string, actorId: string): Promise<void> {
-    await this.getRowById(id);
-    await this.prisma.product.update({
-      where: { id },
+    const existing = await this.getRowById(id);
+    const claimed = await this.prisma.product.updateMany({
+      where: { id, updatedAt: existing.updatedAt },
       data: { deletedAt: new Date() },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'PRODUCT_CHANGED',
+        message: 'The product changed before deletion could be applied.',
+      });
+    }
 
     await this.audit.record({
       actorId,

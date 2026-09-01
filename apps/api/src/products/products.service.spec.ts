@@ -173,4 +173,23 @@ describe('ProductsService', () => {
     });
     expect(prisma.product.update).not.toHaveBeenCalled();
   });
+
+  it('rejects a stale product deletion', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.product.findUnique.mockResolvedValue({
+      id: 'product-1',
+      deletedAt: null,
+      updatedAt,
+    });
+    prisma.product.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.remove('product-1', 'actor1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_CHANGED' }),
+    });
+    expect(prisma.product.updateMany).toHaveBeenCalledWith({
+      where: { id: 'product-1', updatedAt },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(prisma.product.update).not.toHaveBeenCalled();
+  });
 });
