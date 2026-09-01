@@ -10,7 +10,13 @@ describe('InventoryService', () => {
   let prisma: {
     productVariant: { findUnique: jest.Mock };
     warehouse: { findUnique: jest.Mock };
-    inventory: { upsert: jest.Mock; findMany: jest.Mock };
+    inventory: {
+      findUnique: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
+      updateMany: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+    };
   };
   let events: { inventoryChanged: jest.Mock };
 
@@ -18,7 +24,13 @@ describe('InventoryService', () => {
     prisma = {
       productVariant: { findUnique: jest.fn() },
       warehouse: { findUnique: jest.fn() },
-      inventory: { upsert: jest.fn(), findMany: jest.fn() },
+      inventory: {
+        findUnique: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
+        updateMany: jest.fn(),
+        create: jest.fn(),
+        findMany: jest.fn(),
+      },
     };
     events = { inventoryChanged: jest.fn() };
 
@@ -40,7 +52,6 @@ describe('InventoryService', () => {
     await expect(
       service.set('missing-variant', 'w1', { quantityOnHand: 10 }, 'actor1'),
     ).rejects.toBeInstanceOf(NotFoundException);
-    expect(prisma.inventory.upsert).not.toHaveBeenCalled();
   });
 
   it('throws not-found when the warehouse does not exist', async () => {
@@ -63,7 +74,8 @@ describe('InventoryService', () => {
       deletedAt: null,
     });
     prisma.warehouse.findUnique.mockResolvedValue({ id: 'w1' });
-    prisma.inventory.upsert.mockResolvedValue({
+    prisma.inventory.findUnique.mockResolvedValue(null);
+    prisma.inventory.create.mockResolvedValue({
       id: 'inv1',
       variantId: 'v1',
       warehouseId: 'w1',
@@ -76,12 +88,9 @@ describe('InventoryService', () => {
       'actor1',
     );
 
-    expect(prisma.inventory.upsert).toHaveBeenCalledWith(
+    expect(prisma.inventory.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
-          variantId_warehouseId: { variantId: 'v1', warehouseId: 'w1' },
-        },
-        create: expect.objectContaining({
+        data: expect.objectContaining({
           quantityOnHand: 25,
           reorderPoint: 5,
         }),
@@ -92,6 +101,39 @@ describe('InventoryService', () => {
       'p1',
       'updated',
     );
+  });
+
+  it('rejects a stale absolute inventory update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v1',
+      productId: 'p1',
+      deletedAt: null,
+    });
+    prisma.warehouse.findUnique.mockResolvedValue({ id: 'w1' });
+    prisma.inventory.findUnique.mockResolvedValue({
+      id: 'inv1',
+      updatedAt,
+    });
+    prisma.inventory.updateMany.mockImplementation(updateMany);
+
+    await expect(
+      service.set('v1', 'w1', { quantityOnHand: 25 }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVENTORY_CHANGED' }),
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'inv1', updatedAt },
+      data: {
+        quantityOnHand: 25,
+        quantityReserved: undefined,
+        quantityCommitted: undefined,
+        quantityDamaged: undefined,
+        quantityIncoming: undefined,
+        reorderPoint: undefined,
+      },
+    });
   });
 
   describe('reservation lifecycle', () => {

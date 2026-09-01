@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -55,28 +55,66 @@ export class InventoryService {
     const variant = await this.assertVariantExists(variantId);
     await this.assertWarehouseExists(warehouseId);
 
-    const inventory = await this.prisma.inventory.upsert({
+    const data = {
+      quantityOnHand: dto.quantityOnHand,
+      quantityReserved: dto.quantityReserved,
+      quantityCommitted: dto.quantityCommitted,
+      quantityDamaged: dto.quantityDamaged,
+      quantityIncoming: dto.quantityIncoming,
+      reorderPoint: dto.reorderPoint,
+    };
+    const existing = await this.prisma.inventory.findUnique({
       where: { variantId_warehouseId: { variantId, warehouseId } },
-      create: {
-        variantId,
-        warehouseId,
-        quantityOnHand: dto.quantityOnHand ?? 0,
-        quantityReserved: dto.quantityReserved ?? 0,
-        quantityCommitted: dto.quantityCommitted ?? 0,
-        quantityDamaged: dto.quantityDamaged ?? 0,
-        quantityIncoming: dto.quantityIncoming ?? 0,
-        reorderPoint: dto.reorderPoint ?? 0,
-      },
-      update: {
-        quantityOnHand: dto.quantityOnHand,
-        quantityReserved: dto.quantityReserved,
-        quantityCommitted: dto.quantityCommitted,
-        quantityDamaged: dto.quantityDamaged,
-        quantityIncoming: dto.quantityIncoming,
-        reorderPoint: dto.reorderPoint,
-      },
-      include: { warehouse: true },
     });
+
+    let inventory: Awaited<
+      ReturnType<typeof this.prisma.inventory.findUniqueOrThrow>
+    >;
+    try {
+      if (existing) {
+        const claimed = await this.prisma.inventory.updateMany({
+          where: { id: existing.id, updatedAt: existing.updatedAt },
+          data,
+        });
+        if (claimed.count === 0) {
+          throw new ConflictException({
+            code: 'INVENTORY_CHANGED',
+            message:
+              'The inventory changed before this update could be applied.',
+          });
+        }
+        inventory = await this.prisma.inventory.findUniqueOrThrow({
+          where: { id: existing.id },
+          include: { warehouse: true },
+        });
+      } else {
+        inventory = await this.prisma.inventory.create({
+          data: {
+            variantId,
+            warehouseId,
+            quantityOnHand: dto.quantityOnHand ?? 0,
+            quantityReserved: dto.quantityReserved ?? 0,
+            quantityCommitted: dto.quantityCommitted ?? 0,
+            quantityDamaged: dto.quantityDamaged ?? 0,
+            quantityIncoming: dto.quantityIncoming ?? 0,
+            reorderPoint: dto.reorderPoint ?? 0,
+          },
+          include: { warehouse: true },
+        });
+      }
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'INVENTORY_CHANGED',
+          message:
+            'The inventory was created before this update could be applied.',
+        });
+      }
+      throw error;
+    }
 
     await this.audit.record({
       actorId,
