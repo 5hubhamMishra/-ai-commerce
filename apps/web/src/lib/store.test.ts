@@ -671,6 +671,47 @@ describe("server address / order actions", () => {
     expect(useStore.getState().serverAddresses).toEqual([]);
   });
 
+  it("does not let an old address mutation update a new session", async () => {
+    useStore.setState({
+      user: authenticatedUser,
+      accessToken: "tok-1",
+      authStatus: "authenticated",
+      serverAddresses: [],
+    });
+    let resolveCreate!: (response: Response) => void;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveCreate = resolve;
+          }),
+      ),
+    );
+
+    const creating = useStore.getState().createServerAddress({
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+      isDefault: true,
+    });
+    await vi.waitFor(() => expect(resolveCreate).toBeTypeOf("function"));
+
+    useStore.getState().clearSession();
+    useStore.setState({
+      user: authenticatedUser,
+      accessToken: "tok-2",
+      authStatus: "authenticated",
+      serverAddresses: [],
+    });
+    resolveCreate({ ok: true, status: 201, json: async () => address } as Response);
+    await creating;
+
+    expect(useStore.getState().serverAddresses).toEqual([]);
+  });
+
   it("keeps the newest overlapping address fetch response", async () => {
     useStore.setState({ user: authenticatedUser, accessToken: "tok-1" });
     let resolveFirst!: (response: Response) => void;

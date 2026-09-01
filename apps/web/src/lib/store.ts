@@ -548,9 +548,10 @@ export const useStore = create<StoreState>()(
       },
 
       createServerAddress: async (input) => {
+        const session = authOperation;
         const userId = get().user?.id;
         const address = await addressesApi.create(input);
-        if (get().user?.id !== userId) return address;
+        if (session !== authOperation || get().user?.id !== userId) return address;
         set((state) => ({
           serverAddresses: address.isDefault
             ? [address, ...(state.serverAddresses ?? []).map((a) => ({ ...a, isDefault: false }))]
@@ -560,9 +561,10 @@ export const useStore = create<StoreState>()(
       },
 
       updateServerAddress: async (id, input) => {
+        const session = authOperation;
         const userId = get().user?.id;
         const address = await addressesApi.update(id, input);
-        if (get().user?.id !== userId) return address;
+        if (session !== authOperation || get().user?.id !== userId) return address;
         set((state) => ({
           serverAddresses: (state.serverAddresses ?? []).map((a) =>
             a.id === id ? address : address.isDefault ? { ...a, isDefault: false } : a,
@@ -572,9 +574,10 @@ export const useStore = create<StoreState>()(
       },
 
       removeServerAddress: async (id) => {
+        const session = authOperation;
         const userId = get().user?.id;
         await addressesApi.remove(id);
-        if (get().user?.id !== userId) return;
+        if (session !== authOperation || get().user?.id !== userId) return;
         set((state) => ({
           serverAddresses: (state.serverAddresses ?? []).filter((a) => a.id !== id),
         }));
