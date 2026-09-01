@@ -37,18 +37,15 @@ export class ProductTagsService {
   }
 
   async remove(productId: string, tagId: string) {
-    const assignment = await this.prisma.productTagAssignment.findUnique({
-      where: { productId_tagId: { productId, tagId } },
+    const deleted = await this.prisma.productTagAssignment.deleteMany({
+      where: { productId, tagId },
     });
-    if (!assignment) {
+    if (deleted.count === 0) {
       throw new NotFoundException({
         code: 'PRODUCT_TAG_NOT_FOUND',
         message: 'This tag is not assigned to the product.',
       });
     }
-    await this.prisma.productTagAssignment.delete({
-      where: { productId_tagId: { productId, tagId } },
-    });
     this.events.productChanged(productId, 'updated');
     return this.products.findByIdAdmin(productId);
   }

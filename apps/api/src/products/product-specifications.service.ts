@@ -39,8 +39,15 @@ export class ProductSpecificationsService {
   }
 
   async remove(productId: string, specId: string) {
-    await this.getOwned(productId, specId);
-    await this.prisma.productSpecification.delete({ where: { id: specId } });
+    const deleted = await this.prisma.productSpecification.deleteMany({
+      where: { id: specId, productId },
+    });
+    if (deleted.count === 0) {
+      throw new NotFoundException({
+        code: 'PRODUCT_SPECIFICATION_NOT_FOUND',
+        message: 'Product specification not found.',
+      });
+    }
     this.events.productChanged(productId, 'updated');
     return this.products.findByIdAdmin(productId);
   }

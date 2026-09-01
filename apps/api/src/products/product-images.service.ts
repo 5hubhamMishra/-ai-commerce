@@ -70,8 +70,15 @@ export class ProductImagesService {
   }
 
   async remove(productId: string, imageId: string) {
-    await this.getOwned(productId, imageId);
-    await this.prisma.productImage.delete({ where: { id: imageId } });
+    const deleted = await this.prisma.productImage.deleteMany({
+      where: { id: imageId, productId },
+    });
+    if (deleted.count === 0) {
+      throw new NotFoundException({
+        code: 'PRODUCT_IMAGE_NOT_FOUND',
+        message: 'Product image not found.',
+      });
+    }
     this.events.productChanged(productId, 'updated');
     return this.products.findByIdAdmin(productId);
   }
