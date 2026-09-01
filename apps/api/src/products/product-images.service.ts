@@ -42,7 +42,6 @@ export class ProductImagesService {
   }
 
   async update(productId: string, imageId: string, dto: UpdateImageDto) {
-    await this.getOwned(productId, imageId);
     if (dto.variantId)
       await this.assertVariantBelongsToProduct(productId, dto.variantId);
 
@@ -87,19 +86,6 @@ export class ProductImagesService {
     }
     this.events.productChanged(productId, 'updated');
     return this.products.findByIdAdmin(productId);
-  }
-
-  private async getOwned(productId: string, imageId: string) {
-    const image = await this.prisma.productImage.findUnique({
-      where: { id: imageId },
-    });
-    if (!image || image.productId !== productId) {
-      throw new NotFoundException({
-        code: 'PRODUCT_IMAGE_NOT_FOUND',
-        message: 'Product image not found.',
-      });
-    }
-    return image;
   }
 
   private async assertVariantBelongsToProduct(
