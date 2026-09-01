@@ -150,4 +150,19 @@ describe('AddressesService', () => {
       response: expect.objectContaining({ code: 'ADDRESS_HAS_ORDERS' }),
     });
   });
+
+  it('maps a concurrent address deletion to not found', async () => {
+    prisma.address.findUnique.mockResolvedValue({ id: 'addr1', userId: 'u1' });
+    prisma.order.count.mockResolvedValue(0);
+    prisma.address.delete.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(service.remove('u1', 'addr1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ADDRESS_NOT_FOUND' }),
+    });
+  });
 });

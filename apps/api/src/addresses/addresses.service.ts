@@ -81,6 +81,15 @@ export class AddressesService {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException({
+          code: 'ADDRESS_NOT_FOUND',
+          message: 'Address not found.',
+        });
+      }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2003'
       ) {
         throw new ConflictException({
