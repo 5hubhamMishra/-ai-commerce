@@ -142,4 +142,32 @@ describe('SellersService', () => {
     expect(notifications.create).not.toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
   });
+
+  it('does not verify a seller after its status changes', async () => {
+    const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const audit = { record: jest.fn() };
+    const notifications = { create: jest.fn() };
+    const service = new SellersService(
+      { seller: { updateMany: sellerUpdateMany } } as never,
+      {} as never,
+      {} as never,
+      audit as never,
+      notifications as never,
+      {} as never,
+      {} as never,
+    );
+    (service as unknown as { getRow: jest.Mock }).getRow = jest
+      .fn()
+      .mockResolvedValue({ id: 'seller-1', status: SellerStatus.REJECTED });
+
+    await expect(service.verify('admin-1', 'seller-1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SELLER_STATUS_CHANGED' }),
+    });
+    expect(sellerUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'seller-1', status: SellerStatus.REJECTED },
+      data: { status: SellerStatus.VERIFIED, verifiedAt: expect.any(Date) },
+    });
+    expect(notifications.create).not.toHaveBeenCalled();
+    expect(audit.record).not.toHaveBeenCalled();
+  });
 });

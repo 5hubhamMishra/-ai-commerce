@@ -220,7 +220,7 @@ export class SellersService {
    *  resolves a PENDING_MANUAL_REVIEW / REJECTED case). */
   async verify(actorId: string, id: string) {
     const seller = await this.getRow(id);
-    const updated = await this.markVerified(id);
+    const updated = await this.markVerified(id, seller.status);
     await this.audit.record({
       actorId,
       action: 'SELLER_VERIFIED',
@@ -400,7 +400,9 @@ export class SellersService {
       reason?: string;
     },
   ) {
-    if (result.status === 'VERIFIED') return this.markVerified(sellerId);
+    if (result.status === 'VERIFIED') {
+      return this.markVerified(sellerId, SellerStatus.PENDING_VERIFICATION);
+    }
     if (result.status === 'REJECTED') {
       return this.prisma.seller.update({
         where: { id: sellerId },
@@ -420,10 +422,19 @@ export class SellersService {
    *  actual fulfillment address at application time); a seller can correct
    *  them via PATCH /sellers/me/warehouse before shipping anything for real —
    *  documented as a known gap in DATABASE.md, not silently left broken. */
-  private async markVerified(sellerId: string) {
-    const seller = await this.prisma.seller.update({
-      where: { id: sellerId },
+  private async markVerified(sellerId: string, expectedStatus: SellerStatus) {
+    const claimed = await this.prisma.seller.updateMany({
+      where: { id: sellerId, status: expectedStatus },
       data: { status: SellerStatus.VERIFIED, verifiedAt: new Date() },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'SELLER_STATUS_CHANGED',
+        message: 'The seller changed before verification could be applied.',
+      });
+    }
+    const seller = await this.prisma.seller.findUniqueOrThrow({
+      where: { id: sellerId },
     });
     const existingWarehouse = await this.prisma.warehouse.findFirst({
       where: { sellerId },
