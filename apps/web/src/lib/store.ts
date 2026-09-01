@@ -45,6 +45,7 @@ let cartFetchOperation = 0;
 let wishlistFetchOperation = 0;
 let addressFetchOperation = 0;
 let behavioralProfileFetchOperation = 0;
+let activityOperation = 0;
 const wishlistToggleQueues = new Map<string, Promise<void>>();
 let cartMutationQueue: Promise<void> = Promise.resolve();
 let personalizationQueue: Promise<void> = Promise.resolve();
@@ -282,10 +283,16 @@ export const useStore = create<StoreState>()(
         await request;
       },
       clearActivity: async () => {
+        const operation = ++activityOperation;
         const userId = get().user?.id;
         if (userId) {
           await activityApi.clear();
-          if (get().user?.id !== userId) return;
+          if (
+            operation !== activityOperation ||
+            get().user?.id !== userId
+          ) {
+            return;
+          }
         }
         set({
           events: [],
@@ -353,6 +360,7 @@ export const useStore = create<StoreState>()(
         wishlistFetchOperation++;
         addressFetchOperation++;
         behavioralProfileFetchOperation++;
+        activityOperation++;
         set({
           user: null,
           accessToken: null,

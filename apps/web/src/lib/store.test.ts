@@ -972,4 +972,42 @@ describe("real event tracking and behavioral profile", () => {
     expect(useStore.getState().recentlyViewed).toEqual(["p1"]);
     expect(useStore.getState().recentlyViewedReal).toEqual(["p1"]);
   });
+
+  it("does not let an old activity deletion clear a new session", async () => {
+    useStore.setState({
+      user: authenticatedUser,
+      events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }],
+      recentlyViewed: ["p1"],
+      recentlyViewedReal: ["p1"],
+    });
+    let resolveDelete!: (response: Response) => void;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveDelete = resolve;
+          }),
+      ),
+    );
+
+    const clearing = useStore.getState().clearActivity();
+    await vi.waitFor(() => expect(resolveDelete).toBeTypeOf("function"));
+
+    useStore.getState().clearSession();
+    useStore.setState({
+      user: authenticatedUser,
+      events: [{ eventType: "PRODUCT_SEARCHED", timestamp: 2 }],
+      recentlyViewed: ["p2"],
+      recentlyViewedReal: ["p2"],
+    });
+    resolveDelete({ ok: true, status: 204, json: async () => undefined } as Response);
+    await clearing;
+
+    expect(useStore.getState().events).toEqual([
+      { eventType: "PRODUCT_SEARCHED", timestamp: 2 },
+    ]);
+    expect(useStore.getState().recentlyViewed).toEqual(["p2"]);
+    expect(useStore.getState().recentlyViewedReal).toEqual(["p2"]);
+  });
 });
