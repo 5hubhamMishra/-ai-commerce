@@ -29,4 +29,41 @@ describe('BrandsService', () => {
     });
     expect(create).toHaveBeenCalled();
   });
+
+  it('rejects a stale brand update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    const brandUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      brand: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'brand-1',
+          deletedAt: null,
+          updatedAt,
+        }),
+        updateMany: brandUpdateMany,
+      },
+    };
+    const service = new BrandsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.update('brand-1', { name: 'New name' }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'BRAND_CHANGED' }),
+    });
+    expect(brandUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'brand-1', updatedAt },
+      data: {
+        name: 'New name',
+        slug: undefined,
+        description: undefined,
+        logoUrl: undefined,
+        isActive: undefined,
+      },
+    });
+  });
 });

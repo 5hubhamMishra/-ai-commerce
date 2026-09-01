@@ -127,14 +127,14 @@ export class BrandsService {
   }
 
   async update(id: string, dto: UpdateBrandDto, actorId: string) {
-    await this.findById(id);
+    const existing = await this.findById(id);
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
 
-    let brand: Awaited<ReturnType<typeof this.prisma.brand.update>>;
+    let brand: Awaited<ReturnType<typeof this.prisma.brand.findUniqueOrThrow>>;
     try {
-      brand = await this.prisma.brand.update({
-        where: { id },
+      const claimed = await this.prisma.brand.updateMany({
+        where: { id, updatedAt: existing.updatedAt },
         data: {
           name: dto.name,
           slug,
@@ -143,6 +143,13 @@ export class BrandsService {
           isActive: dto.isActive,
         },
       });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'BRAND_CHANGED',
+          message: 'The brand changed before this update could be applied.',
+        });
+      }
+      brand = await this.prisma.brand.findUniqueOrThrow({ where: { id } });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
