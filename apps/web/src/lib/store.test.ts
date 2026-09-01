@@ -299,6 +299,40 @@ describe("auth", () => {
     expect(useStore.getState().authStatus).toBe("unauthenticated");
   });
 
+  it("does not let an old account deletion clear a new session", async () => {
+    let resolveDelete!: (response: Response) => void;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveDelete = resolve;
+          }),
+      ),
+    );
+    useStore.setState({
+      user: authenticatedUser,
+      accessToken: "tok-1",
+      authStatus: "authenticated",
+    });
+
+    const deleting = useStore.getState().deleteAccount("password123");
+    await vi.waitFor(() => expect(resolveDelete).toBeTypeOf("function"));
+
+    useStore.getState().clearSession();
+    useStore.setState({
+      user: authenticatedUser,
+      accessToken: "tok-2",
+      authStatus: "authenticated",
+    });
+    resolveDelete({ ok: true, status: 204, json: async () => undefined } as Response);
+    await deleting;
+
+    expect(useStore.getState().user).toEqual(authenticatedUser);
+    expect(useStore.getState().accessToken).toBe("tok-2");
+    expect(useStore.getState().authStatus).toBe("authenticated");
+  });
+
   it("drops a server cart response that arrives after the session is cleared", async () => {
     let resolveCart!: (response: Response) => void;
     const cartResponse = new Promise<Response>((resolve) => {

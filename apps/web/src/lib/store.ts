@@ -380,9 +380,15 @@ export const useStore = create<StoreState>()(
       exportMyData: () => usersApi.exportData(),
 
       deleteAccount: async (password) => {
+        const operation = authOperation;
         const userId = get().user?.id;
         await usersApi.deleteAccount({ password });
-        if (get().user?.id === userId) get().clearSession();
+        if (
+          operation === authOperation &&
+          get().user?.id === userId
+        ) {
+          get().clearSession();
+        }
       },
 
       serverCart: null,
