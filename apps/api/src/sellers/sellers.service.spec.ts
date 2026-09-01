@@ -170,4 +170,41 @@ describe('SellersService', () => {
     expect(notifications.create).not.toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
   });
+
+  it('does not apply a provider rejection after moderation changes status', async () => {
+    const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const service = new SellersService(
+      { seller: { updateMany: sellerUpdateMany } } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const applyVerificationResult = (
+      service as unknown as {
+        applyVerificationResult: (
+          sellerId: string,
+          result: unknown,
+        ) => Promise<unknown>;
+      }
+    ).applyVerificationResult;
+
+    await expect(
+      applyVerificationResult.call(service, 'seller-1', {
+        status: 'REJECTED',
+        reason: 'Provider mismatch',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SELLER_STATUS_CHANGED' }),
+    });
+    expect(sellerUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'seller-1', status: SellerStatus.PENDING_VERIFICATION },
+      data: {
+        status: SellerStatus.REJECTED,
+        rejectReason: 'Provider mismatch',
+      },
+    });
+  });
 });

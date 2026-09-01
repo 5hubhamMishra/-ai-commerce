@@ -404,10 +404,18 @@ export class SellersService {
       return this.markVerified(sellerId, SellerStatus.PENDING_VERIFICATION);
     }
     if (result.status === 'REJECTED') {
-      return this.prisma.seller.update({
-        where: { id: sellerId },
+      const claimed = await this.prisma.seller.updateMany({
+        where: { id: sellerId, status: SellerStatus.PENDING_VERIFICATION },
         data: { status: SellerStatus.REJECTED, rejectReason: result.reason },
       });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'SELLER_STATUS_CHANGED',
+          message:
+            'The seller changed before provider rejection could be applied.',
+        });
+      }
+      return this.prisma.seller.findUniqueOrThrow({ where: { id: sellerId } });
     }
     // PENDING_MANUAL_REVIEW: stays PENDING_VERIFICATION, awaiting an admin.
     return this.getRow(sellerId);
