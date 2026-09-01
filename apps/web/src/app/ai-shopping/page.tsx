@@ -113,6 +113,7 @@ export default function AiShoppingPage() {
   const [history, setHistory] = useState<ChatTurn[]>(loadVisibleHistory);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const [sendingUser, setSendingUser] = useState(user);
   const [sending, setSending] = useState(false);
   const [forgetOnLeave, setForgetOnLeave] = useState(
     () =>
@@ -202,20 +203,30 @@ export default function AiShoppingPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history, sending]);
 
+  const currentSending = sending && sendingUser === user;
+
   async function send(text: string) {
-    if (!text.trim() || sending) return;
+    if (!text.trim() || currentSending) return;
+    const requestUser = user;
+    const requestAuthStatus = useStore.getState().authStatus;
+    const isCurrent = () =>
+      useStore.getState().user === requestUser &&
+      useStore.getState().authStatus === requestAuthStatus;
     const nextHistory: ChatTurn[] = [
       ...history,
       { role: "user", content: text },
     ];
     setHistory(limitSavedHistory(nextHistory));
     setInput("");
+    setSendingUser(requestUser);
     setSending(true);
     try {
       const reply = await sendShopAIMessage(text);
+      if (!isCurrent()) return;
       const fallback = isShopAIUnavailableReply(reply.content)
         ? await createCatalogBackedReply(nextHistory)
         : null;
+      if (!isCurrent()) return;
       const content = fallback?.content ?? reply.content;
       const products = fallback?.products ?? findDemoProductsInReply(content);
       if (fallback?.clearHistory) {
@@ -226,7 +237,9 @@ export default function AiShoppingPage() {
         );
       }
     } catch {
+      if (!isCurrent()) return;
       const fallback = await createCatalogBackedReply(nextHistory);
+      if (!isCurrent()) return;
       const assistantTurn = {
         role: "assistant" as const,
         content: fallback.content,
@@ -238,7 +251,10 @@ export default function AiShoppingPage() {
           : limitSavedHistory([...h, assistantTurn]),
       );
     } finally {
-      setSending(false);
+      if (isCurrent()) {
+        setSending(false);
+        setSendingUser(null);
+      }
     }
   }
 
@@ -401,7 +417,7 @@ export default function AiShoppingPage() {
               </div>
             ),
           )}
-          {sending && (
+          {currentSending && (
             <div className="flex gap-3">
               <div className="h-8 w-8 shrink-0 rounded-xl bg-stone-900 flex items-center justify-center text-amber-500 text-sm">
                 ★
@@ -458,7 +474,7 @@ export default function AiShoppingPage() {
             />
             <button
               type="submit"
-              disabled={sending}
+              disabled={currentSending}
               className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors duration-200"
               style={{ background: "var(--clr-ink)" }}
             >
