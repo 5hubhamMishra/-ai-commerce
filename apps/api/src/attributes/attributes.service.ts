@@ -75,13 +75,27 @@ export class AttributesService {
           message: 'An attribute with this slug already exists.',
         });
       }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException({
+          code: 'ATTRIBUTE_NOT_FOUND',
+          message: 'Attribute not found.',
+        });
+      }
       throw error;
     }
   }
 
   async remove(id: string): Promise<void> {
-    await this.findById(id);
-    await this.prisma.attribute.delete({ where: { id } });
+    const deleted = await this.prisma.attribute.deleteMany({ where: { id } });
+    if (deleted.count === 0) {
+      throw new NotFoundException({
+        code: 'ATTRIBUTE_NOT_FOUND',
+        message: 'Attribute not found.',
+      });
+    }
   }
 
   async addValue(attributeId: string, dto: CreateAttributeValueDto) {
@@ -115,16 +129,15 @@ export class AttributesService {
   }
 
   async removeValue(attributeId: string, valueId: string): Promise<void> {
-    const value = await this.prisma.attributeValue.findUnique({
-      where: { id: valueId },
+    const deleted = await this.prisma.attributeValue.deleteMany({
+      where: { id: valueId, attributeId },
     });
-    if (!value || value.attributeId !== attributeId) {
+    if (deleted.count === 0) {
       throw new NotFoundException({
         code: 'ATTRIBUTE_VALUE_NOT_FOUND',
         message: 'Attribute value not found.',
       });
     }
-    await this.prisma.attributeValue.delete({ where: { id: valueId } });
   }
 
   private async assertSlugAvailable(slug: string, excludeId?: string) {
