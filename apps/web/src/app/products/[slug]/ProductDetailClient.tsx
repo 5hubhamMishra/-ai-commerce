@@ -334,6 +334,7 @@ export default function ProductDetailClient({
       </div>
 
       <ProductReviews
+        key={product.slug}
         productSlug={product.slug}
         summary={{ average: product.rating, count: product.reviewCount }}
       />
