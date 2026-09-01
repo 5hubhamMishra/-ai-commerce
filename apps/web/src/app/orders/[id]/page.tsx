@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, use, useEffect, useState } from "react";
+import { startTransition, use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { OrderDetail } from "@ai-commerce/types";
 import { ordersApi } from "@ai-commerce/api-client";
@@ -22,36 +22,54 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const orderOperation = useRef(0);
+  const cancelOperation = useRef(0);
 
   useEffect(() => {
+    const operation = ++orderOperation.current;
+    cancelOperation.current++;
     let cancelled = false;
-    startTransition(() => setLoading(true));
+    startTransition(() => {
+      setLoading(true);
+      setCancelling(false);
+      setCancelError(null);
+    });
     ordersApi
       .get(id)
       .then((res) => {
-        if (!cancelled) setOrder(res);
+        if (!cancelled && operation === orderOperation.current) setOrder(res);
       })
       .catch(() => {
-        if (!cancelled) setOrder(null);
+        if (!cancelled && operation === orderOperation.current) setOrder(null);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && operation === orderOperation.current) setLoading(false);
       });
     return () => {
       cancelled = true;
+      orderOperation.current++;
+      cancelOperation.current++;
     };
   }, [id]);
 
   async function onCancel() {
+    const order = orderOperation.current;
+    const operation = ++cancelOperation.current;
     setCancelError(null);
     setCancelling(true);
     try {
       const updated = await ordersApi.cancel(id);
-      setOrder(updated);
+      if (order === orderOperation.current && operation === cancelOperation.current) {
+        setOrder(updated);
+      }
     } catch (err) {
-      setCancelError(err instanceof Error ? err.message : "Couldn't cancel this order.");
+      if (order === orderOperation.current && operation === cancelOperation.current) {
+        setCancelError(err instanceof Error ? err.message : "Couldn't cancel this order.");
+      }
     } finally {
-      setCancelling(false);
+      if (order === orderOperation.current && operation === cancelOperation.current) {
+        setCancelling(false);
+      }
     }
   }
 
