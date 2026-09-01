@@ -584,17 +584,19 @@ export const useStore = create<StoreState>()(
       },
 
       finalizeServerOrder: async (orderId, paymentId, confirmPayload) => {
+        const session = authOperation;
         const userId = get().user?.id;
         const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
         if (confirmed.status !== "SUCCEEDED") {
           throw new Error(confirmed.failureReason ?? "Payment was not successful. Please try again.");
         }
         const finalOrder = await ordersApi.get(orderId);
-        void get().fetchServerCart();
-        if (get().user?.id === userId) {
-          get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
-          get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
+        if (session !== authOperation || get().user?.id !== userId) {
+          return finalOrder;
         }
+        void get().fetchServerCart();
+        get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
+        get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
         return finalOrder;
       },
 

@@ -791,6 +791,43 @@ describe("server address / order actions", () => {
     // Only the confirm call happened — no follow-up GET /orders/:id once confirmation failed.
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("does not record an old order finalization in a new session", async () => {
+    let resolveOrder!: (response: Response) => void;
+    const orderResponse = new Promise<Response>((resolve) => {
+      resolveOrder = resolve;
+    });
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      const path = new URL(typeof input === "string" ? input : input.toString()).pathname;
+      if (path.endsWith("/payments/pay-1/confirm")) {
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ status: "SUCCEEDED", paymentId: "pay-1", orderId: "ord-1" }),
+        } as Response;
+      }
+      if (path.endsWith("/orders/ord-1")) return orderResponse;
+      throw new Error(`unexpected request: ${path}`);
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
+
+    const finalizing = useStore.getState().finalizeServerOrder("ord-1", "pay-1");
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+    useStore.getState().clearSession();
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-2", authStatus: "authenticated" });
+    resolveOrder({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "ord-1", status: "CONFIRMED", total: 500 }),
+    } as Response);
+    await finalizing;
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(useStore.getState().events).not.toContainEqual(
+      expect.objectContaining({ eventType: "ORDER_COMPLETED" }),
+    );
+  });
 });
 
 describe("ShopAI actions", () => {
