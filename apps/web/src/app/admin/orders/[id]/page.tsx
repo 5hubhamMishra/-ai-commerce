@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminSettableOrderStatus, OrderDetail, ShipmentEventStatus } from "@ai-commerce/types";
@@ -51,6 +51,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const [eventDescription, setEventDescription] = useState("");
   const [addingEvent, setAddingEvent] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
+  const orderOperation = useRef(0);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -59,22 +60,27 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   useEffect(() => {
     if (authStatus !== "authenticated" || !authorized) return;
+    const operation = ++orderOperation.current;
     let cancelled = false;
     ordersApi
       .adminGet(id)
       .then((nextOrder) => {
-        if (!cancelled) setOrder(nextOrder);
+        if (!cancelled && operation === orderOperation.current) setOrder(nextOrder);
       })
       .catch((err) => {
-        if (!cancelled) setLoadError(accessDeniedMessage(err, "Couldn't load this order."));
+        if (!cancelled && operation === orderOperation.current) {
+          setLoadError(accessDeniedMessage(err, "Couldn't load this order."));
+        }
       });
     return () => {
       cancelled = true;
+      orderOperation.current++;
     };
   }, [authStatus, authorized, id]);
 
   async function onUpdateStatus(e: React.FormEvent) {
     e.preventDefault();
+    const operation = orderOperation.current;
     setUpdateError(null);
     setUpdating(true);
     try {
@@ -84,17 +90,21 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         carrier: nextStatus === "SHIPPED" ? carrier.trim() || undefined : undefined,
         trackingNumber: nextStatus === "SHIPPED" ? trackingNumber.trim() || undefined : undefined,
       });
+      if (operation !== orderOperation.current) return;
       setOrder(updated);
       setNote("");
     } catch (err) {
-      setUpdateError(accessDeniedMessage(err, "Couldn't update the order status."));
+      if (operation === orderOperation.current) {
+        setUpdateError(accessDeniedMessage(err, "Couldn't update the order status."));
+      }
     } finally {
-      setUpdating(false);
+      if (operation === orderOperation.current) setUpdating(false);
     }
   }
 
   async function onAddTrackingEvent(e: React.FormEvent) {
     e.preventDefault();
+    const operation = orderOperation.current;
     setEventError(null);
     setAddingEvent(true);
     try {
@@ -103,13 +113,16 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         location: eventLocation.trim() || undefined,
         description: eventDescription.trim() || undefined,
       });
+      if (operation !== orderOperation.current) return;
       setOrder(updated);
       setEventLocation("");
       setEventDescription("");
     } catch (err) {
-      setEventError(accessDeniedMessage(err, "Couldn't add that tracking event."));
+      if (operation === orderOperation.current) {
+        setEventError(accessDeniedMessage(err, "Couldn't add that tracking event."));
+      }
     } finally {
-      setAddingEvent(false);
+      if (operation === orderOperation.current) setAddingEvent(false);
     }
   }
 
