@@ -201,7 +201,7 @@ export class CategoriesService {
   }
 
   async remove(id: string, actorId: string): Promise<void> {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
     const [childCount, productCount] = await Promise.all([
       this.prisma.category.count({ where: { parentId: id, deletedAt: null } }),
@@ -215,10 +215,16 @@ export class CategoriesService {
       });
     }
 
-    await this.prisma.category.update({
-      where: { id },
+    const claimed = await this.prisma.category.updateMany({
+      where: { id, updatedAt: existing.updatedAt },
       data: { deletedAt: new Date() },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'CATEGORY_CHANGED',
+        message: 'The category changed before deletion could be applied.',
+      });
+    }
 
     await this.audit.record({
       actorId,

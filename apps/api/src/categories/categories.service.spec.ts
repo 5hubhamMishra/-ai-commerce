@@ -149,14 +149,35 @@ describe('CategoriesService', () => {
     prisma.category.findUnique.mockResolvedValue({ id: 'c1', deletedAt: null });
     prisma.category.count.mockResolvedValue(0);
     prisma.product.count.mockResolvedValue(0);
-    prisma.category.update.mockResolvedValue({ id: 'c1' });
+    prisma.category.updateMany.mockResolvedValue({ count: 1 });
 
     await service.remove('c1', 'actor1');
 
-    expect(prisma.category.update).toHaveBeenCalledWith({
-      where: { id: 'c1' },
+    expect(prisma.category.updateMany).toHaveBeenCalledWith({
+      where: { id: 'c1', updatedAt: undefined },
       data: { deletedAt: expect.any(Date) },
     });
     expect(events.categoryChanged).toHaveBeenCalledWith('c1', 'deleted');
+  });
+
+  it('rejects a stale category deletion', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.category.findUnique.mockResolvedValue({
+      id: 'category-1',
+      deletedAt: null,
+      updatedAt,
+    });
+    prisma.category.count.mockResolvedValue(0);
+    prisma.product.count.mockResolvedValue(0);
+    prisma.category.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.remove('category-1', 'actor1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'CATEGORY_CHANGED' }),
+    });
+    expect(prisma.category.updateMany).toHaveBeenCalledWith({
+      where: { id: 'category-1', updatedAt },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(events.categoryChanged).not.toHaveBeenCalled();
   });
 });
