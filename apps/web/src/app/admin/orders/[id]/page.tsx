@@ -59,10 +59,18 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   useEffect(() => {
     if (authStatus !== "authenticated" || !authorized) return;
+    let cancelled = false;
     ordersApi
       .adminGet(id)
-      .then(setOrder)
-      .catch((err) => setLoadError(accessDeniedMessage(err, "Couldn't load this order.")));
+      .then((nextOrder) => {
+        if (!cancelled) setOrder(nextOrder);
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(accessDeniedMessage(err, "Couldn't load this order."));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [authStatus, authorized, id]);
 
   async function onUpdateStatus(e: React.FormEvent) {
