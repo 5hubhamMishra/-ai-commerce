@@ -43,6 +43,7 @@ let authOperation = 0;
 let personalizationOperation = 0;
 let cartFetchOperation = 0;
 let wishlistFetchOperation = 0;
+let addressFetchOperation = 0;
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -330,6 +331,7 @@ export const useStore = create<StoreState>()(
         personalizationOperation++;
         cartFetchOperation++;
         wishlistFetchOperation++;
+        addressFetchOperation++;
         set({
           user: null,
           accessToken: null,
@@ -448,15 +450,26 @@ export const useStore = create<StoreState>()(
       serverAddressesStatus: "idle",
 
       fetchServerAddresses: async () => {
+        const operation = ++addressFetchOperation;
         const userId = get().user?.id;
         if (!userId) return;
         set({ serverAddressesStatus: "loading" });
         try {
           const addresses = await addressesApi.list();
-          if (get().user?.id !== userId) return;
+          if (
+            operation !== addressFetchOperation ||
+            get().user?.id !== userId
+          ) {
+            return;
+          }
           set({ serverAddresses: addresses, serverAddressesStatus: "idle" });
         } catch {
-          if (get().user?.id === userId) set({ serverAddressesStatus: "error" });
+          if (
+            operation === addressFetchOperation &&
+            get().user?.id === userId
+          ) {
+            set({ serverAddressesStatus: "error" });
+          }
         }
       },
 

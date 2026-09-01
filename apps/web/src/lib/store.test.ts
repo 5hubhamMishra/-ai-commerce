@@ -551,6 +551,46 @@ describe("server address / order actions", () => {
     expect(useStore.getState().serverAddresses).toEqual([]);
   });
 
+  it("keeps the newest overlapping address fetch response", async () => {
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1" });
+    let resolveFirst!: (response: Response) => void;
+    let resolveSecond!: (response: Response) => void;
+    let requestCount = 0;
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondResponse = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const fetchSpy = vi.fn(() => {
+      requestCount++;
+      return requestCount === 1 ? firstResponse : secondResponse;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstFetch = useStore.getState().fetchServerAddresses();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    const secondFetch = useStore.getState().fetchServerAddresses();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+
+    resolveSecond({
+      ok: true,
+      status: 200,
+      json: async () => [{ id: "new-address" }],
+    } as Response);
+    await secondFetch;
+    resolveFirst({
+      ok: true,
+      status: 200,
+      json: async () => [{ id: "old-address" }],
+    } as Response);
+    await firstFetch;
+
+    expect(useStore.getState().serverAddresses).toEqual([
+      { id: "new-address" },
+    ]);
+  });
+
   it("finalizeServerOrder confirms the payment, then re-fetches the order and cart", async () => {
     const confirmedOrder = { id: "ord-1", status: "CONFIRMED", total: 500 };
     const emptyCart = { id: "cart-1", items: [], itemCount: 0, subtotal: 0, currency: "INR", hasUnavailableItems: false };
