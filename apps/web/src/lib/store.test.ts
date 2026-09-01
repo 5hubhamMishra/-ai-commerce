@@ -114,25 +114,32 @@ describe("personalization / event tracking", () => {
   it("does not let an older failed preference update roll back a newer choice", async () => {
     useStore.setState({ user: authenticatedUser });
     let rejectFirst!: (error: Error) => void;
+    let resolveSecond!: (response: Response) => void;
     const firstRequest = new Promise<Response>((_, reject) => {
       rejectFirst = reject;
     });
+    const secondRequest = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
     const fetchSpy = vi.fn(() =>
-      fetchSpy.mock.calls.length === 1
-        ? firstRequest
-        : Promise.resolve({
-            ok: true,
-            status: 200,
-            json: async () => ({}),
-          } as Response),
+      fetchSpy.mock.calls.length === 1 ? firstRequest : secondRequest,
     );
     vi.stubGlobal("fetch", fetchSpy);
 
     const firstUpdate = useStore.getState().setPersonalization(false);
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
-    await useStore.getState().setPersonalization(true);
+    const secondUpdate = useStore.getState().setPersonalization(true);
+    await Promise.resolve();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
     rejectFirst(new Error("older request failed"));
     await firstUpdate;
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+    resolveSecond({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    } as Response);
+    await secondUpdate;
 
     expect(useStore.getState().personalizationEnabled).toBe(true);
   });

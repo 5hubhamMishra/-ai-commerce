@@ -47,6 +47,7 @@ let addressFetchOperation = 0;
 let behavioralProfileFetchOperation = 0;
 const wishlistToggleQueues = new Map<string, Promise<void>>();
 let cartMutationQueue: Promise<void> = Promise.resolve();
+let personalizationQueue: Promise<void> = Promise.resolve();
 
 function enqueueCartMutation(operation: () => Promise<void>) {
   const next = cartMutationQueue.catch(() => undefined).then(operation);
@@ -259,16 +260,26 @@ export const useStore = create<StoreState>()(
         const userId = get().user?.id;
         set({ personalizationEnabled: enabled });
         if (!userId) return;
-        try {
-          await usersApi.updateProfile({ personalizationEnabled: enabled });
-        } catch {
+        const request = personalizationQueue.catch(() => undefined).then(async () => {
           if (
-            operation === personalizationOperation &&
-            get().user?.id === userId
+            operation !== personalizationOperation ||
+            get().user?.id !== userId
           ) {
-            set({ personalizationEnabled: previous });
+            return;
           }
-        }
+          try {
+            await usersApi.updateProfile({ personalizationEnabled: enabled });
+          } catch {
+            if (
+              operation === personalizationOperation &&
+              get().user?.id === userId
+            ) {
+              set({ personalizationEnabled: previous });
+            }
+          }
+        });
+        personalizationQueue = request;
+        await request;
       },
       clearActivity: async () => {
         const userId = get().user?.id;
