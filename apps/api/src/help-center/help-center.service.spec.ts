@@ -35,4 +35,58 @@ describe('HelpCenterService', () => {
     });
     expect(create).toHaveBeenCalled();
   });
+
+  it('rejects a stale article update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      helpArticle: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'article-1',
+          updatedAt,
+        }),
+        updateMany,
+      },
+    };
+    const service = new HelpCenterService(prisma as never, {} as never);
+
+    await expect(
+      service.update('article-1', { title: 'New title' }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'HELP_ARTICLE_CHANGED' }),
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'article-1', updatedAt },
+      data: {
+        title: 'New title',
+        slug: undefined,
+        body: undefined,
+        category: undefined,
+        sortOrder: undefined,
+        isPublished: undefined,
+      },
+    });
+  });
+
+  it('rejects a stale article deletion', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    const deleteMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      helpArticle: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'article-1',
+          updatedAt,
+        }),
+        deleteMany,
+      },
+    };
+    const service = new HelpCenterService(prisma as never, {} as never);
+
+    await expect(service.remove('article-1', 'actor1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'HELP_ARTICLE_CHANGED' }),
+    });
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: { id: 'article-1', updatedAt },
+    });
+  });
 });

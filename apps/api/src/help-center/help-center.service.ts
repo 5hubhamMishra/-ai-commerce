@@ -82,14 +82,16 @@ export class HelpCenterService {
   }
 
   async update(id: string, dto: UpdateHelpArticleDto, actorId: string) {
-    await this.assertExists(id);
+    const existing = await this.assertExists(id);
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
 
-    let article: Awaited<ReturnType<typeof this.prisma.helpArticle.update>>;
+    let article: Awaited<
+      ReturnType<typeof this.prisma.helpArticle.findUniqueOrThrow>
+    >;
     try {
-      article = await this.prisma.helpArticle.update({
-        where: { id },
+      const claimed = await this.prisma.helpArticle.updateMany({
+        where: { id, updatedAt: existing.updatedAt },
         data: {
           title: dto.title,
           slug,
@@ -98,6 +100,16 @@ export class HelpCenterService {
           sortOrder: dto.sortOrder,
           isPublished: dto.isPublished,
         },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'HELP_ARTICLE_CHANGED',
+          message:
+            'The help article changed before this update could be applied.',
+        });
+      }
+      article = await this.prisma.helpArticle.findUniqueOrThrow({
+        where: { id },
       });
     } catch (error) {
       if (
@@ -121,8 +133,16 @@ export class HelpCenterService {
   }
 
   async remove(id: string, actorId: string): Promise<void> {
-    await this.assertExists(id);
-    await this.prisma.helpArticle.delete({ where: { id } });
+    const existing = await this.assertExists(id);
+    const deleted = await this.prisma.helpArticle.deleteMany({
+      where: { id, updatedAt: existing.updatedAt },
+    });
+    if (deleted.count === 0) {
+      throw new ConflictException({
+        code: 'HELP_ARTICLE_CHANGED',
+        message: 'The help article changed before deletion could be applied.',
+      });
+    }
     await this.audit.record({
       actorId,
       action: 'HELP_ARTICLE_DELETED',
