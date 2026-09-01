@@ -38,14 +38,26 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (authStatus !== "authenticated" || !authorized) return;
+    let cancelled = false;
     analyticsApi
       .getDashboard()
-      .then(setDashboard)
-      .catch((err) => setDashboardError(accessDeniedMessage(err, "Couldn't load analytics.")));
+      .then((report) => {
+        if (!cancelled) setDashboard(report);
+      })
+      .catch((err) => {
+        if (!cancelled) setDashboardError(accessDeniedMessage(err, "Couldn't load analytics."));
+      });
     ordersApi
       .adminList({ pageSize: ORDERS_PAGE_SIZE })
-      .then(setOrders)
-      .catch((err) => setOrdersError(accessDeniedMessage(err, "Couldn't load orders.")));
+      .then((result) => {
+        if (!cancelled) setOrders(result);
+      })
+      .catch((err) => {
+        if (!cancelled) setOrdersError(accessDeniedMessage(err, "Couldn't load orders."));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [authStatus, authorized]);
 
   const orderStats = useMemo(() => {
