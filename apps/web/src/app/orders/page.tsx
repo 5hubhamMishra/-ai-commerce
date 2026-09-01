@@ -7,17 +7,31 @@ import { ordersApi } from "@ai-commerce/api-client";
 import { formatPrice } from "@/lib/format";
 import { ORDER_STATUS_BADGE, ORDER_STATUS_LABELS } from "@/lib/order-status";
 import { RowsPageSkeleton } from "@/components/Skeleton";
+import { useStore } from "@/lib/store";
 
 const PAGE_SIZE = 20;
 
 export default function OrdersPage() {
+  const authStatus = useStore((s) => s.authStatus);
+  const userId = useStore((s) => s.user?.id ?? null);
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<ListOrdersResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(authStatus !== "unauthenticated");
 
   useEffect(() => {
+    if (authStatus !== "authenticated" || !userId) {
+      startTransition(() => {
+        setResult(null);
+        setLoading(authStatus === "checking" || authStatus === "idle");
+      });
+      return;
+    }
+
     let cancelled = false;
-    startTransition(() => setLoading(true));
+    startTransition(() => {
+      setResult(null);
+      setLoading(true);
+    });
     ordersApi
       .list({ page, pageSize: PAGE_SIZE })
       .then((res) => {
@@ -32,7 +46,27 @@ export default function OrdersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [authStatus, page, userId]);
+
+  if (authStatus === "idle" || authStatus === "checking") {
+    return <RowsPageSkeleton />;
+  }
+
+  if (authStatus !== "authenticated") {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="empty-state flex flex-col items-center">
+          <h1 className="font-display text-2xl font-semibold">Your orders</h1>
+          <p className="mt-2 max-w-xs text-center text-sm" style={{ color: "var(--clr-text-secondary)" }}>
+            Sign in to see your order history.
+          </p>
+          <Link href="/login?redirect=/orders" className="mt-5 btn btn-accent">
+            Sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading && !result) return <RowsPageSkeleton />;
 
