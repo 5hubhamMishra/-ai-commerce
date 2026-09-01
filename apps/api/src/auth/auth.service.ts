@@ -170,26 +170,18 @@ export class AuthService {
       // A revoked token being presented again is a theft signal, not a routine error —
       // revoke the whole session chain and audit it so it's visible to security monitoring,
       // not just silently absorbed as another 401.
-      await this.prisma.refreshToken.updateMany({
-        where: { userId: record.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-      await this.audit.record({
-        actorId: record.userId,
-        action: 'REFRESH_TOKEN_REUSE_DETECTED',
-        entityType: 'user',
-        entityId: record.userId,
-        metadata: { refreshTokenId: record.id },
-      });
-      throw invalid();
+      return this.rejectRefreshReuse(record.userId, record.id, invalid);
     }
 
     if (record.expiresAt < new Date()) throw invalid();
 
-    await this.prisma.refreshToken.update({
-      where: { id: record.id },
+    const revoked = await this.prisma.refreshToken.updateMany({
+      where: { id: record.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    if (revoked.count === 0) {
+      return this.rejectRefreshReuse(record.userId, record.id, invalid);
+    }
 
     const user = await this.prisma.user.findUnique({
       where: { id: record.userId },
@@ -211,6 +203,25 @@ export class AuthService {
       where: { tokenHash, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+  }
+
+  private async rejectRefreshReuse(
+    userId: string,
+    refreshTokenId: string,
+    invalid: () => UnauthorizedException,
+  ): Promise<never> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await this.audit.record({
+      actorId: userId,
+      action: 'REFRESH_TOKEN_REUSE_DETECTED',
+      entityType: 'user',
+      entityId: userId,
+      metadata: { refreshTokenId },
+    });
+    throw invalid();
   }
 
   private async issueTokens(userId: string, email: string): Promise<TokenPair> {

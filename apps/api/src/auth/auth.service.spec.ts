@@ -28,7 +28,7 @@ describe('AuthService', () => {
         create: jest.fn().mockResolvedValue({}),
         findUnique: jest.fn(),
         update: jest.fn(),
-        updateMany: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
     };
     audit = { record: jest.fn() };
@@ -316,6 +316,34 @@ describe('AuthService', () => {
           deletedAt: true,
         },
       });
+    });
+
+    it('rejects a concurrent refresh and revokes the session chain', async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt1',
+        userId: 'u1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 1_000_000),
+      });
+      prisma.refreshToken.updateMany
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 1 });
+
+      await expect(service.refresh('some-token')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(prisma.refreshToken.updateMany).toHaveBeenNthCalledWith(1, {
+        where: { id: 'rt1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(prisma.refreshToken.updateMany).toHaveBeenNthCalledWith(2, {
+        where: { userId: 'u1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(audit.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'REFRESH_TOKEN_REUSE_DETECTED' }),
+      );
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('rejects an unrecognized token', async () => {
