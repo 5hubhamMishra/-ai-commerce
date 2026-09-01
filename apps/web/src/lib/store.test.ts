@@ -316,6 +316,24 @@ describe("server cart / wishlist actions", () => {
     await useStore.getState().toggleServerWishlistItem("p1");
     expect(useStore.getState().serverWishlist).toEqual({ items: [] });
   });
+
+  it("drops a cart mutation response that arrives after the session is cleared", async () => {
+    let resolveCart!: (response: Response) => void;
+    const cartResponse = new Promise<Response>((resolve) => {
+      resolveCart = resolve;
+    });
+    const fetchSpy = vi.fn(async () => cartResponse);
+    vi.stubGlobal("fetch", fetchSpy);
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
+
+    const pending = useStore.getState().addServerCartItem("v1", 1);
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    useStore.getState().clearSession();
+    resolveCart({ ok: true, status: 200, json: async () => ({ id: "old-cart", items: [] }) } as Response);
+    await pending;
+
+    expect(useStore.getState().serverCart).toBeNull();
+  });
 });
 
 describe("server address / order actions", () => {

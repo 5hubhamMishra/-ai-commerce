@@ -241,17 +241,20 @@ export const useStore = create<StoreState>()(
 
       setPersonalization: async (enabled) => {
         const previous = get().personalizationEnabled;
+        const userId = get().user?.id;
         set({ personalizationEnabled: enabled });
-        if (!get().user) return;
+        if (!userId) return;
         try {
           await usersApi.updateProfile({ personalizationEnabled: enabled });
         } catch {
-          set({ personalizationEnabled: previous });
+          if (get().user?.id === userId) set({ personalizationEnabled: previous });
         }
       },
       clearActivity: async () => {
-        if (get().user) {
+        const userId = get().user?.id;
+        if (userId) {
           await activityApi.clear();
+          if (get().user?.id !== userId) return;
         }
         set({
           events: [],
@@ -314,8 +317,9 @@ export const useStore = create<StoreState>()(
       exportMyData: () => usersApi.exportData(),
 
       deleteAccount: async (password) => {
+        const userId = get().user?.id;
         await usersApi.deleteAccount({ password });
-        get().clearSession();
+        if (get().user?.id === userId) get().clearSession();
       },
 
       serverCart: null,
@@ -335,26 +339,34 @@ export const useStore = create<StoreState>()(
       },
 
       addServerCartItem: async (variantId, quantity) => {
+        const userId = get().user?.id;
         const cart = await cartApi.addItem(variantId, quantity);
+        if (get().user?.id !== userId) return;
         set({ serverCart: cart });
         const productId = cart.items.find((i) => i.variantId === variantId)?.productId;
         get().trackRealEvent("PRODUCT_ADDED_TO_CART", productId, { variantId, quantity });
       },
 
       updateServerCartItem: async (itemId, quantity) => {
+        const userId = get().user?.id;
         const cart = await cartApi.updateItem(itemId, quantity);
+        if (get().user?.id !== userId) return;
         set({ serverCart: cart });
       },
 
       removeServerCartItem: async (itemId) => {
+        const userId = get().user?.id;
         const productId = get().serverCart?.items.find((i) => i.id === itemId)?.productId;
         const cart = await cartApi.removeItem(itemId);
+        if (get().user?.id !== userId) return;
         set({ serverCart: cart });
         get().trackRealEvent("PRODUCT_REMOVED_FROM_CART", productId);
       },
 
       clearServerCart: async () => {
+        const userId = get().user?.id;
         await cartApi.clear();
+        if (get().user?.id !== userId) return;
         set({ serverCart: null });
       },
 
@@ -375,11 +387,13 @@ export const useStore = create<StoreState>()(
       },
 
       toggleServerWishlistItem: async (productId) => {
+        const userId = get().user?.id;
         const isWishlisted =
           get().serverWishlist?.items.some((i) => i.productId === productId) ?? false;
         const wishlist = isWishlisted
           ? await wishlistApi.remove(productId)
           : await wishlistApi.add(productId);
+        if (get().user?.id !== userId) return;
         set({ serverWishlist: wishlist });
         get().trackRealEvent(isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED", productId);
       },
@@ -401,7 +415,9 @@ export const useStore = create<StoreState>()(
       },
 
       createServerAddress: async (input) => {
+        const userId = get().user?.id;
         const address = await addressesApi.create(input);
+        if (get().user?.id !== userId) return address;
         set((state) => ({
           serverAddresses: address.isDefault
             ? [address, ...(state.serverAddresses ?? []).map((a) => ({ ...a, isDefault: false }))]
@@ -411,7 +427,9 @@ export const useStore = create<StoreState>()(
       },
 
       updateServerAddress: async (id, input) => {
+        const userId = get().user?.id;
         const address = await addressesApi.update(id, input);
+        if (get().user?.id !== userId) return address;
         set((state) => ({
           serverAddresses: (state.serverAddresses ?? []).map((a) =>
             a.id === id ? address : address.isDefault ? { ...a, isDefault: false } : a,
@@ -421,21 +439,26 @@ export const useStore = create<StoreState>()(
       },
 
       removeServerAddress: async (id) => {
+        const userId = get().user?.id;
         await addressesApi.remove(id);
+        if (get().user?.id !== userId) return;
         set((state) => ({
           serverAddresses: (state.serverAddresses ?? []).filter((a) => a.id !== id),
         }));
       },
 
       finalizeServerOrder: async (orderId, paymentId, confirmPayload) => {
+        const userId = get().user?.id;
         const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
         if (confirmed.status !== "SUCCEEDED") {
           throw new Error(confirmed.failureReason ?? "Payment was not successful. Please try again.");
         }
         const finalOrder = await ordersApi.get(orderId);
         void get().fetchServerCart();
-        get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
-        get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
+        if (get().user?.id === userId) {
+          get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
+          get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
+        }
         return finalOrder;
       },
 
