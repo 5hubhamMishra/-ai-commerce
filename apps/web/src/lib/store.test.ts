@@ -385,6 +385,46 @@ describe("server cart / wishlist actions", () => {
     expect(useStore.getState().serverWishlist).toEqual({ items: [] });
   });
 
+  it("keeps the newest overlapping wishlist fetch response", async () => {
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1" });
+    let resolveFirst!: (response: Response) => void;
+    let resolveSecond!: (response: Response) => void;
+    let requestCount = 0;
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondResponse = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const fetchSpy = vi.fn(() => {
+      requestCount++;
+      return requestCount === 1 ? firstResponse : secondResponse;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstFetch = useStore.getState().fetchServerWishlist();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    const secondFetch = useStore.getState().fetchServerWishlist();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+
+    resolveSecond({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [{ productId: "new" }] }),
+    } as Response);
+    await secondFetch;
+    resolveFirst({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [{ productId: "old" }] }),
+    } as Response);
+    await firstFetch;
+
+    expect(useStore.getState().serverWishlist).toEqual({
+      items: [{ productId: "new" }],
+    });
+  });
+
   it("drops a cart mutation response that arrives after the session is cleared", async () => {
     let resolveCart!: (response: Response) => void;
     const cartResponse = new Promise<Response>((resolve) => {

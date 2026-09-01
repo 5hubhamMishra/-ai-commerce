@@ -41,6 +41,7 @@ type AsyncStatus = "idle" | "loading" | "error";
 let sessionId: string | null = null;
 let authOperation = 0;
 let personalizationOperation = 0;
+let wishlistFetchOperation = 0;
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -326,6 +327,7 @@ export const useStore = create<StoreState>()(
       clearSession: () => {
         authOperation++;
         personalizationOperation++;
+        wishlistFetchOperation++;
         set({
           user: null,
           accessToken: null,
@@ -402,15 +404,26 @@ export const useStore = create<StoreState>()(
       serverWishlistStatus: "idle",
 
       fetchServerWishlist: async () => {
+        const operation = ++wishlistFetchOperation;
         const userId = get().user?.id;
         if (!userId) return;
         set({ serverWishlistStatus: "loading" });
         try {
           const wishlist = await wishlistApi.list();
-          if (get().user?.id !== userId) return;
+          if (
+            operation !== wishlistFetchOperation ||
+            get().user?.id !== userId
+          ) {
+            return;
+          }
           set({ serverWishlist: wishlist, serverWishlistStatus: "idle" });
         } catch {
-          if (get().user?.id === userId) set({ serverWishlistStatus: "error" });
+          if (
+            operation === wishlistFetchOperation &&
+            get().user?.id === userId
+          ) {
+            set({ serverWishlistStatus: "error" });
+          }
         }
       },
 
