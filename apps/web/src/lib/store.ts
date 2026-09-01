@@ -301,8 +301,14 @@ export const useStore = create<StoreState>()(
           accessToken: null,
           authStatus: "unauthenticated",
           serverCart: null,
+          serverCartStatus: "idle",
           serverWishlist: null,
+          serverWishlistStatus: "idle",
+          serverAddresses: null,
+          serverAddressesStatus: "idle",
           behavioralProfile: null,
+          behavioralProfileStatus: "idle",
+          shopaiConversationId: null,
         }),
 
       exportMyData: () => usersApi.exportData(),
@@ -316,12 +322,15 @@ export const useStore = create<StoreState>()(
       serverCartStatus: "idle",
 
       fetchServerCart: async () => {
+        const userId = get().user?.id;
+        if (!userId) return;
         set({ serverCartStatus: "loading" });
         try {
           const cart = await cartApi.getCart();
+          if (get().user?.id !== userId) return;
           set({ serverCart: cart, serverCartStatus: "idle" });
         } catch {
-          set({ serverCartStatus: "error" });
+          if (get().user?.id === userId) set({ serverCartStatus: "error" });
         }
       },
 
@@ -353,12 +362,15 @@ export const useStore = create<StoreState>()(
       serverWishlistStatus: "idle",
 
       fetchServerWishlist: async () => {
+        const userId = get().user?.id;
+        if (!userId) return;
         set({ serverWishlistStatus: "loading" });
         try {
           const wishlist = await wishlistApi.list();
+          if (get().user?.id !== userId) return;
           set({ serverWishlist: wishlist, serverWishlistStatus: "idle" });
         } catch {
-          set({ serverWishlistStatus: "error" });
+          if (get().user?.id === userId) set({ serverWishlistStatus: "error" });
         }
       },
 
@@ -376,12 +388,15 @@ export const useStore = create<StoreState>()(
       serverAddressesStatus: "idle",
 
       fetchServerAddresses: async () => {
+        const userId = get().user?.id;
+        if (!userId) return;
         set({ serverAddressesStatus: "loading" });
         try {
           const addresses = await addressesApi.list();
+          if (get().user?.id !== userId) return;
           set({ serverAddresses: addresses, serverAddressesStatus: "idle" });
         } catch {
-          set({ serverAddressesStatus: "error" });
+          if (get().user?.id === userId) set({ serverAddressesStatus: "error" });
         }
       },
 
@@ -491,16 +506,18 @@ export const useStore = create<StoreState>()(
       behavioralProfileStatus: "idle",
 
       fetchBehavioralProfile: async () => {
-        if (!get().user) {
+        const userId = get().user?.id;
+        if (!userId) {
           set({ behavioralProfile: null, behavioralProfileStatus: "idle" });
           return;
         }
         set({ behavioralProfileStatus: "loading" });
         try {
           const { profile } = await activityApi.getBehavioralProfile();
+          if (get().user?.id !== userId) return;
           set({ behavioralProfile: profile, behavioralProfileStatus: "idle" });
         } catch {
-          set({ behavioralProfileStatus: "error" });
+          if (get().user?.id === userId) set({ behavioralProfileStatus: "error" });
         }
       },
 

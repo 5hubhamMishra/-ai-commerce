@@ -22,6 +22,14 @@ function mockFetch(responses: Record<string, { status?: number; body?: unknown }
 
 const productA = products[0].id;
 const productB = products[1].id;
+const authenticatedUser = {
+  id: "u1",
+  email: "ada@example.com",
+  name: "Ada",
+  isActive: true,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  roles: ["CUSTOMER"] as Role[],
+};
 
 const initialState = useStore.getState();
 
@@ -207,13 +215,39 @@ describe("auth", () => {
 
   it("logout clears the session", async () => {
     vi.stubGlobal("fetch", mockFetch({ "POST /api/v1/auth/logout": { status: 204 } }));
-    useStore.setState({ user: publicUser, accessToken: "tok-1", authStatus: "authenticated" });
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
 
     await useStore.getState().logout();
 
     expect(useStore.getState().user).toBeNull();
     expect(useStore.getState().accessToken).toBeNull();
     expect(useStore.getState().authStatus).toBe("unauthenticated");
+  });
+
+  it("drops a server cart response that arrives after the session is cleared", async () => {
+    let resolveCart!: (response: Response) => void;
+    const cartResponse = new Promise<Response>((resolve) => {
+      resolveCart = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (new URL(typeof input === "string" ? input : input.toString()).pathname.endsWith("/cart")) {
+          return cartResponse;
+        }
+        return { ok: true, status: 204, json: async () => undefined } as Response;
+      }),
+    );
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
+
+    const pending = useStore.getState().fetchServerCart();
+    await vi.waitFor(() => expect(useStore.getState().serverCartStatus).toBe("loading"));
+    useStore.getState().clearSession();
+    resolveCart({ ok: true, status: 200, json: async () => ({ id: "old-cart" }) } as Response);
+    await pending;
+
+    expect(useStore.getState().serverCart).toBeNull();
+    expect(useStore.getState().serverCartStatus).toBe("idle");
   });
 });
 
@@ -353,6 +387,7 @@ describe("server address / order actions", () => {
   it("finalizeServerOrder confirms the payment, then re-fetches the order and cart", async () => {
     const confirmedOrder = { id: "ord-1", status: "CONFIRMED", total: 500 };
     const emptyCart = { id: "cart-1", items: [], itemCount: 0, subtotal: 0, currency: "INR", hasUnavailableItems: false };
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
 
     vi.stubGlobal(
       "fetch",
