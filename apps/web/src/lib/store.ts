@@ -39,6 +39,7 @@ type AsyncStatus = "idle" | "loading" | "error";
  *  session, matching typical analytics session semantics), generated lazily on first real
  *  event so a page that never tracks anything never pays for it. */
 let sessionId: string | null = null;
+let authOperation = 0;
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -272,43 +273,51 @@ export const useStore = create<StoreState>()(
       authStatus: "idle",
 
       login: async (email, password) => {
+        const operation = ++authOperation;
         const result = await authApi.login({ email, password });
+        if (operation !== authOperation) return;
         set({ accessToken: result.accessToken, authStatus: "checking" });
         try {
           const me = await authApi.me();
           const profile = await usersApi.getProfile();
+          if (operation !== authOperation) return;
           set({ user: me, personalizationEnabled: profile.personalizationEnabled, authStatus: "authenticated" });
           void get().fetchServerCart();
           void get().fetchServerWishlist();
           void get().fetchBehavioralProfile();
         } catch (error) {
-          get().clearSession();
+          if (operation === authOperation) get().clearSession();
           throw error;
         }
       },
 
       register: async (email, password, name) => {
+        const operation = ++authOperation;
         const result = await authApi.register({ email, password, name });
+        if (operation !== authOperation) return;
         set({ accessToken: result.accessToken, authStatus: "checking" });
         try {
           const me = await authApi.me();
           const profile = await usersApi.getProfile();
+          if (operation !== authOperation) return;
           set({ user: me, personalizationEnabled: profile.personalizationEnabled, authStatus: "authenticated" });
           void get().fetchServerCart();
           void get().fetchServerWishlist();
           void get().fetchBehavioralProfile();
         } catch (error) {
-          get().clearSession();
+          if (operation === authOperation) get().clearSession();
           throw error;
         }
       },
 
       logout: async () => {
+        const operation = ++authOperation;
         await authApi.logout().catch(() => undefined);
-        get().clearSession();
+        if (operation === authOperation) get().clearSession();
       },
 
-      clearSession: () =>
+      clearSession: () => {
+        authOperation++;
         set({
           user: null,
           accessToken: null,
@@ -322,7 +331,8 @@ export const useStore = create<StoreState>()(
           behavioralProfile: null,
           behavioralProfileStatus: "idle",
           shopaiConversationId: null,
-        }),
+        });
+      },
 
       exportMyData: () => usersApi.exportData(),
 

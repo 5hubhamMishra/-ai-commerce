@@ -228,6 +228,33 @@ describe("auth", () => {
     expect(useStore.getState().authStatus).toBe("unauthenticated");
   });
 
+  it("does not establish a session when login finishes after session clearing", async () => {
+    let resolveLogin!: (response: Response) => void;
+    const loginResponse = new Promise<Response>((resolve) => {
+      resolveLogin = resolve;
+    });
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL) => {
+      if (new URL(typeof input === "string" ? input : input.toString()).pathname.endsWith("/auth/login")) {
+        return loginResponse;
+      }
+      throw new Error("stale login should not hydrate");
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const pending = useStore.getState().login("ada@example.com", "password123");
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    useStore.getState().clearSession();
+    resolveLogin({
+      ok: true,
+      status: 200,
+      json: async () => ({ accessToken: "old-token", refreshToken: "r1", user: { id: "u1", email: "ada@example.com", name: "Ada", roles: ["CUSTOMER"] } }),
+    } as Response);
+    await pending;
+
+    expect(useStore.getState().user).toBeNull();
+    expect(useStore.getState().accessToken).toBeNull();
+  });
+
   it("logout clears the session", async () => {
     vi.stubGlobal("fetch", mockFetch({ "POST /api/v1/auth/logout": { status: 204 } }));
     useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
