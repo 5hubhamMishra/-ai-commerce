@@ -811,6 +811,44 @@ describe("real event tracking and behavioral profile", () => {
     expect(useStore.getState().behavioralProfile).toEqual(profile);
   });
 
+  it("keeps the newest overlapping behavioral profile response", async () => {
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1" });
+    let resolveFirst!: (response: Response) => void;
+    let resolveSecond!: (response: Response) => void;
+    let requestCount = 0;
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondResponse = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const fetchSpy = vi.fn(() => {
+      requestCount++;
+      return requestCount === 1 ? firstResponse : secondResponse;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstFetch = useStore.getState().fetchBehavioralProfile();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    const secondFetch = useStore.getState().fetchBehavioralProfile();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+
+    resolveSecond({
+      ok: true,
+      status: 200,
+      json: async () => ({ profile: { eventCount: 2 } }),
+    } as Response);
+    await secondFetch;
+    resolveFirst({
+      ok: true,
+      status: 200,
+      json: async () => ({ profile: { eventCount: 1 } }),
+    } as Response);
+    await firstFetch;
+
+    expect(useStore.getState().behavioralProfile).toEqual({ eventCount: 2 });
+  });
+
   it("clearActivity always clears local state, and also calls the real delete endpoint when signed in", async () => {
     useStore.setState({ events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }], recentlyViewed: ["p1"], recentlyViewedReal: ["p1"] });
     const deleteMock: typeof fetch = async () => ({ ok: true, status: 204, json: async () => undefined }) as Response;

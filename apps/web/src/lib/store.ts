@@ -44,6 +44,7 @@ let personalizationOperation = 0;
 let cartFetchOperation = 0;
 let wishlistFetchOperation = 0;
 let addressFetchOperation = 0;
+let behavioralProfileFetchOperation = 0;
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -332,6 +333,7 @@ export const useStore = create<StoreState>()(
         cartFetchOperation++;
         wishlistFetchOperation++;
         addressFetchOperation++;
+        behavioralProfileFetchOperation++;
         set({
           user: null,
           accessToken: null,
@@ -592,6 +594,7 @@ export const useStore = create<StoreState>()(
       behavioralProfileStatus: "idle",
 
       fetchBehavioralProfile: async () => {
+        const operation = ++behavioralProfileFetchOperation;
         const userId = get().user?.id;
         if (!userId) {
           set({ behavioralProfile: null, behavioralProfileStatus: "idle" });
@@ -600,10 +603,20 @@ export const useStore = create<StoreState>()(
         set({ behavioralProfileStatus: "loading" });
         try {
           const { profile } = await activityApi.getBehavioralProfile();
-          if (get().user?.id !== userId) return;
+          if (
+            operation !== behavioralProfileFetchOperation ||
+            get().user?.id !== userId
+          ) {
+            return;
+          }
           set({ behavioralProfile: profile, behavioralProfileStatus: "idle" });
         } catch {
-          if (get().user?.id === userId) set({ behavioralProfileStatus: "error" });
+          if (
+            operation === behavioralProfileFetchOperation &&
+            get().user?.id === userId
+          ) {
+            set({ behavioralProfileStatus: "error" });
+          }
         }
       },
 
