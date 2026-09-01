@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddressesService } from './addresses.service';
@@ -25,6 +26,7 @@ describe('AddressesService', () => {
       delete: jest.Mock;
       count: jest.Mock;
     };
+    order: { count: jest.Mock };
     $transaction: jest.Mock;
   };
 
@@ -40,6 +42,7 @@ describe('AddressesService', () => {
         delete: jest.fn(),
         count: jest.fn(),
       },
+      order: { count: jest.fn() },
       $transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(prisma)),
     };
 
@@ -127,6 +130,24 @@ describe('AddressesService', () => {
     expect(prisma.address.updateMany).toHaveBeenCalledWith({
       where: { id: 'addr1', userId: 'u1', updatedAt },
       data: { city: 'New city', isDefault: true },
+    });
+  });
+
+  it('maps an order-created-during-delete race to the address conflict', async () => {
+    prisma.address.findUnique.mockResolvedValue({ id: 'addr1', userId: 'u1' });
+    prisma.order.count.mockResolvedValue(0);
+    prisma.address.delete.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        'Foreign key constraint failed',
+        {
+          code: 'P2003',
+          clientVersion: 'test',
+        },
+      ),
+    );
+
+    await expect(service.remove('u1', 'addr1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ADDRESS_HAS_ORDERS' }),
     });
   });
 });

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateAddressDto } from './dto/create-address.dto';
 import type { UpdateAddressDto } from './dto/update-address.dto';
@@ -75,7 +76,21 @@ export class AddressesService {
           'This address is referenced by past orders and cannot be deleted.',
       });
     }
-    await this.prisma.address.delete({ where: { id } });
+    try {
+      await this.prisma.address.delete({ where: { id } });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new ConflictException({
+          code: 'ADDRESS_HAS_ORDERS',
+          message:
+            'This address is referenced by past orders and cannot be deleted.',
+        });
+      }
+      throw error;
+    }
   }
 
   /** Same not-found response whether the address doesn't exist or belongs to someone
