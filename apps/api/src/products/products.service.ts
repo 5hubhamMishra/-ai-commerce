@@ -293,15 +293,15 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto, actorId: string) {
-    await this.getRowById(id);
+    const existing = await this.getRowById(id);
     if (dto.categoryId) await this.assertCategoryExists(dto.categoryId);
     if (dto.brandId) await this.assertBrandExists(dto.brandId);
     const slug = dto.slug ? slugify(dto.slug) : undefined;
     if (slug) await this.assertSlugAvailable(slug, id);
 
     try {
-      await this.prisma.product.update({
-        where: { id },
+      const claimed = await this.prisma.product.updateMany({
+        where: { id, updatedAt: existing.updatedAt },
         data: {
           name: dto.name,
           slug,
@@ -312,6 +312,12 @@ export class ProductsService {
           isFeatured: dto.isFeatured,
         },
       });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'PRODUCT_CHANGED',
+          message: 'The product changed before this update could be applied.',
+        });
+      }
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

@@ -16,6 +16,7 @@ describe('ProductsService', () => {
       findFirst: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
+      updateMany: jest.Mock;
       count: jest.Mock;
     };
     category: { findUnique: jest.Mock };
@@ -30,6 +31,7 @@ describe('ProductsService', () => {
         findFirst: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
         count: jest.fn().mockResolvedValue(0),
       },
       category: { findUnique: jest.fn() },
@@ -141,5 +143,34 @@ describe('ProductsService', () => {
         where: expect.objectContaining({ status: ProductStatus.ACTIVE }),
       }),
     );
+  });
+
+  it('rejects a stale product update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.product.findUnique.mockResolvedValue({
+      id: 'product-1',
+      deletedAt: null,
+      updatedAt,
+    });
+    prisma.product.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.update('product-1', { name: 'New name' }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_CHANGED' }),
+    });
+    expect(prisma.product.updateMany).toHaveBeenCalledWith({
+      where: { id: 'product-1', updatedAt },
+      data: {
+        name: 'New name',
+        slug: undefined,
+        description: undefined,
+        categoryId: undefined,
+        brandId: undefined,
+        status: undefined,
+        isFeatured: undefined,
+      },
+    });
+    expect(prisma.product.update).not.toHaveBeenCalled();
   });
 });
