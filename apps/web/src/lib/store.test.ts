@@ -548,7 +548,7 @@ describe("real event tracking and behavioral profile", () => {
   });
 
   it("clearActivity always clears local state, and also calls the real delete endpoint when signed in", async () => {
-    useStore.setState({ events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }], recentlyViewed: ["p1"] });
+    useStore.setState({ events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }], recentlyViewed: ["p1"], recentlyViewedReal: ["p1"] });
     const deleteMock: typeof fetch = async () => ({ ok: true, status: 204, json: async () => undefined }) as Response;
     const deleteSpy = vi.fn(deleteMock);
     vi.stubGlobal("fetch", deleteSpy);
@@ -556,6 +556,7 @@ describe("real event tracking and behavioral profile", () => {
     await useStore.getState().clearActivity();
     expect(useStore.getState().events).toEqual([]);
     expect(useStore.getState().recentlyViewed).toEqual([]);
+    expect(useStore.getState().recentlyViewedReal).toEqual([]);
     expect(deleteSpy).not.toHaveBeenCalled(); // guest — nothing real to delete
 
     useStore.setState({ user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] } });
@@ -564,5 +565,23 @@ describe("real event tracking and behavioral profile", () => {
     const [url, init] = deleteSpy.mock.calls[0];
     expect(new URL(url as string).pathname).toBe("/api/v1/users/me/activity");
     expect(init?.method).toBe("DELETE");
+  });
+
+  it("keeps local activity when signed-in server deletion fails", async () => {
+    useStore.setState({
+      user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] },
+      events: [{ eventType: "PRODUCT_VIEWED", timestamp: 1 }],
+      recentlyViewed: ["p1"],
+      recentlyViewedReal: ["p1"],
+    });
+    vi.stubGlobal(
+      "fetch",
+      mockFetch({ "DELETE /api/v1/users/me/activity": { status: 500, body: {} } }),
+    );
+
+    await expect(useStore.getState().clearActivity()).rejects.toThrow();
+    expect(useStore.getState().events).toHaveLength(1);
+    expect(useStore.getState().recentlyViewed).toEqual(["p1"]);
+    expect(useStore.getState().recentlyViewedReal).toEqual(["p1"]);
   });
 });

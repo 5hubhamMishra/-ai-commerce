@@ -250,10 +250,16 @@ export const useStore = create<StoreState>()(
         }
       },
       clearActivity: async () => {
-        set({ events: [], recentlyViewed: [] });
         if (get().user) {
-          await activityApi.clear().catch(() => undefined);
+          await activityApi.clear();
         }
+        set({
+          events: [],
+          recentlyViewed: [],
+          recentlyViewedReal: [],
+          behavioralProfile: null,
+          behavioralProfileStatus: "idle",
+        });
       },
       setHydrated: () => set({ hydrated: true }),
 

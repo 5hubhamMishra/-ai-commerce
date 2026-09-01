@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "loading">("idle");
+  const [activityError, setActivityError] = useState(false);
 
   const categories = useCategories();
   const brands = useBrands();
@@ -96,6 +97,15 @@ export default function ProfilePage() {
           ? "Incorrect password."
           : "Something went wrong. Please try again.",
       );
+    }
+  }
+
+  async function handleClearActivity() {
+    setActivityError(false);
+    try {
+      await clearActivity();
+    } catch {
+      setActivityError(true);
     }
   }
 
@@ -207,7 +217,7 @@ export default function ProfilePage() {
             {exportStatus === "loading" ? "Preparing export…" : "Export my data"}
           </button>
           <button
-            onClick={() => { if (confirm("Clear all browsing activity? This can't be undone.")) void clearActivity(); }}
+            onClick={() => { if (confirm("Clear all browsing activity? This can't be undone.")) void handleClearActivity(); }}
             className="btn text-xs px-3 py-2 rounded-xl border border-[var(--clr-border)] text-[var(--clr-error,red)] hover:bg-red-50 font-medium"
           >
             Delete activity history
@@ -226,6 +236,11 @@ export default function ProfilePage() {
             ? `Export downloads everything the server holds about your account — profile, addresses, orders, activity, and more. "Delete account" erases your personal data and permanently deactivates sign-in; ${events.length} extra events are also stored locally on this device.`
             : `${events.length} activity events stored locally on this device — sign in to build a real, server-side shopping profile and access data export/account deletion.`}
         </p>
+        {activityError && (
+          <p className="mt-2 text-xs text-[var(--clr-error,red)]" role="alert">
+            Couldn&apos;t delete activity history. Please try again.
+          </p>
+        )}
         {exportStatus === "error" && (
           <p className="mt-2 text-xs text-[var(--clr-error,red)]">Couldn&apos;t prepare your export. Please try again.</p>
         )}
