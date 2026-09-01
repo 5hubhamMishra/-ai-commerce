@@ -385,6 +385,33 @@ describe("server cart / wishlist actions", () => {
     expect(useStore.getState().serverWishlist).toEqual({ items: [] });
   });
 
+  it("serializes rapid wishlist toggles for the same product", async () => {
+    const withItem = { items: [{ productId: "p1" }] };
+    useStore.setState({
+      user: authenticatedUser,
+      accessToken: "tok-1",
+      serverWishlist: { items: [] },
+      personalizationEnabled: false,
+    });
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = new URL(typeof input === "string" ? input : input.toString()).pathname;
+      if (init?.method === "POST" && path.endsWith("/wishlist/items")) {
+        return { ok: true, status: 200, json: async () => withItem } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({ items: [] }) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstToggle = useStore.getState().toggleServerWishlistItem("p1");
+    const secondToggle = useStore.getState().toggleServerWishlistItem("p1");
+    await Promise.all([firstToggle, secondToggle]);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy.mock.calls[0][1]?.method).toBe("POST");
+    expect(fetchSpy.mock.calls[1][1]?.method).toBe("DELETE");
+    expect(useStore.getState().serverWishlist).toEqual({ items: [] });
+  });
+
   it("keeps the newest overlapping wishlist fetch response", async () => {
     useStore.setState({ user: authenticatedUser, accessToken: "tok-1" });
     let resolveFirst!: (response: Response) => void;

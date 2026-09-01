@@ -45,6 +45,7 @@ let cartFetchOperation = 0;
 let wishlistFetchOperation = 0;
 let addressFetchOperation = 0;
 let behavioralProfileFetchOperation = 0;
+const wishlistToggleQueues = new Map<string, Promise<void>>();
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -437,15 +438,26 @@ export const useStore = create<StoreState>()(
       },
 
       toggleServerWishlistItem: async (productId) => {
-        const userId = get().user?.id;
-        const isWishlisted =
-          get().serverWishlist?.items.some((i) => i.productId === productId) ?? false;
-        const wishlist = isWishlisted
-          ? await wishlistApi.remove(productId)
-          : await wishlistApi.add(productId);
-        if (get().user?.id !== userId) return;
-        set({ serverWishlist: wishlist });
-        get().trackRealEvent(isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED", productId);
+        const session = authOperation;
+        const previous = wishlistToggleQueues.get(productId) ?? Promise.resolve();
+        const operation = previous.catch(() => undefined).then(async () => {
+          const userId = get().user?.id;
+          if (session !== authOperation) return;
+          const isWishlisted =
+            get().serverWishlist?.items.some((i) => i.productId === productId) ?? false;
+          const wishlist = isWishlisted
+            ? await wishlistApi.remove(productId)
+            : await wishlistApi.add(productId);
+          if (session !== authOperation || get().user?.id !== userId) return;
+          set({ serverWishlist: wishlist });
+          get().trackRealEvent(isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED", productId);
+        }).finally(() => {
+          if (wishlistToggleQueues.get(productId) === operation) {
+            wishlistToggleQueues.delete(productId);
+          }
+        });
+        wishlistToggleQueues.set(productId, operation);
+        await operation;
       },
 
       serverAddresses: null,
