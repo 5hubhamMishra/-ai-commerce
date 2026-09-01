@@ -38,15 +38,25 @@ export class AddressesService {
   }
 
   async update(userId: string, id: string, dto: UpdateAddressDto) {
-    await this.assertOwnership(userId, id);
+    const existing = await this.assertOwnership(userId, id);
     return this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.address.updateMany({
+        where: { id, userId, updatedAt: existing.updatedAt },
+        data: dto,
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'ADDRESS_CHANGED',
+          message: 'The address changed before this update could be applied.',
+        });
+      }
       if (dto.isDefault) {
         await tx.address.updateMany({
-          where: { userId, isDefault: true },
+          where: { userId, isDefault: true, NOT: { id } },
           data: { isDefault: false },
         });
       }
-      return tx.address.update({ where: { id }, data: dto });
+      return tx.address.findUniqueOrThrow({ where: { id } });
     });
   }
 

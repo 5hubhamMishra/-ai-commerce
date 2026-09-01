@@ -21,6 +21,7 @@ describe('AddressesService', () => {
       create: jest.Mock;
       update: jest.Mock;
       updateMany: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
       delete: jest.Mock;
       count: jest.Mock;
     };
@@ -35,6 +36,7 @@ describe('AddressesService', () => {
         create: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
         delete: jest.fn(),
         count: jest.fn(),
       },
@@ -105,5 +107,26 @@ describe('AddressesService', () => {
     await expect(service.remove('u1', 'missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('rejects a stale address update before changing default state', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.address.findUnique.mockResolvedValue({
+      id: 'addr1',
+      userId: 'u1',
+      updatedAt,
+    });
+    prisma.address.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.update('u1', 'addr1', { city: 'New city', isDefault: true }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ADDRESS_CHANGED' }),
+    });
+    expect(prisma.address.updateMany).toHaveBeenCalledTimes(1);
+    expect(prisma.address.updateMany).toHaveBeenCalledWith({
+      where: { id: 'addr1', userId: 'u1', updatedAt },
+      data: { city: 'New city', isDefault: true },
+    });
   });
 });
