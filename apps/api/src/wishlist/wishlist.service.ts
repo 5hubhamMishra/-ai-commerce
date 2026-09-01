@@ -57,9 +57,7 @@ export class WishlistService {
   }
 
   async remove(userId: string, productId: string) {
-    await this.prisma.wishlistItem
-      .delete({ where: { userId_productId: { userId, productId } } })
-      .catch(() => undefined); // removing something already absent is a no-op success
+    await this.prisma.wishlistItem.deleteMany({ where: { userId, productId } });
     return this.list(userId);
   }
 
