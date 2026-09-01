@@ -36,8 +36,8 @@ export class CustomerProfileService {
     if (!event || event.processedAt) return; // already applied, or retried after deletion (privacy erase) — nothing to do.
 
     if (!event.personalizationEligible) {
-      await this.prisma.behavioralEvent.update({
-        where: { id: event.id },
+      await this.prisma.behavioralEvent.updateMany({
+        where: { id: event.id, processedAt: null },
         data: { processedAt: new Date() },
       });
       return;
@@ -49,8 +49,8 @@ export class CustomerProfileService {
         select: { personalizationEnabled: true },
       });
       if (profileSettings?.personalizationEnabled === false) {
-        await this.prisma.behavioralEvent.update({
-          where: { id: event.id },
+        await this.prisma.behavioralEvent.updateMany({
+          where: { id: event.id, processedAt: null },
           data: { processedAt: new Date() },
         });
         return;
@@ -61,21 +61,25 @@ export class CustomerProfileService {
       ? { userId: event.userId }
       : { anonymousId: event.anonymousId };
 
-    await this.prisma.$transaction(async (tx) => {
-      const delta = await this.computeDelta(tx, event);
+    await this.prisma.$transaction(
+      async (tx) => {
+        const claimed = await tx.behavioralEvent.updateMany({
+          where: { id: event.id, processedAt: null },
+          data: { processedAt: new Date() },
+        });
+        if (claimed.count === 0) return;
 
-      const profile = await this.getOrCreateProfile(tx, identity);
-      const merged = this.mergeDelta(profile, delta, event.occurredAt);
-      await tx.customerProfile.update({
-        where: { id: profile.id },
-        data: merged,
-      });
+        const delta = await this.computeDelta(tx, event);
 
-      await tx.behavioralEvent.update({
-        where: { id: event.id },
-        data: { processedAt: new Date() },
-      });
-    });
+        const profile = await this.getOrCreateProfile(tx, identity);
+        const merged = this.mergeDelta(profile, delta, event.occurredAt);
+        await tx.customerProfile.update({
+          where: { id: profile.id },
+          data: merged,
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /** Public read used by the activity/profile endpoints and (from Phase 7
