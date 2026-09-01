@@ -29,11 +29,16 @@ export class ProductSpecificationsService {
   }
 
   async update(productId: string, specId: string, dto: UpdateSpecificationDto) {
-    await this.getOwned(productId, specId);
-    await this.prisma.productSpecification.update({
-      where: { id: specId },
+    const updated = await this.prisma.productSpecification.updateMany({
+      where: { id: specId, productId },
       data: dto,
     });
+    if (updated.count === 0) {
+      throw new NotFoundException({
+        code: 'PRODUCT_SPECIFICATION_NOT_FOUND',
+        message: 'Product specification not found.',
+      });
+    }
     this.events.productChanged(productId, 'updated');
     return this.products.findByIdAdmin(productId);
   }

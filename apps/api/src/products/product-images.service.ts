@@ -53,8 +53,8 @@ export class ProductImagesService {
           data: { isPrimary: false },
         });
       }
-      await tx.productImage.update({
-        where: { id: imageId },
+      const updated = await tx.productImage.updateMany({
+        where: { id: imageId, productId },
         data: {
           url: dto.url,
           variantId: dto.variantId,
@@ -63,6 +63,12 @@ export class ProductImagesService {
           isPrimary: dto.isPrimary,
         },
       });
+      if (updated.count === 0) {
+        throw new NotFoundException({
+          code: 'PRODUCT_IMAGE_NOT_FOUND',
+          message: 'Product image not found.',
+        });
+      }
     });
 
     this.events.productChanged(productId, 'updated');
