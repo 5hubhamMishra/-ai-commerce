@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -62,23 +63,24 @@ export class CartService {
 
   async updateItem(userId: string, itemId: string, dto: UpdateCartItemDto) {
     const cart = await this.getOrCreateCart(userId);
-    await this.assertItemOwnership(cart.id, itemId);
+    const existing = await this.assertItemOwnership(cart.id, itemId);
 
     if (dto.quantity <= 0) {
-      await this.prisma.cartItem.delete({ where: { id: itemId } });
+      await this.deleteItemIfCurrent(cart.id, itemId, existing.updatedAt);
     } else {
-      await this.prisma.cartItem.update({
-        where: { id: itemId },
+      const updated = await this.prisma.cartItem.updateMany({
+        where: { id: itemId, cartId: cart.id, updatedAt: existing.updatedAt },
         data: { quantity: dto.quantity },
       });
+      if (updated.count === 0) throw this.itemChanged();
     }
     return this.getCart(userId);
   }
 
   async removeItem(userId: string, itemId: string) {
     const cart = await this.getOrCreateCart(userId);
-    await this.assertItemOwnership(cart.id, itemId);
-    await this.prisma.cartItem.delete({ where: { id: itemId } });
+    const existing = await this.assertItemOwnership(cart.id, itemId);
+    await this.deleteItemIfCurrent(cart.id, itemId, existing.updatedAt);
     return this.getCart(userId);
   }
 
@@ -106,6 +108,24 @@ export class CartService {
       });
     }
     return item;
+  }
+
+  private async deleteItemIfCurrent(
+    cartId: string,
+    itemId: string,
+    updatedAt: Date,
+  ) {
+    const deleted = await this.prisma.cartItem.deleteMany({
+      where: { id: itemId, cartId, updatedAt },
+    });
+    if (deleted.count === 0) throw this.itemChanged();
+  }
+
+  private itemChanged() {
+    return new ConflictException({
+      code: 'CART_ITEM_CHANGED',
+      message: 'The cart item changed before this update could be applied.',
+    });
   }
 
   private async assertVariantPurchasable(variantId: string) {
