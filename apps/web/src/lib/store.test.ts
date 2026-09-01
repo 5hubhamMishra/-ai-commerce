@@ -525,6 +525,28 @@ describe("ShopAI actions", () => {
     expect(requestBodies[0].anonymousId).toBeUndefined();
     expect(useStore.getState().anonymousId).toBeNull();
   });
+
+  it("does not restore a conversation after the session is cleared", async () => {
+    let resolveResponse!: (response: Response) => void;
+    const response = new Promise<Response>((resolve) => {
+      resolveResponse = resolve;
+    });
+    const fetchSpy = vi.fn(async () => response);
+    vi.stubGlobal("fetch", fetchSpy);
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
+
+    const pending = useStore.getState().sendShopAIMessage("hello");
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    useStore.getState().clearSession();
+    resolveResponse({
+      ok: true,
+      status: 200,
+      json: async () => ({ conversationId: "old-conversation", message: { role: "assistant", content: "hello" }, toolActivity: [] }),
+    } as Response);
+    await pending;
+
+    expect(useStore.getState().shopaiConversationId).toBeNull();
+  });
 });
 
 describe("real event tracking and behavioral profile", () => {

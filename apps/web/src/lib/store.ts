@@ -466,9 +466,13 @@ export const useStore = create<StoreState>()(
       shopaiConversationId: null,
 
       sendShopAIMessage: async (text) => {
+        const userId = get().user?.id;
         get().trackEvent("AI_ASSISTANT_QUERY", { query: text });
         const isGuest = !get().user;
         const anonymousId = isGuest ? get().ensureAnonymousId() : null;
+        const identityIsCurrent = () =>
+          get().user?.id === userId &&
+          (userId !== undefined || get().anonymousId === anonymousId);
 
         const send = (conversationId?: string) =>
           shopaiApi.sendMessage({
@@ -480,12 +484,12 @@ export const useStore = create<StoreState>()(
         try {
           const conversationId = get().shopaiConversationId ?? undefined;
           const result = await send(conversationId);
-          set({ shopaiConversationId: result.conversationId });
+          if (identityIsCurrent()) set({ shopaiConversationId: result.conversationId });
           return result.message;
         } catch (err) {
           if (err instanceof ApiError && err.code === "CONVERSATION_NOT_FOUND") {
             const result = await send(undefined);
-            set({ shopaiConversationId: result.conversationId });
+            if (identityIsCurrent()) set({ shopaiConversationId: result.conversationId });
             return result.message;
           }
           throw err;
