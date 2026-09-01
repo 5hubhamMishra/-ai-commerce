@@ -40,6 +40,7 @@ type AsyncStatus = "idle" | "loading" | "error";
  *  event so a page that never tracks anything never pays for it. */
 let sessionId: string | null = null;
 let authOperation = 0;
+let personalizationOperation = 0;
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -241,6 +242,7 @@ export const useStore = create<StoreState>()(
       },
 
       setPersonalization: async (enabled) => {
+        const operation = ++personalizationOperation;
         const previous = get().personalizationEnabled;
         const userId = get().user?.id;
         set({ personalizationEnabled: enabled });
@@ -248,7 +250,12 @@ export const useStore = create<StoreState>()(
         try {
           await usersApi.updateProfile({ personalizationEnabled: enabled });
         } catch {
-          if (get().user?.id === userId) set({ personalizationEnabled: previous });
+          if (
+            operation === personalizationOperation &&
+            get().user?.id === userId
+          ) {
+            set({ personalizationEnabled: previous });
+          }
         }
       },
       clearActivity: async () => {
@@ -318,6 +325,7 @@ export const useStore = create<StoreState>()(
 
       clearSession: () => {
         authOperation++;
+        personalizationOperation++;
         set({
           user: null,
           accessToken: null,

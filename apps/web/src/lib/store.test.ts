@@ -111,6 +111,32 @@ describe("personalization / event tracking", () => {
     expect(useStore.getState().personalizationEnabled).toBe(true);
   });
 
+  it("does not let an older failed preference update roll back a newer choice", async () => {
+    useStore.setState({ user: authenticatedUser });
+    let rejectFirst!: (error: Error) => void;
+    const firstRequest = new Promise<Response>((_, reject) => {
+      rejectFirst = reject;
+    });
+    const fetchSpy = vi.fn(() =>
+      fetchSpy.mock.calls.length === 1
+        ? firstRequest
+        : Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({}),
+          } as Response),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstUpdate = useStore.getState().setPersonalization(false);
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    await useStore.getState().setPersonalization(true);
+    rejectFirst(new Error("older request failed"));
+    await firstUpdate;
+
+    expect(useStore.getState().personalizationEnabled).toBe(true);
+  });
+
   it("does not record behavior events when personalization is disabled", () => {
     useStore.getState().setPersonalization(false);
     useStore.getState().recordView(productA);
