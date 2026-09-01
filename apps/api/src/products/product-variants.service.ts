@@ -150,11 +150,18 @@ export class ProductVariantsService {
   }
 
   async remove(productId: string, variantId: string, actorId: string) {
-    await this.getOwned(productId, variantId);
-    await this.prisma.productVariant.update({
-      where: { id: variantId },
+    const variant = await this.getOwned(productId, variantId);
+    const claimed = await this.prisma.productVariant.updateMany({
+      where: { id: variantId, updatedAt: variant.updatedAt },
       data: { deletedAt: new Date(), isActive: false },
     });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'PRODUCT_VARIANT_CHANGED',
+        message:
+          'The product variant changed before deletion could be applied.',
+      });
+    }
 
     await this.audit.record({
       actorId,

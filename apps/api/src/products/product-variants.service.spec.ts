@@ -138,4 +138,24 @@ describe('ProductVariantsService', () => {
       data: { isDefault: false },
     });
   });
+
+  it('rejects a stale variant deletion', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v1',
+      productId: 'p1',
+      deletedAt: null,
+      updatedAt,
+    });
+    prisma.productVariant.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.remove('p1', 'v1', 'actor1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_VARIANT_CHANGED' }),
+    });
+    expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
+      where: { id: 'v1', updatedAt },
+      data: { deletedAt: expect.any(Date), isActive: false },
+    });
+    expect(prisma.productVariant.update).not.toHaveBeenCalled();
+  });
 });
