@@ -358,6 +358,58 @@ describe("server cart / wishlist actions", () => {
     expect(useStore.getState().serverCart).toEqual(cart);
   });
 
+  it("serializes rapid cart quantity changes against the latest quantity", async () => {
+    useStore.setState({
+      user: authenticatedUser,
+      accessToken: "tok-1",
+      serverCart: {
+        id: "cart-1",
+        items: [{
+          id: "item-1",
+          variantId: "v1",
+          productId: "p1",
+          productName: "Widget",
+          productSlug: "widget",
+          sku: "SKU-1",
+          imageUrl: null,
+          unitPrice: 100,
+          currency: "INR",
+          quantity: 1,
+          lineTotal: 100,
+          availableQuantity: 10,
+          isAvailable: true,
+          insufficientStock: false,
+          attributes: [],
+        }],
+        itemCount: 1,
+        subtotal: 100,
+        currency: "INR",
+        hasUnavailableItems: false,
+      },
+      personalizationEnabled: false,
+    });
+    const quantities: number[] = [];
+    const fetchSpy = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const nextQuantity = JSON.parse(init?.body as string).quantity as number;
+      quantities.push(nextQuantity);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [{ id: "item-1", quantity: nextQuantity }] }),
+      } as Response;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstUpdate = useStore.getState().updateServerCartItem("item-1", 2);
+    const secondUpdate = useStore.getState().updateServerCartItem("item-1", 2);
+    await Promise.all([firstUpdate, secondUpdate]);
+
+    expect(quantities).toEqual([2, 3]);
+    expect(useStore.getState().serverCart).toEqual({
+      items: [{ id: "item-1", quantity: 3 }],
+    });
+  });
+
   it("toggleServerWishlistItem adds when absent, removes when present", async () => {
     const withItem = {
       items: [

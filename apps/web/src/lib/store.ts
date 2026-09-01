@@ -46,6 +46,13 @@ let wishlistFetchOperation = 0;
 let addressFetchOperation = 0;
 let behavioralProfileFetchOperation = 0;
 const wishlistToggleQueues = new Map<string, Promise<void>>();
+let cartMutationQueue: Promise<void> = Promise.resolve();
+
+function enqueueCartMutation(operation: () => Promise<void>) {
+  const next = cartMutationQueue.catch(() => undefined).then(operation);
+  cartMutationQueue = next;
+  return next;
+}
 
 type StoreState = {
   // ---- Legacy, fake-catalog-backed state (untouched — the fabricated checkout/order
@@ -380,34 +387,62 @@ export const useStore = create<StoreState>()(
 
       addServerCartItem: async (variantId, quantity) => {
         const userId = get().user?.id;
-        const cart = await cartApi.addItem(variantId, quantity);
-        if (get().user?.id !== userId) return;
-        set({ serverCart: cart });
-        const productId = cart.items.find((i) => i.variantId === variantId)?.productId;
-        get().trackRealEvent("PRODUCT_ADDED_TO_CART", productId, { variantId, quantity });
+        const session = authOperation;
+        await enqueueCartMutation(async () => {
+          if (session !== authOperation || get().user?.id !== userId) return;
+          cartFetchOperation++;
+          const cart = await cartApi.addItem(variantId, quantity);
+          if (session !== authOperation || get().user?.id !== userId) return;
+          set({ serverCart: cart });
+          const productId = cart.items.find((i) => i.variantId === variantId)?.productId;
+          get().trackRealEvent("PRODUCT_ADDED_TO_CART", productId, { variantId, quantity });
+        });
       },
 
       updateServerCartItem: async (itemId, quantity) => {
         const userId = get().user?.id;
-        const cart = await cartApi.updateItem(itemId, quantity);
-        if (get().user?.id !== userId) return;
-        set({ serverCart: cart });
+        const session = authOperation;
+        const currentQuantity = get().serverCart?.items.find((i) => i.id === itemId)?.quantity;
+        const delta = currentQuantity === undefined ? null : quantity - currentQuantity;
+        await enqueueCartMutation(async () => {
+          if (session !== authOperation || get().user?.id !== userId) return;
+          const current = get().serverCart?.items.find((i) => i.id === itemId);
+          if (!current) return;
+          cartFetchOperation++;
+          const cart = await cartApi.updateItem(
+            itemId,
+            delta === null ? quantity : current.quantity + delta,
+          );
+          if (session !== authOperation || get().user?.id !== userId) return;
+          set({ serverCart: cart });
+        });
       },
 
       removeServerCartItem: async (itemId) => {
         const userId = get().user?.id;
-        const productId = get().serverCart?.items.find((i) => i.id === itemId)?.productId;
-        const cart = await cartApi.removeItem(itemId);
-        if (get().user?.id !== userId) return;
-        set({ serverCart: cart });
-        get().trackRealEvent("PRODUCT_REMOVED_FROM_CART", productId);
+        const session = authOperation;
+        await enqueueCartMutation(async () => {
+          if (session !== authOperation || get().user?.id !== userId) return;
+          const productId = get().serverCart?.items.find((i) => i.id === itemId)?.productId;
+          if (!productId) return;
+          cartFetchOperation++;
+          const cart = await cartApi.removeItem(itemId);
+          if (session !== authOperation || get().user?.id !== userId) return;
+          set({ serverCart: cart });
+          get().trackRealEvent("PRODUCT_REMOVED_FROM_CART", productId);
+        });
       },
 
       clearServerCart: async () => {
         const userId = get().user?.id;
-        await cartApi.clear();
-        if (get().user?.id !== userId) return;
-        set({ serverCart: null });
+        const session = authOperation;
+        await enqueueCartMutation(async () => {
+          if (session !== authOperation || get().user?.id !== userId) return;
+          cartFetchOperation++;
+          await cartApi.clear();
+          if (session !== authOperation || get().user?.id !== userId) return;
+          set({ serverCart: null });
+        });
       },
 
       serverWishlist: null,
