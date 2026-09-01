@@ -56,17 +56,4 @@ export class ProductSpecificationsService {
     this.events.productChanged(productId, 'updated');
     return this.products.findByIdAdmin(productId);
   }
-
-  private async getOwned(productId: string, specId: string) {
-    const spec = await this.prisma.productSpecification.findUnique({
-      where: { id: specId },
-    });
-    if (!spec || spec.productId !== productId) {
-      throw new NotFoundException({
-        code: 'PRODUCT_SPECIFICATION_NOT_FOUND',
-        message: 'Product specification not found.',
-      });
-    }
-    return spec;
-  }
 }

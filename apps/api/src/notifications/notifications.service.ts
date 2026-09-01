@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { NotificationChannel } from './channels/notification-channel.types';
 import { NotificationDeliveryService } from './notification-delivery.service';
@@ -81,10 +81,23 @@ export class NotificationsService {
         message: 'Notification not found.',
       });
     }
-    return this.prisma.notification.update({
-      where: { id: notificationId },
-      data: { readAt: notification.readAt ?? new Date() },
-    });
+    try {
+      return await this.prisma.notification.update({
+        where: { id: notificationId },
+        data: { readAt: notification.readAt ?? new Date() },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException({
+          code: 'NOTIFICATION_NOT_FOUND',
+          message: 'Notification not found.',
+        });
+      }
+      throw error;
+    }
   }
 
   async markAllRead(userId: string): Promise<void> {

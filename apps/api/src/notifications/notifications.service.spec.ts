@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationDeliveryService } from './notification-delivery.service';
 import { NotificationsService } from './notifications.service';
@@ -113,5 +113,25 @@ describe('NotificationsService', () => {
       expect.stringContaining('Failed to create notification for user user1'),
     );
     warnSpy.mockRestore();
+  });
+
+  it('maps a concurrent notification deletion to not found', async () => {
+    prisma.notification.findUnique.mockResolvedValue({
+      id: 'notification1',
+      userId: 'user1',
+      readAt: null,
+    });
+    prisma.notification.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.markRead('user1', 'notification1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'NOTIFICATION_NOT_FOUND' }),
+    });
   });
 });
