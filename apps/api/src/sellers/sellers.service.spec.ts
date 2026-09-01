@@ -36,6 +36,46 @@ describe('SellersService', () => {
     expect(create).toHaveBeenCalled();
   });
 
+  it('rejects a stale seller profile update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      seller: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'seller-1',
+          businessName: 'Acme Store',
+          updatedAt,
+        }),
+        updateMany,
+      },
+    };
+    const service = new SellersService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.updateOwn('owner-1', { description: 'New description' }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SELLER_PROFILE_CHANGED' }),
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'seller-1', updatedAt },
+      data: {
+        businessName: undefined,
+        slug: undefined,
+        description: 'New description',
+        logoUrl: undefined,
+        bannerUrl: undefined,
+      },
+    });
+  });
+
   it('does not deactivate listings when suspension loses its status claim', async () => {
     const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
     const productUpdateMany = jest.fn();

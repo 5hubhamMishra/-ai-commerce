@@ -125,10 +125,12 @@ export class SellersService {
         ? await this.generateUniqueSlug(dto.businessName, seller.id)
         : undefined;
 
-    let updated: Awaited<ReturnType<typeof this.prisma.seller.update>>;
+    let updated: Awaited<
+      ReturnType<typeof this.prisma.seller.findUniqueOrThrow>
+    >;
     try {
-      updated = await this.prisma.seller.update({
-        where: { id: seller.id },
+      const claimed = await this.prisma.seller.updateMany({
+        where: { id: seller.id, updatedAt: seller.updatedAt },
         data: {
           businessName: dto.businessName,
           slug,
@@ -136,6 +138,16 @@ export class SellersService {
           logoUrl: dto.logoUrl,
           bannerUrl: dto.bannerUrl,
         },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'SELLER_PROFILE_CHANGED',
+          message:
+            'The seller profile changed before this update could be applied.',
+        });
+      }
+      updated = await this.prisma.seller.findUniqueOrThrow({
+        where: { id: seller.id },
       });
     } catch (error) {
       this.rethrowUniqueConflict(error);
