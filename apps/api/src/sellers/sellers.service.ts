@@ -239,10 +239,19 @@ export class SellersService {
   }
 
   async reject(actorId: string, id: string, dto: RejectSellerDto) {
-    await this.getRow(id);
-    const updated = await this.prisma.seller.update({
-      where: { id },
+    const seller = await this.getRow(id);
+    const claimed = await this.prisma.seller.updateMany({
+      where: { id, status: seller.status },
       data: { status: SellerStatus.REJECTED, rejectReason: dto.reason },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'SELLER_STATUS_CHANGED',
+        message: 'The seller changed before rejection could be applied.',
+      });
+    }
+    const updated = await this.prisma.seller.findUniqueOrThrow({
+      where: { id },
     });
     await this.audit.record({
       actorId,

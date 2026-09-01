@@ -106,4 +106,40 @@ describe('SellersService', () => {
       data: { status: SellerStatus.VERIFIED, suspendReason: null },
     });
   });
+
+  it('rejects a stale seller rejection without notifying the owner', async () => {
+    const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const notifications = { create: jest.fn() };
+    const audit = { record: jest.fn() };
+    const service = new SellersService(
+      { seller: { updateMany: sellerUpdateMany } } as never,
+      {} as never,
+      {} as never,
+      audit as never,
+      notifications as never,
+      {} as never,
+      {} as never,
+    );
+    (service as unknown as { getRow: jest.Mock }).getRow = jest
+      .fn()
+      .mockResolvedValue({
+        id: 'seller-1',
+        status: SellerStatus.PENDING_VERIFICATION,
+      });
+
+    await expect(
+      service.reject('admin-1', 'seller-1', { reason: 'Incomplete documents' }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'SELLER_STATUS_CHANGED' }),
+    });
+    expect(sellerUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'seller-1', status: SellerStatus.PENDING_VERIFICATION },
+      data: {
+        status: SellerStatus.REJECTED,
+        rejectReason: 'Incomplete documents',
+      },
+    });
+    expect(notifications.create).not.toHaveBeenCalled();
+    expect(audit.record).not.toHaveBeenCalled();
+  });
 });
