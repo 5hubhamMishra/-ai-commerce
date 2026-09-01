@@ -442,6 +442,47 @@ describe("server cart / wishlist actions", () => {
 
     expect(useStore.getState().serverCart).toBeNull();
   });
+
+  it("keeps the newest overlapping cart fetch response", async () => {
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1" });
+    let resolveFirst!: (response: Response) => void;
+    let resolveSecond!: (response: Response) => void;
+    let requestCount = 0;
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondResponse = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const fetchSpy = vi.fn(() => {
+      requestCount++;
+      return requestCount === 1 ? firstResponse : secondResponse;
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const firstFetch = useStore.getState().fetchServerCart();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    const secondFetch = useStore.getState().fetchServerCart();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+
+    resolveSecond({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "new-cart", items: [] }),
+    } as Response);
+    await secondFetch;
+    resolveFirst({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "old-cart", items: [] }),
+    } as Response);
+    await firstFetch;
+
+    expect(useStore.getState().serverCart).toEqual({
+      id: "new-cart",
+      items: [],
+    });
+  });
 });
 
 describe("server address / order actions", () => {

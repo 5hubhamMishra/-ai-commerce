@@ -41,6 +41,7 @@ type AsyncStatus = "idle" | "loading" | "error";
 let sessionId: string | null = null;
 let authOperation = 0;
 let personalizationOperation = 0;
+let cartFetchOperation = 0;
 let wishlistFetchOperation = 0;
 
 type StoreState = {
@@ -327,6 +328,7 @@ export const useStore = create<StoreState>()(
       clearSession: () => {
         authOperation++;
         personalizationOperation++;
+        cartFetchOperation++;
         wishlistFetchOperation++;
         set({
           user: null,
@@ -356,15 +358,18 @@ export const useStore = create<StoreState>()(
       serverCartStatus: "idle",
 
       fetchServerCart: async () => {
+        const operation = ++cartFetchOperation;
         const userId = get().user?.id;
         if (!userId) return;
         set({ serverCartStatus: "loading" });
         try {
           const cart = await cartApi.getCart();
-          if (get().user?.id !== userId) return;
+          if (operation !== cartFetchOperation || get().user?.id !== userId) return;
           set({ serverCart: cart, serverCartStatus: "idle" });
         } catch {
-          if (get().user?.id === userId) set({ serverCartStatus: "error" });
+          if (operation === cartFetchOperation && get().user?.id === userId) {
+            set({ serverCartStatus: "error" });
+          }
         }
       },
 
