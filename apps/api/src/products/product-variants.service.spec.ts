@@ -17,7 +17,7 @@ describe('ProductVariantsService', () => {
       update: jest.Mock;
       updateMany: jest.Mock;
     };
-    variantAttributeValue: { deleteMany: jest.Mock };
+    variantAttributeValue: { deleteMany: jest.Mock; createMany: jest.Mock };
     attributeValue: { count: jest.Mock };
     $transaction: jest.Mock;
   };
@@ -30,9 +30,9 @@ describe('ProductVariantsService', () => {
         count: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
-        updateMany: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
-      variantAttributeValue: { deleteMany: jest.fn() },
+      variantAttributeValue: { deleteMany: jest.fn(), createMany: jest.fn() },
       attributeValue: { count: jest.fn() },
       $transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(prisma)),
     };
@@ -128,11 +128,26 @@ describe('ProductVariantsService', () => {
       id: 'v2',
       productId: 'p1',
       sku: 'SKU-2',
+      updatedAt: new Date('2026-09-01T00:00:00.000Z'),
     });
-    prisma.productVariant.update.mockResolvedValue({ id: 'v2' });
 
     await service.update('p1', 'v2', { isDefault: true }, 'actor1');
 
+    expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'v2',
+        updatedAt: new Date('2026-09-01T00:00:00.000Z'),
+      },
+      data: {
+        sku: undefined,
+        price: undefined,
+        compareAtPrice: undefined,
+        currency: undefined,
+        weightGrams: undefined,
+        isDefault: true,
+        isActive: undefined,
+      },
+    });
     expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
       where: { productId: 'p1', isDefault: true, NOT: { id: 'v2' } },
       data: { isDefault: false },
@@ -157,5 +172,35 @@ describe('ProductVariantsService', () => {
       data: { deletedAt: expect.any(Date), isActive: false },
     });
     expect(prisma.productVariant.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects a stale variant update before changing defaults', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v1',
+      productId: 'p1',
+      sku: 'SKU-1',
+      updatedAt,
+    });
+    prisma.productVariant.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.update('p1', 'v1', { price: 200, isDefault: true }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_VARIANT_CHANGED' }),
+    });
+    expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
+      where: { id: 'v1', updatedAt },
+      data: {
+        sku: undefined,
+        price: 200,
+        compareAtPrice: undefined,
+        currency: undefined,
+        weightGrams: undefined,
+        isDefault: true,
+        isActive: undefined,
+      },
+    });
+    expect(prisma.variantAttributeValue.deleteMany).not.toHaveBeenCalled();
   });
 });

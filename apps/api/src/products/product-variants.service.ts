@@ -95,18 +95,9 @@ export class ProductVariantsService {
       await this.assertAttributeValuesExist(dto.attributeValueIds);
 
     await this.prisma.$transaction(async (tx) => {
-      if (dto.isDefault) {
-        await tx.productVariant.updateMany({
-          where: { productId, isDefault: true, NOT: { id: variantId } },
-          data: { isDefault: false },
-        });
-      }
-      if (dto.attributeValueIds) {
-        await tx.variantAttributeValue.deleteMany({ where: { variantId } });
-      }
       try {
-        await tx.productVariant.update({
-          where: { id: variantId },
+        const claimed = await tx.productVariant.updateMany({
+          where: { id: variantId, updatedAt: variant.updatedAt },
           data: {
             sku: dto.sku,
             price: dto.price,
@@ -115,15 +106,32 @@ export class ProductVariantsService {
             weightGrams: dto.weightGrams,
             isDefault: dto.isDefault,
             isActive: dto.isActive,
-            attributeValues: dto.attributeValueIds
-              ? {
-                  create: dto.attributeValueIds.map((attributeValueId) => ({
-                    attributeValueId,
-                  })),
-                }
-              : undefined,
           },
         });
+        if (claimed.count === 0) {
+          throw new ConflictException({
+            code: 'PRODUCT_VARIANT_CHANGED',
+            message:
+              'The product variant changed before this update could be applied.',
+          });
+        }
+        if (dto.isDefault) {
+          await tx.productVariant.updateMany({
+            where: { productId, isDefault: true, NOT: { id: variantId } },
+            data: { isDefault: false },
+          });
+        }
+        if (dto.attributeValueIds) {
+          await tx.variantAttributeValue.deleteMany({ where: { variantId } });
+          if (dto.attributeValueIds.length > 0) {
+            await tx.variantAttributeValue.createMany({
+              data: dto.attributeValueIds.map((attributeValueId) => ({
+                variantId,
+                attributeValueId,
+              })),
+            });
+          }
+        }
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
