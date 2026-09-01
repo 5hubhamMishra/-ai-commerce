@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -18,6 +19,7 @@ type UserWithRoles = {
   name: string;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
   deletedAt: Date | null;
   roles: { role: Role }[];
 };
@@ -33,6 +35,7 @@ const USER_SELECT = {
   name: true,
   isActive: true,
   createdAt: true,
+  updatedAt: true,
   deletedAt: true,
   roles: true,
 } as const;
@@ -59,9 +62,19 @@ export class UsersService {
   }
 
   async updateName(id: string, name: string): Promise<UserWithRoles> {
-    return this.prisma.user.update({
-      where: { id },
+    const existing = await this.findById(id);
+    const claimed = await this.prisma.user.updateMany({
+      where: { id, updatedAt: existing.updatedAt, deletedAt: null },
       data: { name },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictException({
+        code: 'USER_CHANGED',
+        message: 'The user changed before this update could be applied.',
+      });
+    }
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id },
       select: USER_SELECT,
     });
   }

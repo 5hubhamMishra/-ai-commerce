@@ -10,7 +10,9 @@ describe('UsersService', () => {
   let prisma: {
     user: {
       findUnique: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
       update: jest.Mock;
+      updateMany: jest.Mock;
       findMany: jest.Mock;
       count: jest.Mock;
     };
@@ -42,6 +44,7 @@ describe('UsersService', () => {
     name: 'A',
     isActive: true,
     createdAt: new Date(),
+    updatedAt: new Date(),
     deletedAt: null,
     roles: [],
   };
@@ -50,7 +53,9 @@ describe('UsersService', () => {
     prisma = {
       user: {
         findUnique: jest.fn().mockResolvedValue(row),
+        findUniqueOrThrow: jest.fn().mockResolvedValue(row),
         update: jest.fn().mockResolvedValue(row),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         findMany: jest.fn().mockResolvedValue([row]),
         count: jest.fn().mockResolvedValue(1),
       },
@@ -129,10 +134,24 @@ describe('UsersService', () => {
 
     it('updateName uses select, not include', async () => {
       await service.updateName('u1', 'New Name');
-      const call = prisma.user.update.mock.calls[0][0];
+      const call = prisma.user.findUniqueOrThrow.mock.calls[0][0];
       expect(call.include).toBeUndefined();
       expect(call.select).toBeDefined();
       expect(call.select.passwordHash).toBeUndefined();
+    });
+
+    it('rejects a stale name update', async () => {
+      const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+      prisma.user.findUnique.mockResolvedValue({ ...row, updatedAt });
+      prisma.user.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.updateName('u1', 'New Name')).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'USER_CHANGED' }),
+      });
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'u1', updatedAt, deletedAt: null },
+        data: { name: 'New Name' },
+      });
     });
 
     it('list uses select, not include', async () => {
