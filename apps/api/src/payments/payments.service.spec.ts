@@ -1,4 +1,9 @@
-import { OrderStatus, PaymentProviderType, PaymentStatus, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentProviderType,
+  PaymentStatus,
+  Prisma,
+} from '@prisma/client';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
@@ -267,6 +272,70 @@ describe('PaymentsService settlement race', () => {
       data: {
         status: PaymentStatus.FAILED,
         failureReason: 'Payment provider could not create an intent.',
+      },
+    });
+  });
+
+  it('marks the payment failed when the provider reference cannot be saved', async () => {
+    const saveError = new Error('database unavailable');
+    const paymentUpdate = jest
+      .fn()
+      .mockRejectedValueOnce(saveError)
+      .mockResolvedValueOnce({ count: 1 });
+    const service = new PaymentsService(
+      {
+        payment: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          update: paymentUpdate,
+          updateMany: paymentUpdate,
+        },
+        $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+          callback({
+            order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+            payment: {
+              create: jest.fn().mockResolvedValue({
+                id: 'payment-1',
+                provider: PaymentProviderType.RAZORPAY,
+                status: PaymentStatus.PENDING,
+              }),
+            },
+          }),
+        ),
+      } as never,
+      {
+        type: PaymentProviderType.RAZORPAY,
+        createIntent: jest.fn().mockResolvedValue({ providerRef: 'ref-1' }),
+      } as never,
+      {
+        assertOwnership: jest.fn().mockResolvedValue({
+          status: OrderStatus.PENDING_PAYMENT,
+          total: 100,
+          currency: 'INR',
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    const createInternal = (
+      service as unknown as {
+        createPaymentInternal: (
+          userId: string,
+          orderId: string,
+          key: string,
+        ) => Promise<unknown>;
+      }
+    ).createPaymentInternal;
+
+    await expect(
+      createInternal.call(service, 'user-1', 'order-1', 'key-1'),
+    ).rejects.toBe(saveError);
+    expect(paymentUpdate).toHaveBeenNthCalledWith(2, {
+      where: { id: 'payment-1', status: PaymentStatus.PENDING },
+      data: {
+        status: PaymentStatus.FAILED,
+        failureReason: 'Payment provider intent could not be saved.',
       },
     });
   });

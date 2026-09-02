@@ -144,10 +144,25 @@ export class PaymentsService {
         throw error;
       }
 
-      const updatedPayment = await this.prisma.payment.update({
-        where: { id: payment.id },
-        data: { providerRef: intent.providerRef },
-      });
+      let updatedPayment: Payment;
+      try {
+        updatedPayment = await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: { providerRef: intent.providerRef },
+        });
+      } catch (error) {
+        // The provider intent is keyed by order, so a later attempt can safely ask the
+        // provider for the same intent again. Do not leave this database row pending and
+        // block that recovery path when only the reference write failed.
+        await this.prisma.payment.updateMany({
+          where: { id: payment.id, status: PaymentStatus.PENDING },
+          data: {
+            status: PaymentStatus.FAILED,
+            failureReason: 'Payment provider intent could not be saved.',
+          },
+        });
+        throw error;
+      }
 
       return {
         paymentId: updatedPayment.id,
