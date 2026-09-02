@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify API
+        run: |
+          npm test --workspace=apps/api -- --runInBand
+          npm run lint --workspace=apps/api -- --no-fix
+          npm run build --workspace=apps/api
+
+      - name: Verify web
+        run: |
+          npm test --workspace=apps/web
+          npm run lint --workspace=apps/web
+          npm run build --workspace=apps/web
+
+      - name: Verify mobile
+        run: |
+          npm test --workspace=apps/mobile -- --runInBand
+          npm run lint --workspace=apps/mobile
+          npm run typecheck --workspace=apps/mobile
