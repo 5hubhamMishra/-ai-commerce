@@ -380,6 +380,18 @@ describe('placeOrder', () => {
     await expect(useStore.getState().placeOrder('addr-1', 'STANDARD')).rejects.toThrow('Insufficient stock.');
     expect(paymentsApi.create).not.toHaveBeenCalled();
   });
+
+  it('does not read or return an order when payment confirmation fails', async () => {
+    (ordersApi.create as jest.Mock).mockResolvedValue({ id: 'ord-1' });
+    (paymentsApi.create as jest.Mock).mockResolvedValue({ paymentId: 'pay-1' });
+    (paymentsApi.confirm as jest.Mock).mockResolvedValue({
+      status: 'FAILED',
+      failureReason: 'Payment declined.',
+    });
+
+    await expect(useStore.getState().placeOrder('addr-1', 'STANDARD')).rejects.toThrow('Payment declined.');
+    expect(ordersApi.get).not.toHaveBeenCalled();
+  });
 });
 
 describe('finalizeOrder', () => {

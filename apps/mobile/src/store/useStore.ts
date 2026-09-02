@@ -265,8 +265,11 @@ export const useStore = create<StoreState>((set, get) => ({
     if (operation !== authOperation) throw new Error('Session changed.');
     const payment = await paymentsApi.create(created.id);
     if (operation !== authOperation) throw new Error('Session changed.');
-    await paymentsApi.confirm(payment.paymentId);
+    const confirmed = await paymentsApi.confirm(payment.paymentId);
     if (operation !== authOperation) throw new Error('Session changed.');
+    if (confirmed.status !== 'SUCCEEDED') {
+      throw new Error(confirmed.failureReason ?? 'Payment was not successful. Please try again.');
+    }
     const finalOrder = await ordersApi.get(created.id);
     if (operation !== authOperation) throw new Error('Session changed.');
     void get().fetchCart(); // apps/api already clears the cart server-side as part of order creation
