@@ -26,6 +26,7 @@ export interface EmbeddingProvider {
   readonly model: EmbeddingModel;
   readonly dimensions: number;
   embed(input: EmbeddingInput): Promise<EmbeddingResult>;
+  embedMany(inputs: EmbeddingInput[]): Promise<EmbeddingResult[]>;
   /** Embeds arbitrary free text into the same vector space as `embed()`'s
    *  product vectors — Phase 8's semantic search embeds a search-box query
    *  this way, then compares it against stored product embeddings. Must stay

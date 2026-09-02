@@ -4,10 +4,34 @@ import { PrismaService } from '../prisma/prisma.service';
 import { STORED_EMBEDDING_DIMENSIONS } from './embedding-model-config';
 import {
   EMBEDDING_PROVIDER,
+  type EmbeddingInput,
   type EmbeddingProvider,
 } from './providers/embedding-provider.interface';
 
 export type SimilarProduct = { productId: string; similarity: number };
+const EMBEDDING_BATCH_SIZE = 32;
+
+type EmbeddableProduct = {
+  id: string;
+  name: string;
+  description: string;
+  categoryId: string;
+  brandId: string | null;
+  tags: { tag: { name: string } }[];
+  specifications: { value: string }[];
+};
+
+function toEmbeddingInput(product: EmbeddableProduct): EmbeddingInput {
+  return {
+    productId: product.id,
+    name: product.name,
+    description: product.description,
+    categoryId: product.categoryId,
+    brandId: product.brandId,
+    tags: product.tags.map((tag) => tag.tag.name),
+    specificationValues: product.specifications.map((spec) => spec.value),
+  };
+}
 
 function vectorToLiteral(vector: number[]): string {
   return `[${vector.join(',')}]`;
@@ -53,15 +77,11 @@ export class EmbeddingsService {
       return;
     }
 
-    const { vector } = await this.provider.embed({
-      productId: product.id,
-      name: product.name,
-      description: product.description,
-      categoryId: product.categoryId,
-      brandId: product.brandId,
-      tags: product.tags.map((t) => t.tag.name),
-      specificationValues: product.specifications.map((s) => s.value),
-    });
+    const { vector } = await this.provider.embed(toEmbeddingInput(product));
+    await this.storeEmbedding(product.id, vector);
+  }
+
+  private async storeEmbedding(productId: string, vector: number[]) {
     this.assertCompatibleVector(vector);
     const literal = vectorToLiteral(vector);
 
@@ -85,16 +105,31 @@ export class EmbeddingsService {
 
   /** Batch reindex — the initial backfill for products seeded before this
    *  phase existed, and a manual recovery tool if the embedding model ever
-   *  changes. Sequential, not `Promise.all` — this is an infrequent admin
-   *  action, not a request-path hot loop, and sequential keeps a single
-   *  slow/failing product from taking down a `Promise.all` batch. */
+   *  changes. Provider requests are batched to keep hosted backfills within
+   *  serverless request limits; writes stay sequential and transactional. */
   async reindexAll(): Promise<{ productCount: number }> {
     const products = await this.prisma.product.findMany({
       where: { deletedAt: null },
-      select: { id: true },
+      include: {
+        tags: { include: { tag: true } },
+        specifications: true,
+      },
     });
-    for (const p of products) {
-      await this.reindexProduct(p.id);
+    for (
+      let offset = 0;
+      offset < products.length;
+      offset += EMBEDDING_BATCH_SIZE
+    ) {
+      const batch = products.slice(offset, offset + EMBEDDING_BATCH_SIZE);
+      const results = await this.provider.embedMany(
+        batch.map(toEmbeddingInput),
+      );
+      for (const [index, product] of batch.entries()) {
+        const result = results[index];
+        if (!result)
+          throw new Error('Embedding provider returned too few vectors');
+        await this.storeEmbedding(product.id, result.vector);
+      }
     }
     this.logger.log(`Reindexed embeddings for ${products.length} products`);
     return { productCount: products.length };

@@ -21,6 +21,7 @@ describe('EmbeddingsService graceful degradation', () => {
       model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn(),
+      embedMany: jest.fn(),
       embedText: jest.fn().mockResolvedValue({ vector: vector64 }),
     };
     const prisma: { $queryRaw: jest.Mock } = {
@@ -64,6 +65,7 @@ describe('EmbeddingsService graceful degradation', () => {
       model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn(),
+      embedMany: jest.fn(),
       embedText: jest.fn().mockResolvedValue({ vector: [0.1, 0.2, 0.3] }),
     };
     const prisma: { $queryRaw: jest.Mock } = {
@@ -130,6 +132,7 @@ describe('EmbeddingsService compatibility guards', () => {
       model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn().mockResolvedValue({ vector: compatibleVector }),
+      embedMany: jest.fn(),
       embedText: jest.fn(),
     };
     const { service, prisma } = await buildReindexService(provider);
@@ -152,6 +155,7 @@ describe('EmbeddingsService compatibility guards', () => {
       model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS + 1,
       embed: jest.fn().mockResolvedValue({ vector: compatibleVector }),
+      embedMany: jest.fn(),
       embedText: jest.fn(),
     };
     const { service, prisma } = await buildReindexService(provider);
@@ -171,6 +175,7 @@ describe('EmbeddingsService compatibility guards', () => {
       embed: jest.fn().mockResolvedValue({
         vector: [Number.NaN, ...compatibleVector.slice(1)],
       }),
+      embedMany: jest.fn(),
       embedText: jest.fn(),
     };
     const { service } = await buildReindexService(provider);
@@ -178,5 +183,66 @@ describe('EmbeddingsService compatibility guards', () => {
     await expect(service.reindexProduct('product-1')).rejects.toThrow(
       'non-finite',
     );
+  });
+});
+
+describe('EmbeddingsService batch reindex', () => {
+  it('embeds products in one provider batch and stores each result', async () => {
+    const products = [
+      {
+        id: 'product-1',
+        name: 'Wireless Headphones',
+        description: 'Noise cancelling headphones',
+        categoryId: 'cat-1',
+        brandId: 'brand-1',
+        deletedAt: null,
+        tags: [{ tag: { name: 'audio' } }],
+        specifications: [{ value: 'Bluetooth' }],
+      },
+      {
+        id: 'product-2',
+        name: 'Travel Backpack',
+        description: 'Lightweight carry-on bag',
+        categoryId: 'cat-2',
+        brandId: null,
+        deletedAt: null,
+        tags: [],
+        specifications: [],
+      },
+    ];
+    const provider: EmbeddingProvider = {
+      model: EmbeddingModel.HASHING_V1,
+      dimensions: STORED_EMBEDDING_DIMENSIONS,
+      embed: jest.fn(),
+      embedMany: jest
+        .fn()
+        .mockResolvedValue([
+          { vector: new Array(STORED_EMBEDDING_DIMENSIONS).fill(0.1) },
+          { vector: new Array(STORED_EMBEDDING_DIMENSIONS).fill(0.2) },
+        ]),
+      embedText: jest.fn(),
+    };
+    const prisma = {
+      product: { findMany: jest.fn().mockResolvedValue(products) },
+      productEmbedding: {
+        upsert: jest.fn().mockReturnValue({ op: 'upsert' }),
+      },
+      $executeRaw: jest.fn().mockReturnValue({ op: 'execute' }),
+      $transaction: jest.fn().mockResolvedValue([]),
+    };
+    const module = await Test.createTestingModule({
+      providers: [
+        EmbeddingsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EMBEDDING_PROVIDER, useValue: provider },
+      ],
+    }).compile();
+
+    await expect(module.get(EmbeddingsService).reindexAll()).resolves.toEqual({
+      productCount: 2,
+    });
+    expect((provider.embedMany as jest.Mock).mock.calls).toHaveLength(1);
+    expect(prisma.productEmbedding.upsert).toHaveBeenCalledTimes(2);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
   });
 });

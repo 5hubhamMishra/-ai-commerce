@@ -19,16 +19,18 @@ export class OpenAIEmbeddingAdapter implements EmbeddingProvider {
   constructor(private readonly config: ConfigService) {}
 
   embed(input: EmbeddingInput): Promise<EmbeddingResult> {
-    return this.request(
-      `${input.name}\n${input.description}\n${input.tags.join(' ')}\n${input.specificationValues.join(' ')}`,
-    );
+    return this.request(productText(input)).then(([result]) => result);
+  }
+
+  embedMany(inputs: EmbeddingInput[]): Promise<EmbeddingResult[]> {
+    return this.request(inputs.map(productText));
   }
 
   embedText(text: string): Promise<EmbeddingResult> {
-    return this.request(text);
+    return this.request(text).then(([result]) => result);
   }
 
-  private async request(input: string): Promise<EmbeddingResult> {
+  private async request(input: string | string[]): Promise<EmbeddingResult[]> {
     const apiKey = this.config.get<string>('embeddings.openaiApiKey');
     if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
 
@@ -55,17 +57,31 @@ export class OpenAIEmbeddingAdapter implements EmbeddingProvider {
       typeof body === 'object' && body !== null && 'data' in body
         ? (body as { data?: unknown }).data
         : undefined;
-    const first = Array.isArray(data) ? (data as unknown[])[0] : undefined;
-    const embedding =
-      first && typeof first === 'object' && 'embedding' in first
-        ? (first as { embedding?: unknown }).embedding
-        : undefined;
-    if (
-      !Array.isArray(embedding) ||
-      !embedding.every((value): value is number => typeof value === 'number')
-    ) {
-      throw new Error('OpenAI embedding response had no numeric vector');
+    const embeddings = Array.isArray(data)
+      ? data.map((item) => {
+          const embedding =
+            item && typeof item === 'object' && 'embedding' in item
+              ? (item as { embedding?: unknown }).embedding
+              : undefined;
+          if (
+            !Array.isArray(embedding) ||
+            !embedding.every(
+              (value): value is number => typeof value === 'number',
+            )
+          ) {
+            throw new Error('OpenAI embedding response had no numeric vector');
+          }
+          return { vector: embedding };
+        })
+      : [];
+    const expectedCount = Array.isArray(input) ? input.length : 1;
+    if (embeddings.length !== expectedCount) {
+      throw new Error('OpenAI embedding response count did not match input');
     }
-    return { vector: embedding };
+    return embeddings;
   }
+}
+
+function productText(input: EmbeddingInput): string {
+  return `${input.name}\n${input.description}\n${input.tags.join(' ')}\n${input.specificationValues.join(' ')}`;
 }

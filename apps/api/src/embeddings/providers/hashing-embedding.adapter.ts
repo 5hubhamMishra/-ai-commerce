@@ -55,25 +55,11 @@ export class HashingEmbeddingAdapter implements EmbeddingProvider {
   readonly dimensions = DIMENSIONS;
 
   embed(input: EmbeddingInput): Promise<EmbeddingResult> {
-    const vector = new Array<number>(DIMENSIONS).fill(0);
+    return Promise.resolve(this.embedSync(input));
+  }
 
-    const addToken = (token: string, weight: number) => {
-      const hash = fnv1a(token);
-      const bucket = hash % DIMENSIONS;
-      const sign = hash & 1 ? 1 : -1;
-      vector[bucket] += sign * weight;
-    };
-
-    addToken(`category:${input.categoryId}`, STRUCTURED_TOKEN_WEIGHT);
-    if (input.brandId)
-      addToken(`brand:${input.brandId}`, STRUCTURED_TOKEN_WEIGHT);
-    for (const tag of input.tags)
-      addToken(`tag:${tag.toLowerCase()}`, STRUCTURED_TOKEN_WEIGHT);
-
-    const text = `${input.name} ${input.description} ${input.specificationValues.join(' ')}`;
-    for (const token of tokenize(text)) addToken(token, TEXT_TOKEN_WEIGHT);
-
-    return Promise.resolve({ vector: l2Normalize(vector) });
+  embedMany(inputs: EmbeddingInput[]): Promise<EmbeddingResult[]> {
+    return Promise.resolve(inputs.map((input) => this.embedSync(input)));
   }
 
   /** A search-box query has no category/brand/tag fields — just plain text,
@@ -93,5 +79,27 @@ export class HashingEmbeddingAdapter implements EmbeddingProvider {
       vector[bucket] += sign * TEXT_TOKEN_WEIGHT;
     }
     return Promise.resolve({ vector: l2Normalize(vector) });
+  }
+
+  private embedSync(input: EmbeddingInput): EmbeddingResult {
+    const vector = new Array<number>(DIMENSIONS).fill(0);
+
+    const addToken = (token: string, weight: number) => {
+      const hash = fnv1a(token);
+      const bucket = hash % DIMENSIONS;
+      const sign = hash & 1 ? 1 : -1;
+      vector[bucket] += sign * weight;
+    };
+
+    addToken(`category:${input.categoryId}`, STRUCTURED_TOKEN_WEIGHT);
+    if (input.brandId)
+      addToken(`brand:${input.brandId}`, STRUCTURED_TOKEN_WEIGHT);
+    for (const tag of input.tags)
+      addToken(`tag:${tag.toLowerCase()}`, STRUCTURED_TOKEN_WEIGHT);
+
+    const text = `${input.name} ${input.description} ${input.specificationValues.join(' ')}`;
+    for (const token of tokenize(text)) addToken(token, TEXT_TOKEN_WEIGHT);
+
+    return { vector: l2Normalize(vector) };
   }
 }
