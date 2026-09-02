@@ -42,6 +42,14 @@ export default function ProductDetailClient({
 
   const similar = useRecommendations("similar", { productId: product.id, limit: 6 });
   const frequentlyBoughtWith = useRecommendations("frequentlyBoughtWith", { productId: product.id, limit: 3 });
+  const frequentlyBoughtWithReasons = useMemo(
+    () => Object.fromEntries((frequentlyBoughtWith ?? []).map((r) => [r.product.id, r.reasons[0]])),
+    [frequentlyBoughtWith],
+  );
+  const similarReasons = useMemo(
+    () => Object.fromEntries((similar ?? []).map((r) => [r.product.id, r.reasons[0]])),
+    [similar],
+  );
   const similarProducts =
     similar && similar.length > 0
       ? similar.map((r) => r.product)
@@ -355,7 +363,10 @@ export default function ProductDetailClient({
           <h2 className="font-display text-xl font-semibold mb-4" style={{ color: "var(--clr-text-primary)" }}>
             Frequently bought together
           </h2>
-          <CatalogProductGrid products={frequentlyBoughtWith.map((r) => fromProductListItem(r.product))} />
+          <CatalogProductGrid
+            products={frequentlyBoughtWith.map((r) => fromProductListItem(r.product))}
+            reasons={frequentlyBoughtWithReasons}
+          />
         </div>
       )}
 
@@ -364,7 +375,7 @@ export default function ProductDetailClient({
           <h2 className="font-display text-xl font-semibold mb-4" style={{ color: "var(--clr-text-primary)" }}>
             Similar products
           </h2>
-          <CatalogProductGrid products={similarProducts.map(fromProductListItem)} />
+          <CatalogProductGrid products={similarProducts.map(fromProductListItem)} reasons={similarReasons} />
         </div>
       )}
 

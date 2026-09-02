@@ -129,7 +129,10 @@ export default function CatalogProductCard({
       <Link
         href={`/products/${product.slug}`}
         className="flex-1 flex flex-col"
-        onClick={() => trackRealEvent("PRODUCT_CLICKED", product.id)}
+        onClick={() => {
+          trackRealEvent("PRODUCT_CLICKED", product.id);
+          if (reason) trackRealEvent("RECOMMENDATION_CLICKED", product.id);
+        }}
       >
         <div className="relative aspect-square overflow-hidden bg-stone-50">
           {product.imageUrl ? (
