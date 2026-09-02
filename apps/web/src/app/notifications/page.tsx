@@ -15,6 +15,10 @@ const notificationDate = new Intl.DateTimeFormat("en-IN", {
   minute: "2-digit",
 });
 
+function invalidate(operation: { current: number }) {
+  operation.current++;
+}
+
 function NotificationLink({ notification }: { notification: Notification }) {
   if (notification.relatedType !== "order" || !notification.relatedId) return null;
   return (
@@ -59,7 +63,7 @@ export default function NotificationsPage() {
     startTransition(() => void loadNotifications());
     const interval = window.setInterval(() => void loadNotifications(), 60_000);
     return () => {
-      notificationOperation.current++;
+      invalidate(notificationOperation);
       window.clearInterval(interval);
     };
   }, [authStatus, loadNotifications, userId]);

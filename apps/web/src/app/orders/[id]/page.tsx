@@ -17,6 +17,10 @@ import { RowsPageSkeleton } from "@/components/Skeleton";
 import WriteReviewAction from "@/components/product/WriteReviewAction";
 import { useStore } from "@/lib/store";
 
+function invalidate(operation: { current: number }) {
+  operation.current++;
+}
+
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const authStatus = useStore((s) => s.authStatus);
@@ -61,8 +65,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       });
     return () => {
       cancelled = true;
-      orderOperation.current++;
-      cancelOperation.current++;
+      invalidate(orderOperation);
+      invalidate(cancelOperation);
     };
   }, [authStatus, id, userId]);
 
