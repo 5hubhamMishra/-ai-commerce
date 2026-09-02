@@ -142,6 +142,16 @@ describe('ProductDetailScreen', () => {
     expect(toggleWishlistItem).toHaveBeenCalledWith('p1');
   });
 
+  it('shows a wishlist error when saving the product fails', async () => {
+    (catalogApi.getProductBySlug as jest.Mock).mockResolvedValue(product);
+    toggleWishlistItem.mockRejectedValue(new Error('Wishlist unavailable.'));
+
+    const { findByLabelText, findByText } = await render(<ProductDetailScreen route={route} navigation={navigation} />);
+    await fireEvent.press(await findByLabelText('Add to wishlist'));
+
+    expect(await findByText('Wishlist unavailable.')).toBeTruthy();
+  });
+
   it('disables Add to cart and shows Unavailable when the resolved variant has no stock', async () => {
     (catalogApi.getProductBySlug as jest.Mock).mockResolvedValue({
       ...product,

@@ -132,9 +132,11 @@ export default function ProductDetailClient({
     setWishlistPending(true);
     try {
       await toggleWishlist(product.id);
-    } catch {
+    } catch (err) {
       if (useStore.getState().authStatus === "unauthenticated") {
         requireAuth(`/products/${product.slug}`);
+      } else {
+        setError(err instanceof Error ? err.message : "Couldn't update your wishlist.");
       }
     } finally {
       setWishlistPending(false);

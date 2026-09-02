@@ -44,6 +44,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   const [added, setAdded] = useState(false);
   const [wishlistPending, setWishlistPending] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
+  const [wishlistError, setWishlistError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,9 +124,12 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   }
 
   async function handleWishlist() {
+    setWishlistError(null);
     setWishlistPending(true);
     try {
       await toggleWishlistItem(product!.id);
+    } catch (err) {
+      setWishlistError(err instanceof Error ? err.message : "Couldn't update your wishlist.");
     } finally {
       setWishlistPending(false);
     }
@@ -194,6 +198,11 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
       {cartError && (
         <Text style={styles.errorText} accessibilityRole="alert">
           {cartError}
+        </Text>
+      )}
+      {wishlistError && (
+        <Text style={styles.errorText} accessibilityRole="alert">
+          {wishlistError}
         </Text>
       )}
 
