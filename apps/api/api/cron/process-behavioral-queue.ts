@@ -74,21 +74,28 @@ export default async function handler(
 
     let processed = 0;
     let failed = 0;
-    const worker = new Worker<AggregateJobData>(
-      BEHAVIORAL_QUEUE_NAME,
-      async (job) => {
-        await customerProfiles.applyEvent(job.data.eventId);
-        processed++;
-      },
-      { connection, concurrency: 5 },
-    );
-    worker.on('failed', () => {
-      failed++;
-    });
+    let worker: Worker<AggregateJobData> | undefined;
+    try {
+      worker = new Worker<AggregateJobData>(
+        BEHAVIORAL_QUEUE_NAME,
+        async (job) => {
+          await customerProfiles.applyEvent(job.data.eventId);
+          processed++;
+        },
+        { connection, concurrency: 5 },
+      );
+      worker.on('failed', () => {
+        failed++;
+      });
 
-    await new Promise((resolve) => setTimeout(resolve, DRAIN_WINDOW_MS));
-    await worker.close();
-    await connection.quit();
+      await new Promise((resolve) => setTimeout(resolve, DRAIN_WINDOW_MS));
+    } finally {
+      try {
+        await worker?.close();
+      } finally {
+        await connection.quit();
+      }
+    }
 
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ processed, failed }));
