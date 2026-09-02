@@ -414,6 +414,23 @@ describe('finalizeOrder', () => {
     );
     expect(ordersApi.get).not.toHaveBeenCalled();
   });
+
+  it('does not return an order when finalization finishes after logout', async () => {
+    let resolveOrder!: (order: { id: string; status: string; total: number }) => void;
+    const pendingOrder = new Promise<{ id: string; status: string; total: number }>((resolve) => {
+      resolveOrder = resolve;
+    });
+    (paymentsApi.confirm as jest.Mock).mockResolvedValue({ status: 'SUCCEEDED' });
+    (ordersApi.get as jest.Mock).mockReturnValue(pendingOrder);
+    useStore.setState({ user: publicUser, authStatus: 'authenticated' });
+
+    const finalizing = useStore.getState().finalizeOrder('ord-1', 'pay-1');
+    await waitFor(() => expect(ordersApi.get).toHaveBeenCalled());
+    useStore.getState().clearSession();
+    resolveOrder({ id: 'ord-1', status: 'CONFIRMED', total: 500 });
+
+    await expect(finalizing).rejects.toThrow('Session changed.');
+  });
 });
 
 describe('sendShopAIMessage', () => {
