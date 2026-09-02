@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, configureApiClient, recommendationsApi, request } from "@ai-commerce/api-client";
+import {
+  ApiError,
+  configureApiClient,
+  ordersApi,
+  paymentsApi,
+  recommendationsApi,
+  request,
+} from "@ai-commerce/api-client";
 
 /** Covers packages/api-client/src/http.ts's error mapping and 401-refresh-retry logic
  *  directly — this lives in apps/web (the only place Vitest is wired up in this monorepo)
@@ -243,6 +250,37 @@ describe("api-client http", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:4000/api/v1/recommendations/admin/reindex-embeddings",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("preserves caller-supplied idempotency keys for checkout retries", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const path = pathOf(input);
+      return path.endsWith("/orders")
+        ? jsonResponse(201, { id: "order-1" })
+        : jsonResponse(201, { paymentId: "payment-1" });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await ordersApi.create(
+      { addressId: "address-1", shippingMethod: "STANDARD" },
+      "order-attempt-1",
+    );
+    await paymentsApi.create("order-1", "payment-attempt-1");
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "http://localhost:4000/api/v1/orders",
+      expect.objectContaining({
+        headers: expect.objectContaining({ "Idempotency-Key": "order-attempt-1" }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "http://localhost:4000/api/v1/payments",
+      expect.objectContaining({
+        headers: expect.objectContaining({ "Idempotency-Key": "payment-attempt-1" }),
+      }),
     );
   });
 });
