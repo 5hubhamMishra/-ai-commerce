@@ -16,6 +16,7 @@ type Props = NativeStackScreenProps<CartStackParamList, 'Checkout'>;
 // credential pair), which is what actually opens the real Checkout widget — see apps/web's
 // identical NEXT_PUBLIC_RAZORPAY_KEY_ID gate in src/app/checkout/page.tsx.
 const RAZORPAY_KEY_ID = process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID;
+const SIMULATED_PAYMENTS_ALLOWED = __DEV__;
 
 type NewAddressFields = {
   label: string;
@@ -151,6 +152,11 @@ export default function CheckoutScreen({ navigation }: Props) {
     setPlacing(true);
     try {
       if (!RAZORPAY_KEY_ID) {
+        if (!SIMULATED_PAYMENTS_ALLOWED) {
+          setError('Online payment is not configured for this release. Please try again later.');
+          setPlacing(false);
+          return;
+        }
         // Simulated path — unchanged from before, no widget.
         const order = await placeOrder(effectiveAddressId, selectedMethod as 'STANDARD' | 'EXPRESS');
         navigation.replace('OrderDetail', { id: order.id });
@@ -188,7 +194,12 @@ export default function CheckoutScreen({ navigation }: Props) {
     setPlacing(false);
   }
 
-  const canSubmit = !showAddForm && !!effectiveAddressId && !!selectedMethod && !placing;
+  const canSubmit =
+    !showAddForm &&
+    !!effectiveAddressId &&
+    !!selectedMethod &&
+    !placing &&
+    (Boolean(RAZORPAY_KEY_ID) || SIMULATED_PAYMENTS_ALLOWED);
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -300,12 +311,19 @@ export default function CheckoutScreen({ navigation }: Props) {
               You&apos;ll be asked to complete payment in a secure Razorpay window before your order is confirmed.
             </Text>
           </>
-        ) : (
+        ) : SIMULATED_PAYMENTS_ALLOWED ? (
           <>
             <Text style={styles.paymentTitle}>Simulated payment</Text>
             <Text style={styles.paymentDisclaimer}>
               This places a real order against the store&apos;s backend, but payment settlement itself is simulated
               — no card details are collected and no real charge occurs.
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.paymentTitle}>Payment unavailable</Text>
+            <Text style={styles.paymentDisclaimer}>
+              Online payment is not configured for this release. Please try again later.
             </Text>
           </>
         )}
