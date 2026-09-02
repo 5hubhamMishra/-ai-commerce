@@ -59,6 +59,54 @@ describe('OpenAIEmbeddingAdapter', () => {
     );
   });
 
+  it('maps a batch request to the returned vectors', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          data: [
+            { embedding: new Array(64).fill(0.1) },
+            { embedding: new Array(64).fill(0.2) },
+          ],
+        }),
+    });
+    const config = {
+      get: jest.fn().mockReturnValue('test-key'),
+    } as unknown as ConfigService;
+    const adapter = new OpenAIEmbeddingAdapter(config);
+    const inputs = [
+      {
+        productId: 'p1',
+        name: 'Headphones',
+        description: 'Wireless',
+        categoryId: 'audio',
+        brandId: null,
+        tags: ['bluetooth'],
+        specificationValues: [],
+      },
+      {
+        productId: 'p2',
+        name: 'Backpack',
+        description: 'Travel',
+        categoryId: 'bags',
+        brandId: null,
+        tags: [],
+        specificationValues: [],
+      },
+    ];
+
+    await expect(adapter.embedMany(inputs)).resolves.toEqual([
+      { vector: new Array(64).fill(0.1) },
+      { vector: new Array(64).fill(0.2) },
+    ]);
+    const request = fetchMock.mock.calls[0]?.[1] as { body: string };
+    expect(JSON.parse(request.body).input).toEqual([
+      'Headphones\nWireless\nbluetooth\n',
+      'Backpack\nTravel\n\n',
+    ]);
+  });
+
   it('rejects malformed provider responses', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
