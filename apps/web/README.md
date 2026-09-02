@@ -5,41 +5,28 @@ checkout, a rule-based recommendation engine, and a conversational shopping assi
 (ShopAI) that only ever shows real catalog products. Built with Next.js (App Router),
 TypeScript, Tailwind CSS, and Zustand.
 
-This is a working MVP scoped down from a much larger platform specification — it runs entirely
-client-side with no external database, so it's free to host and has nothing to configure.
+This is the web client in the monorepo. It uses the NestJS API for the real catalog, account,
+commerce, review, recommendation, and ShopAI flows. A small seeded demo catalog remains as a
+graceful fallback when the API is unavailable, so the storefront can still render locally.
 
 ## What's implemented
 
-- Catalog of 112 seeded products across 8 categories with realistic specs, pricing, and
-  reviews (`scripts/generate-seed.mjs`).
+- Catalog browsing across seeded API data, with a 112-product demo fallback in
+  `src/lib/demo-catalog.ts`.
 - Product browsing, category pages, filters, sorting, product detail, reviews, compare.
-- Natural-language search that parses budget, category, brand, and use case
-  (`src/lib/search.ts`).
-- Cart, wishlist, and a simulated checkout / order tracking flow.
-- A behavioral event log (product views, searches, cart adds, wishlist, etc.) stored per
-  browser, which drives:
-  - A customer profile (category/brand affinity, segment, lifecycle stage) —
-    `src/lib/recommend.ts: buildProfile`.
-  - A hybrid recommendation engine (content similarity + behavioral score + recency decay +
-    popularity fallback) — `src/lib/recommend.ts: recommendForProfile`.
-  - Explainable recommendations ("Recommended because...") shown on product cards.
-- ShopAI: a deterministic, rule-based shopping assistant that parses requests, searches the
-  real catalog, and answers follow-ups ("cheaper options", "compare these", "why did you
-  recommend this") without ever inventing a product.
-- A business dashboard (`/admin`) with catalog analytics, a simple stockout-risk forecast,
-  and insights generated from real data (not fabricated).
-- Privacy controls in `/profile`: personalization on/off, export activity, delete activity.
+- Natural-language API search with budget, category, brand, and use-case filters.
+- Server-backed cart, wishlist, checkout, orders, payments, addresses, and order tracking.
+- Product recommendations, review submission for verified purchases, and privacy controls.
+- ShopAI backed by the API, with demo fallback responses when the API is unavailable.
+- An admin dashboard (`/admin`) with catalog analytics, stockout-risk forecasting, insights,
+  and personalization queue health.
 
-## What's intentionally out of scope for this MVP
+## Current scope boundary
 
-The original spec describes a full microservice platform (NestJS API, Python AI service,
-Postgres + pgvector, Redis, Kafka/SQS, Terraform, multi-tenant admin, real payments, etc.).
-Building and hosting all of that requires infrastructure accounts (a managed Postgres
-instance, a cloud host with billing, a payment provider) that only you can provision. This
-MVP keeps the same product behavior and the same algorithmic approach (rule-based +
-content-based + collaborative-style signals, hybrid search, explainable ranking) but runs
-it client-side against seeded data, so it deploys as a static/serverless site for free with
-zero configuration.
+The separate API service owns persistence and business rules. Kafka/SQS-style event transport,
+multi-tenant administration, object storage, and external notification channels remain outside
+the current single-store scope. Local development uses Docker Postgres and Redis; production
+requires a deployed API and managed infrastructure.
 
 ## Run locally
 
@@ -48,20 +35,20 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000. With no API configured, the public storefront falls back to demo
+data; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` for the full experience. For the API
+and database setup, use the repository root README.
 
-## Deploy it live (free, ~2 minutes)
+## Deploy the web client
 
 The fastest path is Vercel, since this is a Next.js app:
 
-1. Push this folder to a new GitHub repository (or use the zip you were given — create a
-   repo on GitHub and push it there).
-2. Go to https://vercel.com/new, sign in with GitHub, and import the repository.
-3. Leave all settings at their defaults (Vercel auto-detects Next.js) and click **Deploy**.
-4. You'll get a public `https://<project>.vercel.app` URL in about a minute.
+1. Import the repository into Vercel and set the project Root Directory to `apps/web`.
+2. Set `NEXT_PUBLIC_API_URL` to the deployed API's `/api/v1` URL.
+3. Deploy the web app, then configure the API's `WEB_ORIGIN` with the resulting storefront URL.
 
-No environment variables or database are required — everything runs client-side against the
-seeded catalog.
+The demo fallback can run without an API, but authenticated commerce and live catalog data
+require the API and its database/Redis services.
 
 Alternative: from your own machine, with the Vercel CLI installed:
 
@@ -80,14 +67,9 @@ src/
   app/            Next.js routes (one folder per page)
   components/      Shared UI (Navbar, ProductCard, Filters, ...)
   lib/
-    data.ts        Catalog accessors
-    data/           Seeded product/review/category JSON
-    recommend.ts    Customer profile + hybrid recommendation engine
-    search.ts       Natural-language query parsing + search ranking
-    shopai.ts       ShopAI conversational assistant logic
-    admin.ts        Business dashboard analytics + demand forecast
-    store.ts        Zustand store (cart, wishlist, events, orders) — persisted to
-                     localStorage, so activity is per-browser in this demo
+    demo-catalog.ts Demo catalog and offline fallback accessors
+    demo-shopai.ts  Offline ShopAI fallback responses
+    store.ts        Session and local UI state; server cart/wishlist/order actions use the API
 scripts/
   generate-seed.mjs         Regenerates the product/review catalog
   generate-images.mjs       Regenerates category artwork
