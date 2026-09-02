@@ -43,3 +43,6 @@ build command runs configuration preflight, applies Prisma migrations, generates
 the Prisma client, and builds Nest. Configure production secrets in Vercel,
 never in source control. `PAYMENT_PROVIDER=razorpay` and
 `EMBEDDING_PROVIDER=openai` require their corresponding provider credentials.
+The simulated `development` payment provider is for local/test environments only;
+customer-facing production deployments must select `razorpay` and configure both
+Razorpay keys plus `PAYMENT_SECRET`.
