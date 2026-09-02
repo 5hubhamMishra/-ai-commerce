@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, configureApiClient, request } from "@ai-commerce/api-client";
+import { ApiError, configureApiClient, recommendationsApi, request } from "@ai-commerce/api-client";
 
 /** Covers packages/api-client/src/http.ts's error mapping and 401-refresh-retry logic
  *  directly — this lives in apps/web (the only place Vitest is wired up in this monorepo)
@@ -208,6 +208,19 @@ describe("api-client http", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://mobile-api.example.com/api/v1/health",
       expect.anything(),
+    );
+  });
+
+  it("posts the admin embedding reindex request", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(201, { productCount: 112 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(recommendationsApi.reindexEmbeddings()).resolves.toEqual({
+      productCount: 112,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:4000/api/v1/recommendations/admin/reindex-embeddings",
+      expect.objectContaining({ method: "POST" }),
     );
   });
 });
