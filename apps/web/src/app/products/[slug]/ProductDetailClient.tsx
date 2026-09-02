@@ -67,6 +67,7 @@ export default function ProductDetailClient({
   const compareAtPrice = selectedVariant?.compareAtPrice ?? null;
   const savings = compareAtPrice && selectedVariant ? compareAtPrice - selectedVariant.price : 0;
   const inStock = selectedVariant ? selectedVariant.availableQuantity > 0 : product.inStock;
+  const authLoading = authStatus === "idle" || authStatus === "checking";
 
   const requireAuth = useCallback(
     (redirectTo: string) => {
@@ -81,6 +82,7 @@ export default function ProductDetailClient({
       requireAuth(`/products/${product.slug}`);
       return;
     }
+    if (authStatus !== "authenticated") return;
     if (!selectedVariant) return;
     setAdding(true);
     try {
@@ -109,6 +111,7 @@ export default function ProductDetailClient({
       requireAuth(`/products/${product.slug}`);
       return;
     }
+    if (authStatus !== "authenticated") return;
     setWishlistPending(true);
     try {
       await toggleWishlist(product.id);
@@ -274,7 +277,7 @@ export default function ProductDetailClient({
             </div>
             <button
               onClick={handleAddToCart}
-              disabled={!inStock || !selectedVariant || adding}
+              disabled={!inStock || !selectedVariant || adding || authLoading}
               className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors duration-200 disabled:bg-[var(--clr-surface-2)] disabled:text-[var(--clr-text-disabled)] ${
                 added
                   ? "bg-[var(--clr-success-text)] text-white"
@@ -285,7 +288,7 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={handleWishlist}
-              disabled={wishlistPending}
+              disabled={wishlistPending || authLoading}
               aria-pressed={inWishlist}
               className={`px-4 py-3 rounded-xl border text-sm font-semibold transition-colors ${
                 inWishlist
@@ -365,7 +368,7 @@ export default function ProductDetailClient({
           )}
           <button
             onClick={handleAddToCart}
-            disabled={!selectedVariant || adding}
+            disabled={!selectedVariant || adding || authLoading}
             className="rounded-xl px-6 py-2.5 text-sm font-semibold bg-[var(--clr-accent)] text-white hover:bg-[var(--clr-accent-hover)] transition-colors duration-200 disabled:opacity-60"
           >
             {added ? "✓ Added" : "Add to cart"}

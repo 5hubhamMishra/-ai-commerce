@@ -101,7 +101,7 @@ export default function CatalogProductCard({
     >
       <button
         onClick={handleWishlist}
-        disabled={pending}
+        disabled={pending || authStatus === "idle" || authStatus === "checking"}
         className="absolute right-3 top-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200"
         style={{
           border: "1px solid var(--clr-border)",
