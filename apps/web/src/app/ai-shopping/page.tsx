@@ -148,7 +148,7 @@ export default function AiShoppingPage() {
       FORGET_SHOPAI_ON_LEAVE_KEY,
       String(forgetOnLeave),
     );
-  }, [forgetOnLeave, historyKey, hydrated]);
+  }, [forgetOnLeave, historyKey, historyReadyKey, hydrated]);
 
   useEffect(() => {
     if (!hydrated || !historyKey) return;
@@ -196,7 +196,7 @@ export default function AiShoppingPage() {
     shopaiApi
       .getConversation(
         shopaiConversationId,
-        user ? undefined : (anonymousId ?? undefined),
+        user?.id ? undefined : (anonymousId ?? undefined),
       )
       .then((conversation) => {
         if (cancelled || conversation.messages.length === 0) return;
