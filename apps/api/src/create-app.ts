@@ -6,6 +6,15 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
+export function configureTrustProxy(
+  expressApp: { set(name: string, value: number | false): void },
+  vercel = process.env.VERCEL,
+) {
+  // Vercel adds one trusted proxy hop. Local requests stay direct so a client-supplied
+  // X-Forwarded-For header cannot influence throttling during development.
+  expressApp.set('trust proxy', vercel === '1' ? 1 : false);
+}
+
 /**
  * Shared app-construction logic between the traditional entrypoint (main.ts,
  * `app.listen()`) and the Vercel serverless entrypoint (api/index.ts, `app.init()` with
@@ -24,6 +33,7 @@ export async function createApp(
     : await NestFactory.create(AppModule, { rawBody: true });
   app.enableShutdownHooks();
   const config = app.get(ConfigService);
+  configureTrustProxy(app.getHttpAdapter().getInstance());
 
   app.use(helmet());
   app.use(cookieParser());
