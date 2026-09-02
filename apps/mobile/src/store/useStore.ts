@@ -17,9 +17,10 @@ import {
   paymentsApi,
   shopaiApi,
   wishlistApi,
+  refreshAccessToken,
 } from '@ai-commerce/api-client';
 import { session } from '../api/session';
-import { configureMobileApiClient, mobileRefresh, setAccessToken } from '../api/apiClient';
+import { configureMobileApiClient, setAccessToken } from '../api/apiClient';
 
 let authOperation = 0;
 
@@ -147,7 +148,7 @@ export const useStore = create<StoreState>((set, get) => ({
   restoreSession: async () => {
     const operation = ++authOperation;
     set({ authStatus: 'checking' });
-    const newAccessToken = await mobileRefresh();
+    const newAccessToken = await refreshAccessToken();
     if (operation !== authOperation) return;
     if (!newAccessToken) {
       await session.clear();

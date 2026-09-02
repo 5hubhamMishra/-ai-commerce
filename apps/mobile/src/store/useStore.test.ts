@@ -1,14 +1,15 @@
 import { waitFor } from '@testing-library/react-native';
 import type { PublicUser } from '@ai-commerce/types';
-import { ApiError, addressesApi, authApi, cartApi, ordersApi, paymentsApi, shopaiApi, wishlistApi } from '@ai-commerce/api-client';
+import { ApiError, addressesApi, authApi, cartApi, ordersApi, paymentsApi, refreshAccessToken, shopaiApi, wishlistApi } from '@ai-commerce/api-client';
 import { session } from '../api/session';
-import { mobileRefresh, setAccessToken } from '../api/apiClient';
+import { setAccessToken } from '../api/apiClient';
 import { useStore } from './useStore';
 
 jest.mock('@ai-commerce/api-client', () => {
   const actual = jest.requireActual('@ai-commerce/api-client');
   return {
     ApiError: actual.ApiError,
+    refreshAccessToken: jest.fn(),
     authApi: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), me: jest.fn() },
     cartApi: { getCart: jest.fn(), addItem: jest.fn(), updateItem: jest.fn(), removeItem: jest.fn() },
     wishlistApi: { list: jest.fn(), add: jest.fn(), remove: jest.fn() },
@@ -23,7 +24,6 @@ jest.mock('../api/session', () => ({
 }));
 jest.mock('../api/apiClient', () => ({
   configureMobileApiClient: jest.fn(),
-  mobileRefresh: jest.fn(),
   setAccessToken: jest.fn(),
 }));
 
@@ -169,7 +169,7 @@ describe('auth actions', () => {
 
   describe('restoreSession', () => {
     it('restores the user when a stored refresh token is still valid', async () => {
-      (mobileRefresh as jest.Mock).mockResolvedValue('access-new');
+      (refreshAccessToken as jest.Mock).mockResolvedValue('access-new');
       (authApi.me as jest.Mock).mockResolvedValue(publicUser);
       (cartApi.getCart as jest.Mock).mockResolvedValue(emptyCart);
       (wishlistApi.list as jest.Mock).mockResolvedValue(emptyWishlist);
@@ -181,7 +181,7 @@ describe('auth actions', () => {
     });
 
     it('goes unauthenticated without calling /me when there is no valid refresh token', async () => {
-      (mobileRefresh as jest.Mock).mockResolvedValue(null);
+      (refreshAccessToken as jest.Mock).mockResolvedValue(null);
 
       await useStore.getState().restoreSession();
 
@@ -191,7 +191,7 @@ describe('auth actions', () => {
     });
 
     it('clears the session if /me fails even after a successful token refresh', async () => {
-      (mobileRefresh as jest.Mock).mockResolvedValue('access-new');
+      (refreshAccessToken as jest.Mock).mockResolvedValue('access-new');
       (authApi.me as jest.Mock).mockRejectedValue(new Error('unauthorized'));
 
       await useStore.getState().restoreSession();
@@ -205,10 +205,10 @@ describe('auth actions', () => {
       const refresh = new Promise<string | null>((resolve) => {
         resolveRefresh = resolve;
       });
-      (mobileRefresh as jest.Mock).mockReturnValue(refresh);
+      (refreshAccessToken as jest.Mock).mockReturnValue(refresh);
 
       const restoring = useStore.getState().restoreSession();
-      await waitFor(() => expect(mobileRefresh).toHaveBeenCalled());
+      await waitFor(() => expect(refreshAccessToken).toHaveBeenCalled());
       useStore.getState().clearSession();
       resolveRefresh('stale-access');
       await restoring;
