@@ -68,9 +68,11 @@ export default function ProfilePage() {
 
   async function exportData() {
     if (!user) return;
+    const requestUserId = user.id;
     setExportStatus("loading");
     try {
       const data = await exportMyData();
+      if (useStore.getState().user?.id !== requestUserId) return;
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -80,7 +82,7 @@ export default function ProfilePage() {
       URL.revokeObjectURL(url);
       setExportStatus("idle");
     } catch {
-      setExportStatus("error");
+      if (useStore.getState().user?.id === requestUserId) setExportStatus("error");
     }
   }
 
