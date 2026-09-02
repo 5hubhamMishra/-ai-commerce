@@ -4,7 +4,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminDashboardReport, ListOrdersResponse } from "@ai-commerce/types";
-import { analyticsApi, ApiError, eventsApi, ordersApi } from "@ai-commerce/api-client";
+import { analyticsApi, ApiError, eventsApi, ordersApi, recommendationsApi } from "@ai-commerce/api-client";
 import { useStore } from "@/lib/store";
 import { hasAnyRole, ADMIN_SURFACE_ROLES } from "@/lib/roles";
 import { formatPrice } from "@/lib/format";
@@ -33,6 +33,8 @@ export default function AdminPage() {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [aggregationStatus, setAggregationStatus] = useState<Awaited<ReturnType<typeof eventsApi.getAggregationStatus>> | null>(null);
   const [aggregationError, setAggregationError] = useState<string | null>(null);
+  const [reindexing, setReindexing] = useState(false);
+  const [reindexMessage, setReindexMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -49,6 +51,7 @@ export default function AdminPage() {
       setOrdersError(null);
       setAggregationStatus(null);
       setAggregationError(null);
+      setReindexMessage(null);
     });
     analyticsApi
       .getDashboard()
@@ -78,6 +81,19 @@ export default function AdminPage() {
       cancelled = true;
     };
   }, [authStatus, authorized, userId]);
+
+  async function reindexEmbeddings() {
+    setReindexing(true);
+    setReindexMessage(null);
+    try {
+      const result = await recommendationsApi.reindexEmbeddings();
+      setReindexMessage(`Reindexed ${result.productCount} products.`);
+    } catch (err) {
+      setReindexMessage(accessDeniedMessage(err, "Couldn't reindex embeddings."));
+    } finally {
+      setReindexing(false);
+    }
+  }
 
   const orderStats = useMemo(() => {
     if (!orders) return null;
@@ -224,12 +240,20 @@ export default function AdminPage() {
       <div className="mt-6 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid gap-6 lg:grid-cols-3">
         <Card title="Recommendations">
           {dashboardError ? <ErrorNote message={dashboardError} /> : !dashboard ? <SkeletonBlock className="h-32 w-full" /> : (
-            <dl className="space-y-2 text-sm">
-              <Metric label="Product coverage" value={`${Math.round(dashboard.recommendations.coverage.productCoverage * 100)}%`} />
-              <Metric label="Click-through rate" value={dashboard.recommendations.engagement.clickThroughRate == null ? "No data" : `${Math.round(dashboard.recommendations.engagement.clickThroughRate * 100)}%`} />
-              <Metric label="Conversion rate" value={dashboard.recommendations.engagement.conversionRate == null ? "No data" : `${Math.round(dashboard.recommendations.engagement.conversionRate * 100)}%`} />
-              <Metric label={`Hit rate @${dashboard.recommendations.offlineBacktest.k}`} value={dashboard.recommendations.offlineBacktest.hitRateAtK == null ? "No data" : `${Math.round(dashboard.recommendations.offlineBacktest.hitRateAtK * 100)}%`} />
-            </dl>
+            <div className="space-y-4">
+              <dl className="space-y-2 text-sm">
+                <Metric label="Product coverage" value={`${Math.round(dashboard.recommendations.coverage.productCoverage * 100)}%`} />
+                <Metric label="Click-through rate" value={dashboard.recommendations.engagement.clickThroughRate == null ? "No data" : `${Math.round(dashboard.recommendations.engagement.clickThroughRate * 100)}%`} />
+                <Metric label="Conversion rate" value={dashboard.recommendations.engagement.conversionRate == null ? "No data" : `${Math.round(dashboard.recommendations.engagement.conversionRate * 100)}%`} />
+                <Metric label={`Hit rate @${dashboard.recommendations.offlineBacktest.k}`} value={dashboard.recommendations.offlineBacktest.hitRateAtK == null ? "No data" : `${Math.round(dashboard.recommendations.offlineBacktest.hitRateAtK * 100)}%`} />
+              </dl>
+              <div className="border-t border-[var(--clr-border)] pt-4">
+                <button type="button" className="btn btn-accent text-sm" onClick={reindexEmbeddings} disabled={reindexing}>
+                  {reindexing ? "Reindexing..." : "Reindex embeddings"}
+                </button>
+                {reindexMessage && <p className="mt-2 text-xs" style={{ color: "var(--clr-text-secondary)" }}>{reindexMessage}</p>}
+              </div>
+            </div>
           )}
         </Card>
 

@@ -28,4 +28,9 @@ export const recommendationsApi = {
   /** ANALYST/ADMIN/SUPER_ADMIN — coverage/engagement/offline-backtest health metrics. */
   getAdminEvaluation: (query: EvaluateQuery = {}) =>
     request<RecommendationEvaluationReport>(`/recommendations/admin/evaluate${toQueryString(query)}`),
+
+  reindexEmbeddings: () =>
+    request<{ productCount: number }>('/recommendations/admin/reindex-embeddings', {
+      method: 'POST',
+    }),
 };
