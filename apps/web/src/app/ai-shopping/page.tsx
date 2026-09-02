@@ -123,6 +123,7 @@ export default function AiShoppingPage() {
   const historyKey = hydrated
     ? `${SHOPAI_VISIBLE_HISTORY_KEY}:${user?.id ?? "guest"}`
     : null;
+  const [historyReadyKey, setHistoryReadyKey] = useState<string | null>(null);
   const loadedHistoryKey = useRef<string | null>(null);
   const hasSavedHistory = useRef(false);
 
@@ -133,13 +134,16 @@ export default function AiShoppingPage() {
     const loaded = loadVisibleHistory(historyKey);
     loadedHistoryKey.current = historyKey;
     hasSavedHistory.current = loaded.length > 1;
-    startTransition(() => setHistory(loaded));
+    startTransition(() => {
+      setHistory(loaded);
+      setHistoryReadyKey(historyKey);
+    });
     window.localStorage.removeItem(SHOPAI_VISIBLE_HISTORY_KEY);
     if (switched) useStore.setState({ shopaiConversationId: null });
   }, [historyKey]);
 
   useEffect(() => {
-    if (!hydrated || !historyKey) return;
+    if (!hydrated || !historyKey || historyReadyKey !== historyKey) return;
     window.localStorage.setItem(
       FORGET_SHOPAI_ON_LEAVE_KEY,
       String(forgetOnLeave),
@@ -156,7 +160,7 @@ export default function AiShoppingPage() {
       historyKey,
       JSON.stringify(limitSavedHistory(history).slice(1)),
     );
-  }, [forgetOnLeave, history, historyKey, hydrated]);
+  }, [forgetOnLeave, history, historyKey, historyReadyKey, hydrated]);
 
   useEffect(() => {
     if (!forgetOnLeave) return;
