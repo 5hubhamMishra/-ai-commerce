@@ -52,6 +52,9 @@ import { UsersModule } from './users/users.module';
 import { WarehousesModule } from './warehouses/warehouses.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 
+const defaultThrottleLimit =
+  Number.parseInt(process.env.THROTTLE_DEFAULT_LIMIT ?? '100', 10) || 100;
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -60,7 +63,9 @@ import { WishlistModule } from './wishlist/wishlist.module';
       validate: validateEnv,
     }),
     // Default rate limit; auth endpoints override with a tighter one (see auth.controller.ts).
-    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 100 }] }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60_000, limit: defaultThrottleLimit }],
+    }),
     EventEmitterModule.forRoot(),
     PrismaModule,
     CacheModule,

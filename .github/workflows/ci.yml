@@ -65,6 +65,7 @@ jobs:
       ANTHROPIC_API_KEY: ci-anthropic-key-placeholder
       EMBEDDING_PROVIDER: hashing
       PAYMENT_PROVIDER: development
+      THROTTLE_DEFAULT_LIMIT: 1000
 
     services:
       postgres:
