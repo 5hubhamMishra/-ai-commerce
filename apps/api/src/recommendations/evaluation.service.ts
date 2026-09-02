@@ -150,6 +150,14 @@ export class EvaluationService {
       if (!existing || imp.createdAt < existing) pairs.set(key, imp.createdAt);
     }
 
+    if (pairs.size === 0) {
+      return {
+        clickThroughRate: null,
+        conversionRate: null,
+        distinctImpressionPairs: 0,
+      };
+    }
+
     const clickEvents = await this.prisma.behavioralEvent.findMany({
       where: { eventType: BehavioralEventType.RECOMMENDATION_CLICKED },
       select: {

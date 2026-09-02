@@ -61,6 +61,43 @@ describe('EvaluationService', () => {
     expect(report.engagement.conversionRate).toBe(0);
   });
 
+  it('reports no engagement data when every impression is unidentifiable', async () => {
+    const prisma = {
+      product: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      recommendationImpression: {
+        count: jest.fn().mockResolvedValue(1),
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([{ product: { categoryId: 'category-1' } }])
+          .mockResolvedValueOnce([
+            {
+              userId: null,
+              anonymousId: null,
+              productId: 'product-1',
+              createdAt: new Date('2026-08-30T10:00:00.000Z'),
+            },
+          ]),
+      },
+      behavioralEvent: { findMany: jest.fn() },
+      order: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+    const recommendations = { getPersonalized: jest.fn() };
+
+    const report = await new EvaluationService(
+      prisma as unknown as PrismaService,
+      recommendations as unknown as RecommendationsService,
+    ).evaluate();
+
+    expect(report.engagement).toEqual({
+      clickThroughRate: null,
+      conversionRate: null,
+      distinctImpressionPairs: 0,
+    });
+    expect(prisma.behavioralEvent.findMany).not.toHaveBeenCalled();
+  });
+
   it('counts only products the recommendation catalog can actually sell', async () => {
     const prisma = {
       product: {
