@@ -50,10 +50,14 @@ The fastest path is Vercel, since this is a Next.js app:
 2. Set `NEXT_PUBLIC_API_URL` to the deployed API's `/api/v1` URL.
 3. Set `NEXT_PUBLIC_SITE_URL` to the storefront's canonical public origin, including the
    `https://` scheme and no path.
-4. Deploy the web app, then configure the API's `WEB_ORIGIN` with the resulting storefront URL.
+4. Set `NEXT_PUBLIC_RAZORPAY_KEY_ID` to the public key paired with the API's Razorpay
+   credentials.
+5. Deploy the web app, then configure the API's `WEB_ORIGIN` with the resulting storefront URL.
 
 Vercel builds fail early when `NEXT_PUBLIC_API_URL` is missing, rather than shipping a
 storefront that silently targets localhost.
+Production Vercel builds also fail when the public Razorpay key is missing, keeping the web
+checkout path aligned with the API's real-payment requirement.
 
 The demo fallback can run without an API, but authenticated commerce and live catalog data
 require the API and its database/Redis services.

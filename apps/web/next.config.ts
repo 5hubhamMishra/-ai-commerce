@@ -6,6 +6,15 @@ if (process.env.VERCEL === "1" && !process.env.NEXT_PUBLIC_API_URL?.trim()) {
   );
 }
 
+if (
+  process.env.VERCEL_ENV === "production" &&
+  !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim()
+) {
+  throw new Error(
+    "NEXT_PUBLIC_RAZORPAY_KEY_ID is required for Vercel Production web builds; set it to the public Razorpay key used by the API.",
+  );
+}
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
