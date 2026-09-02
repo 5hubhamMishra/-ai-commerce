@@ -13,8 +13,12 @@ async function loadFullCatalog(): Promise<Map<string, ProductListItem>> {
   const first = await catalogApi.listProducts({ page: 1, pageSize: 100 });
   for (const p of first.items) index.set(p.id, p);
   const totalPages = Math.max(1, Math.ceil(first.total / first.pageSize));
-  for (let page = 2; page <= totalPages; page += 1) {
-    const res = await catalogApi.listProducts({ page, pageSize: 100 });
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) =>
+      catalogApi.listProducts({ page: i + 2, pageSize: 100 }),
+    ),
+  );
+  for (const res of remainingPages) {
     for (const p of res.items) index.set(p.id, p);
   }
   for (const p of listDemoProducts({ pageSize: 100 }).items) {
