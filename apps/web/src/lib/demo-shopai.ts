@@ -1,5 +1,9 @@
 import type { ProductListItem } from "@ai-commerce/types";
-import { getDemoProductBySlug, listDemoProducts } from "./demo-catalog";
+import {
+  getDemoProductBySlug,
+  listDemoProducts,
+  shouldUseDemoCatalog,
+} from "./demo-catalog";
 
 type ChatTurn = {
   role: "user" | "assistant";
@@ -279,6 +283,14 @@ export function createCatalogShopAIReply(
 }
 
 export function createDemoShopAIReply(history: ChatTurn[]): ShopAIReply {
+  if (!shouldUseDemoCatalog()) {
+    return {
+      content:
+        "The live catalog is temporarily unavailable. Please try again shortly.",
+      products: [],
+    };
+  }
+
   const latestUserTurn =
     history.filter((turn) => turn.role === "user").at(-1)?.content ?? "";
 
