@@ -88,6 +88,7 @@ describe('EventsService aggregation status', () => {
   });
 
   it('marks opted-out events handled without enqueueing them', async () => {
+    prisma.behavioralEvent.createMany.mockResolvedValueOnce({ count: 1 });
     prisma.profile.findUnique.mockResolvedValue({
       personalizationEnabled: false,
     });
@@ -117,6 +118,35 @@ describe('EventsService aggregation status', () => {
       skipDuplicates: true,
     });
     expect(queue.enqueueMany).not.toHaveBeenCalled();
+  });
+
+  it('reports only newly inserted events when a retry contains duplicates', async () => {
+    prisma.behavioralEvent.createMany.mockResolvedValueOnce({ count: 1 });
+
+    await expect(
+      service.track(undefined, {
+        events: [
+          {
+            eventId: '00000000-0000-4000-8000-000000000001',
+            eventType: 'PRODUCT_VIEWED',
+            anonymousId: 'anonymous-1',
+            sessionId: 'session-1',
+            source: 'WEB',
+            entityId: 'product-1',
+            occurredAt: new Date().toISOString(),
+          },
+          {
+            eventId: '00000000-0000-4000-8000-000000000002',
+            eventType: 'PRODUCT_VIEWED',
+            anonymousId: 'anonymous-2',
+            sessionId: 'session-2',
+            source: 'WEB',
+            entityId: 'product-2',
+            occurredAt: new Date().toISOString(),
+          },
+        ],
+      } as never),
+    ).resolves.toEqual({ accepted: 1 });
   });
 
   it('never reassigns an owned session during identity linking', async () => {

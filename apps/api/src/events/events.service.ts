@@ -38,7 +38,7 @@ export class EventsService {
     // skipDuplicates: a retry that reuses the same eventId is a safe no-op,
     // not an error — the client never has to know or care whether this was
     // the first attempt or the fifth (spec Verify: "duplicate prevention").
-    await this.prisma.behavioralEvent.createMany({
+    const { count: accepted } = await this.prisma.behavioralEvent.createMany({
       data: rows,
       skipDuplicates: true,
     });
@@ -56,7 +56,7 @@ export class EventsService {
       await this.queue.enqueueMany(rows.map((row) => ({ eventId: row.id })));
     }
 
-    return { accepted: rows.length };
+    return { accepted };
   }
 
   async listActivity(userId: string, page: number, pageSize: number) {
