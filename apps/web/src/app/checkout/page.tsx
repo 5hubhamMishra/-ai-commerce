@@ -113,6 +113,7 @@ export default function CheckoutPage() {
   const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const hydrated = useStore((s) => s.hydrated);
+  const authStatus = useStore((s) => s.authStatus);
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
@@ -135,12 +136,12 @@ export default function CheckoutPage() {
   const subtotal = serverCart?.subtotal ?? 0;
 
   useEffect(() => {
-    if (hydrated && lines.length > 0) {
+    if (hydrated && authStatus === "authenticated" && lines.length > 0) {
       trackEvent("CHECKOUT_STARTED", {});
       trackRealEvent("CHECKOUT_STARTED");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
+  }, [hydrated, authStatus]);
 
   // Deliberately keyed on the cart's empty-to-non-empty transition, not just `hydrated`:
   // on a hard navigation straight to /checkout (e.g. from an external link, not the in-app
@@ -152,9 +153,11 @@ export default function CheckoutPage() {
   // customer, not just a cosmetic gap.
   const hasCartItems = lines.length > 0;
   useEffect(() => {
-    if (hydrated && hasCartItems) void fetchServerAddresses();
+    if (hydrated && authStatus === "authenticated" && hasCartItems) {
+      void fetchServerAddresses();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, hasCartItems]);
+  }, [hydrated, authStatus, hasCartItems]);
 
   // Both "which address is selected" and "show the add-address form" have a derived
   // default (the account's default address once addresses load; the form when there
@@ -201,7 +204,7 @@ export default function CheckoutPage() {
   const shippingFee = selectedQuote?.fee ?? 0;
   const total = subtotal + shippingFee;
 
-  if (!hydrated) {
+  if (!hydrated || authStatus === "idle" || authStatus === "checking") {
     return (
       <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 lg:px-8 pb-16">
         <SkeletonText className="h-7 w-32 mb-8" />
@@ -209,6 +212,20 @@ export default function CheckoutPage() {
           <SkeletonBlock className="h-64 w-full" />
           <SkeletonBlock className="h-48 w-full" />
         </div>
+      </div>
+    );
+  }
+
+  if (authStatus !== "authenticated") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-24 flex flex-col items-center text-center">
+        <h1 className="font-display text-2xl font-semibold">Sign in to checkout</h1>
+        <p className="mt-2 max-w-xs text-sm" style={{ color: "var(--clr-text-secondary)" }}>
+          Sign in to use saved addresses and place your order.
+        </p>
+        <Link href="/login?redirect=/checkout" className="mt-6 btn btn-accent">
+          Sign in
+        </Link>
       </div>
     );
   }
