@@ -38,7 +38,7 @@ export default () => ({
     ),
   },
   embeddings: {
-    provider: process.env.EMBEDDING_PROVIDER ?? 'hashing',
+    provider: process.env.EMBEDDING_PROVIDER?.trim() || 'hashing',
     openaiApiKey: process.env.OPENAI_API_KEY,
   },
   payments: {
