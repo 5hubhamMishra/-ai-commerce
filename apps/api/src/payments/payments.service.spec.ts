@@ -19,6 +19,31 @@ describe('PaymentsService settlement race', () => {
     });
   });
 
+  it('rejects a signed Razorpay payment payload without provider identifiers', async () => {
+    const findFirst = jest.fn();
+    const service = new PaymentsService(
+      { payment: { findFirst } } as never,
+      { verifyWebhookSignature: jest.fn().mockReturnValue(true) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.handleRazorpayWebhook(
+        JSON.stringify({
+          event: 'payment.captured',
+          payload: { payment: { entity: { id: 'pay_1' } } },
+        }),
+        'valid-signature',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVALID_WEBHOOK_PAYLOAD' }),
+    });
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+
   it('maps a concurrent pending-payment race to a conflict', async () => {
     const paymentCreate = jest.fn().mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {

@@ -268,11 +268,29 @@ export class PaymentsService {
         message: 'Webhook payload is invalid.',
       });
     }
+    if (!envelope || typeof envelope !== 'object') {
+      throw new BadRequestException({
+        code: 'INVALID_WEBHOOK_PAYLOAD',
+        message: 'Webhook payload is invalid.',
+      });
+    }
     const paymentEntity = envelope.payload?.payment?.entity;
     if (!paymentEntity) {
       // No payment entity to act on (a webhook event type this app doesn't care about) —
       // acknowledge without erroring so Razorpay doesn't endlessly retry.
       return { received: true };
+    }
+    if (
+      typeof envelope.event !== 'string' ||
+      typeof paymentEntity.id !== 'string' ||
+      typeof paymentEntity.order_id !== 'string' ||
+      !paymentEntity.id.trim() ||
+      !paymentEntity.order_id.trim()
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_WEBHOOK_PAYLOAD',
+        message: 'Webhook payload is invalid.',
+      });
     }
 
     const payment = await this.prisma.payment.findFirst({
