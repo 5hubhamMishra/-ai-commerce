@@ -27,9 +27,14 @@ type RawProduct = {
 
 const rawProducts = productsRaw as unknown as RawProduct[];
 const now = "2026-08-25T00:00:00.000Z";
-const demoCatalogEnabled =
-  process.env.NODE_ENV !== "production" ||
-  process.env.NEXT_PUBLIC_ALLOW_DEMO_FALLBACK === "true";
+export function shouldUseDemoCatalog(
+  nodeEnv = process.env.NODE_ENV,
+  allowFallback = process.env.NEXT_PUBLIC_ALLOW_DEMO_FALLBACK,
+): boolean {
+  return nodeEnv !== "production" || allowFallback === "true";
+}
+
+const demoCatalogEnabled = shouldUseDemoCatalog();
 
 function slugify(value: string): string {
   return value
