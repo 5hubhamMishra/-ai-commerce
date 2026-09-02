@@ -98,10 +98,14 @@ export class AuthController {
   }
 
   private setRefreshCookie(res: Response, token: string) {
+    const production = process.env.NODE_ENV?.trim() === 'production';
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV?.trim() === 'production',
-      sameSite: 'lax',
+      // Web and API are separate Vercel origins in production, so the refresh
+      // cookie must be sent with credentialed cross-site fetches. Local HTTP
+      // development keeps Lax because browsers reject SameSite=None without Secure.
+      secure: production,
+      sameSite: production ? 'none' : 'lax',
       path: REFRESH_COOKIE_PATH,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
