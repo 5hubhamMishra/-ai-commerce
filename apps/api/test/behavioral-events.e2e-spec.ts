@@ -357,15 +357,15 @@ describe('Behavioral events (e2e)', () => {
     );
     expect(event).toBeTruthy();
 
-    // ...but it's never queued for aggregation, so the profile's eventCount
-    // never moves — give the (non-existent) job a moment it would have used
-    // if it existed, then assert nothing changed.
+    // ...but it is acknowledged as processed without being aggregated, so the
+    // profile's eventCount never moves — give the queue a moment it would have
+    // used if this event were eligible, then assert nothing changed.
     await new Promise((r) => setTimeout(r, 400));
     const after = await prisma.customerProfile.findUnique({
       where: { userId: customerId },
     });
     expect(after!.eventCount).toBe(before!.eventCount);
-    expect(event.processedAt).toBeNull();
+    expect(event.processedAt).toEqual(expect.any(Date));
 
     // Re-enable for the next test.
     await request(app.getHttpServer())
