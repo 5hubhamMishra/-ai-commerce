@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { startTransition, use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminSettableOrderStatus, OrderDetail, ShipmentEventStatus } from "@ai-commerce/types";
@@ -34,6 +34,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const hydrated = useStore((s) => s.hydrated);
   const authStatus = useStore((s) => s.authStatus);
   const user = useStore((s) => s.user);
+  const userId = user?.id;
   const authorized = hasAnyRole(user, ADMIN_SURFACE_ROLES);
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
@@ -62,6 +63,10 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     if (authStatus !== "authenticated" || !authorized) return;
     const operation = ++orderOperation.current;
     let cancelled = false;
+    startTransition(() => {
+      setOrder(null);
+      setLoadError(null);
+    });
     ordersApi
       .adminGet(id)
       .then((nextOrder) => {
@@ -74,9 +79,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       });
     return () => {
       cancelled = true;
-      orderOperation.current++;
+      orderOperation.current = operation + 1;
     };
-  }, [authStatus, authorized, id]);
+  }, [authStatus, authorized, id, userId]);
 
   async function onUpdateStatus(e: React.FormEvent) {
     e.preventDefault();

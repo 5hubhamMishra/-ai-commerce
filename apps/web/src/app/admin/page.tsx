@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminDashboardReport, ListOrdersResponse } from "@ai-commerce/types";
@@ -23,6 +23,7 @@ export default function AdminPage() {
   const hydrated = useStore((s) => s.hydrated);
   const authStatus = useStore((s) => s.authStatus);
   const user = useStore((s) => s.user);
+  const userId = user?.id;
 
   const authorized = hasAnyRole(user, ADMIN_SURFACE_ROLES);
 
@@ -39,6 +40,12 @@ export default function AdminPage() {
   useEffect(() => {
     if (authStatus !== "authenticated" || !authorized) return;
     let cancelled = false;
+    startTransition(() => {
+      setDashboard(null);
+      setDashboardError(null);
+      setOrders(null);
+      setOrdersError(null);
+    });
     analyticsApi
       .getDashboard()
       .then((report) => {
@@ -58,7 +65,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [authStatus, authorized]);
+  }, [authStatus, authorized, userId]);
 
   const orderStats = useMemo(() => {
     if (!orders) return null;
