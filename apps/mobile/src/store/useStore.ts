@@ -1,13 +1,14 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   Address,
   CartResponse,
   CreateAddressInput,
+  ExportDataResponse,
   OrderDetail,
   PublicUser,
   ShopAIMessage,
   WishlistResponse,
-} from '@ai-commerce/types';
+} from "@ai-commerce/types";
 import {
   ApiError,
   addressesApi,
@@ -16,16 +17,18 @@ import {
   ordersApi,
   paymentsApi,
   shopaiApi,
+  usersApi,
   wishlistApi,
   refreshAccessToken,
-} from '@ai-commerce/api-client';
-import { session } from '../api/session';
-import { configureMobileApiClient, setAccessToken } from '../api/apiClient';
+} from "@ai-commerce/api-client";
+import { session } from "../api/session";
+import { configureMobileApiClient, setAccessToken } from "../api/apiClient";
 
 let authOperation = 0;
 
-export type AuthStatus = 'idle' | 'checking' | 'authenticated' | 'unauthenticated';
-type AsyncStatus = 'idle' | 'loading' | 'error';
+export type AuthStatus =
+  "idle" | "checking" | "authenticated" | "unauthenticated";
+type AsyncStatus = "idle" | "loading" | "error";
 
 type StoreState = {
   user: PublicUser | null;
@@ -37,6 +40,8 @@ type StoreState = {
   /** Sync — clears session state without a network call (used after a failed refresh, or
    *  internally by logout()). */
   clearSession: () => void;
+  exportMyData: () => Promise<ExportDataResponse>;
+  deleteAccount: (password: string) => Promise<void>;
   /** Silently exchanges a stored refresh token for a fresh session on app launch — today's
    *  App.tsx only checked *presence* of an access token and never refreshed an expired one,
    *  so restoring a session on cold start (rather than just gating on a stale token) is a
@@ -66,7 +71,11 @@ type StoreState = {
    *  simulated dev-adapter path only; the real-payment path uses finalizeOrder below,
    *  since a Razorpay confirmation needs a widget interaction in between order/payment
    *  creation and confirm that a single store action can't drive itself. */
-  placeOrder: (addressId: string, shippingMethod: 'STANDARD' | 'EXPRESS', idempotencyKey?: string) => Promise<OrderDetail>;
+  placeOrder: (
+    addressId: string,
+    shippingMethod: "STANDARD" | "EXPRESS",
+    idempotencyKey?: string,
+  ) => Promise<OrderDetail>;
 
   /** Mirrors apps/web's finalizeServerOrder: confirms an already-created payment (the screen
    *  owns order/payment *creation* itself for this path, since opening the Razorpay widget has
@@ -90,7 +99,7 @@ type StoreState = {
 
 export const useStore = create<StoreState>((set, get) => ({
   user: null,
-  authStatus: 'idle',
+  authStatus: "idle",
 
   login: async (email, password) => {
     const operation = ++authOperation;
@@ -101,7 +110,7 @@ export const useStore = create<StoreState>((set, get) => ({
     if (operation !== authOperation) return;
     const me = await authApi.me();
     if (operation !== authOperation) return;
-    set({ user: me, authStatus: 'authenticated' });
+    set({ user: me, authStatus: "authenticated" });
     void get().fetchCart();
     void get().fetchWishlist();
   },
@@ -115,7 +124,7 @@ export const useStore = create<StoreState>((set, get) => ({
     if (operation !== authOperation) return;
     const me = await authApi.me();
     if (operation !== authOperation) return;
-    set({ user: me, authStatus: 'authenticated' });
+    set({ user: me, authStatus: "authenticated" });
     void get().fetchCart();
     void get().fetchWishlist();
   },
@@ -134,31 +143,41 @@ export const useStore = create<StoreState>((set, get) => ({
     setAccessToken(null);
     set({
       user: null,
-      authStatus: 'unauthenticated',
+      authStatus: "unauthenticated",
       cart: null,
-      cartStatus: 'idle',
+      cartStatus: "idle",
       wishlist: null,
-      wishlistStatus: 'idle',
+      wishlistStatus: "idle",
       addresses: null,
-      addressesStatus: 'idle',
+      addressesStatus: "idle",
       shopaiConversationId: null,
     });
   },
 
+  exportMyData: () => usersApi.exportData(),
+
+  deleteAccount: async (password) => {
+    const operation = authOperation;
+    await usersApi.deleteAccount({ password });
+    if (operation !== authOperation) return;
+    await session.clear();
+    if (operation === authOperation) get().clearSession();
+  },
+
   restoreSession: async () => {
     const operation = ++authOperation;
-    set({ authStatus: 'checking' });
+    set({ authStatus: "checking" });
     const newAccessToken = await refreshAccessToken();
     if (operation !== authOperation) return;
     if (!newAccessToken) {
       await session.clear();
-      if (operation === authOperation) set({ authStatus: 'unauthenticated' });
+      if (operation === authOperation) set({ authStatus: "unauthenticated" });
       return;
     }
     try {
       const me = await authApi.me();
       if (operation !== authOperation) return;
-      set({ user: me, authStatus: 'authenticated' });
+      set({ user: me, authStatus: "authenticated" });
       void get().fetchCart();
       void get().fetchWishlist();
     } catch {
@@ -166,94 +185,100 @@ export const useStore = create<StoreState>((set, get) => ({
       await session.clear();
       if (operation !== authOperation) return;
       setAccessToken(null);
-      set({ authStatus: 'unauthenticated' });
+      set({ authStatus: "unauthenticated" });
     }
   },
 
   cart: null,
-  cartStatus: 'idle',
+  cartStatus: "idle",
 
   fetchCart: async () => {
     const operation = authOperation;
-    set({ cartStatus: 'loading' });
+    set({ cartStatus: "loading" });
     try {
       const cart = await cartApi.getCart();
       if (operation !== authOperation) return;
-      set({ cart, cartStatus: 'idle' });
+      set({ cart, cartStatus: "idle" });
     } catch {
       if (operation !== authOperation) return;
-      set({ cartStatus: 'error' });
+      set({ cartStatus: "error" });
     }
   },
 
   addCartItem: async (variantId, quantity) => {
     const operation = authOperation;
     const cart = await cartApi.addItem(variantId, quantity);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     set({ cart });
   },
 
   updateCartItem: async (itemId, quantity) => {
     const operation = authOperation;
     const cart = await cartApi.updateItem(itemId, quantity);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     set({ cart });
   },
 
   removeCartItem: async (itemId) => {
     const operation = authOperation;
     const cart = await cartApi.removeItem(itemId);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     set({ cart });
   },
 
   wishlist: null,
-  wishlistStatus: 'idle',
+  wishlistStatus: "idle",
 
   fetchWishlist: async () => {
     const operation = authOperation;
-    set({ wishlistStatus: 'loading' });
+    set({ wishlistStatus: "loading" });
     try {
       const wishlist = await wishlistApi.list();
       if (operation !== authOperation) return;
-      set({ wishlist, wishlistStatus: 'idle' });
+      set({ wishlist, wishlistStatus: "idle" });
     } catch {
       if (operation !== authOperation) return;
-      set({ wishlistStatus: 'error' });
+      set({ wishlistStatus: "error" });
     }
   },
 
   toggleWishlistItem: async (productId) => {
     const operation = authOperation;
-    const isWishlisted = get().wishlist?.items.some((i) => i.productId === productId) ?? false;
-    const wishlist = isWishlisted ? await wishlistApi.remove(productId) : await wishlistApi.add(productId);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    const isWishlisted =
+      get().wishlist?.items.some((i) => i.productId === productId) ?? false;
+    const wishlist = isWishlisted
+      ? await wishlistApi.remove(productId)
+      : await wishlistApi.add(productId);
+    if (operation !== authOperation) throw new Error("Session changed.");
     set({ wishlist });
   },
 
   addresses: null,
-  addressesStatus: 'idle',
+  addressesStatus: "idle",
 
   fetchAddresses: async () => {
     const operation = authOperation;
-    set({ addressesStatus: 'loading' });
+    set({ addressesStatus: "loading" });
     try {
       const addresses = await addressesApi.list();
       if (operation !== authOperation) return;
-      set({ addresses, addressesStatus: 'idle' });
+      set({ addresses, addressesStatus: "idle" });
     } catch {
       if (operation !== authOperation) return;
-      set({ addressesStatus: 'error' });
+      set({ addressesStatus: "error" });
     }
   },
 
   createAddress: async (input) => {
     const operation = authOperation;
     const address = await addressesApi.create(input);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     set((state) => ({
       addresses: address.isDefault
-        ? [address, ...(state.addresses ?? []).map((a) => ({ ...a, isDefault: false }))]
+        ? [
+            address,
+            ...(state.addresses ?? []).map((a) => ({ ...a, isDefault: false })),
+          ]
         : [...(state.addresses ?? []), address],
     }));
     return address;
@@ -265,19 +290,22 @@ export const useStore = create<StoreState>((set, get) => ({
     const created = idempotencyKey
       ? await ordersApi.create(input, idempotencyKey)
       : await ordersApi.create(input);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     const payment = await paymentsApi.create(created.id);
-    if (operation !== authOperation) throw new Error('Session changed.');
-    if (payment.provider === 'RAZORPAY') {
-      throw new Error('Online payment is required for this order.');
+    if (operation !== authOperation) throw new Error("Session changed.");
+    if (payment.provider === "RAZORPAY") {
+      throw new Error("Online payment is required for this order.");
     }
     const confirmed = await paymentsApi.confirm(payment.paymentId);
-    if (operation !== authOperation) throw new Error('Session changed.');
-    if (confirmed.status !== 'SUCCEEDED') {
-      throw new Error(confirmed.failureReason ?? 'Payment was not successful. Please try again.');
+    if (operation !== authOperation) throw new Error("Session changed.");
+    if (confirmed.status !== "SUCCEEDED") {
+      throw new Error(
+        confirmed.failureReason ??
+          "Payment was not successful. Please try again.",
+      );
     }
     const finalOrder = await ordersApi.get(created.id);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     void get().fetchCart(); // apps/api already clears the cart server-side as part of order creation
     return finalOrder;
   },
@@ -285,16 +313,17 @@ export const useStore = create<StoreState>((set, get) => ({
   finalizeOrder: async (orderId, paymentId, confirmPayload) => {
     const operation = authOperation;
     const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
-    if (operation !== authOperation) throw new Error('Session changed.');
-    if (confirmed.status !== 'SUCCEEDED') {
+    if (operation !== authOperation) throw new Error("Session changed.");
+    if (confirmed.status !== "SUCCEEDED") {
       const error = new Error(
-        confirmed.failureReason ?? 'Payment was not successful. Please try again.',
+        confirmed.failureReason ??
+          "Payment was not successful. Please try again.",
       ) as Error & { paymentFailed?: boolean };
       error.paymentFailed = true;
       throw error;
     }
     const finalOrder = await ordersApi.get(orderId);
-    if (operation !== authOperation) throw new Error('Session changed.');
+    if (operation !== authOperation) throw new Error("Session changed.");
     void get().fetchCart();
     return finalOrder;
   },
@@ -303,18 +332,19 @@ export const useStore = create<StoreState>((set, get) => ({
 
   sendShopAIMessage: async (text) => {
     const operation = authOperation;
-    const send = (conversationId?: string) => shopaiApi.sendMessage({ message: text, conversationId });
+    const send = (conversationId?: string) =>
+      shopaiApi.sendMessage({ message: text, conversationId });
     try {
       const conversationId = get().shopaiConversationId ?? undefined;
       const result = await send(conversationId);
-      if (operation !== authOperation) throw new Error('Session changed.');
+      if (operation !== authOperation) throw new Error("Session changed.");
       set({ shopaiConversationId: result.conversationId });
       return result.message;
     } catch (err) {
-      if (operation !== authOperation) throw new Error('Session changed.');
-      if (err instanceof ApiError && err.code === 'CONVERSATION_NOT_FOUND') {
+      if (operation !== authOperation) throw new Error("Session changed.");
+      if (err instanceof ApiError && err.code === "CONVERSATION_NOT_FOUND") {
         const result = await send(undefined);
-        if (operation !== authOperation) throw new Error('Session changed.');
+        if (operation !== authOperation) throw new Error("Session changed.");
         set({ shopaiConversationId: result.conversationId });
         return result.message;
       }
