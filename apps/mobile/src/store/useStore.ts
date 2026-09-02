@@ -21,6 +21,8 @@ import {
 import { session } from '../api/session';
 import { configureMobileApiClient, mobileRefresh, setAccessToken } from '../api/apiClient';
 
+let authOperation = 0;
+
 export type AuthStatus = 'idle' | 'checking' | 'authenticated' | 'unauthenticated';
 type AsyncStatus = 'idle' | 'loading' | 'error';
 
@@ -90,33 +92,44 @@ export const useStore = create<StoreState>((set, get) => ({
   authStatus: 'idle',
 
   login: async (email, password) => {
+    const operation = ++authOperation;
     const result = await authApi.login({ email, password });
+    if (operation !== authOperation) return;
     setAccessToken(result.accessToken);
     await session.save(result.accessToken, result.refreshToken);
+    if (operation !== authOperation) return;
     const me = await authApi.me();
+    if (operation !== authOperation) return;
     set({ user: me, authStatus: 'authenticated' });
     void get().fetchCart();
     void get().fetchWishlist();
   },
 
   register: async (email, password, name) => {
+    const operation = ++authOperation;
     const result = await authApi.register({ email, password, name });
+    if (operation !== authOperation) return;
     setAccessToken(result.accessToken);
     await session.save(result.accessToken, result.refreshToken);
+    if (operation !== authOperation) return;
     const me = await authApi.me();
+    if (operation !== authOperation) return;
     set({ user: me, authStatus: 'authenticated' });
     void get().fetchCart();
     void get().fetchWishlist();
   },
 
   logout: async () => {
+    const operation = ++authOperation;
     const refreshToken = await session.getRefreshToken();
     await authApi.logout(refreshToken ?? undefined).catch(() => undefined);
+    if (operation !== authOperation) return;
     await session.clear();
-    get().clearSession();
+    if (operation === authOperation) get().clearSession();
   },
 
   clearSession: () => {
+    authOperation++;
     setAccessToken(null);
     set({
       user: null,
@@ -129,20 +142,25 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   restoreSession: async () => {
+    const operation = ++authOperation;
     set({ authStatus: 'checking' });
     const newAccessToken = await mobileRefresh();
+    if (operation !== authOperation) return;
     if (!newAccessToken) {
       await session.clear();
-      set({ authStatus: 'unauthenticated' });
+      if (operation === authOperation) set({ authStatus: 'unauthenticated' });
       return;
     }
     try {
       const me = await authApi.me();
+      if (operation !== authOperation) return;
       set({ user: me, authStatus: 'authenticated' });
       void get().fetchCart();
       void get().fetchWishlist();
     } catch {
+      if (operation !== authOperation) return;
       await session.clear();
+      if (operation !== authOperation) return;
       setAccessToken(null);
       set({ authStatus: 'unauthenticated' });
     }

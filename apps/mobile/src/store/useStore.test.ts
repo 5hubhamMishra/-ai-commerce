@@ -166,6 +166,24 @@ describe('auth actions', () => {
       expect(session.clear).toHaveBeenCalled();
       expect(useStore.getState().authStatus).toBe('unauthenticated');
     });
+
+    it('does not restore a session after the current session is cleared', async () => {
+      let resolveRefresh!: (token: string | null) => void;
+      const refresh = new Promise<string | null>((resolve) => {
+        resolveRefresh = resolve;
+      });
+      (mobileRefresh as jest.Mock).mockReturnValue(refresh);
+
+      const restoring = useStore.getState().restoreSession();
+      await waitFor(() => expect(mobileRefresh).toHaveBeenCalled());
+      useStore.getState().clearSession();
+      resolveRefresh('stale-access');
+      await restoring;
+
+      expect(authApi.me).not.toHaveBeenCalled();
+      expect(useStore.getState().user).toBeNull();
+      expect(useStore.getState().authStatus).toBe('unauthenticated');
+    });
   });
 });
 
