@@ -15,9 +15,12 @@ import {
 } from "@/lib/order-status";
 import { RowsPageSkeleton } from "@/components/Skeleton";
 import WriteReviewAction from "@/components/product/WriteReviewAction";
+import { useStore } from "@/lib/store";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const authStatus = useStore((s) => s.authStatus);
+  const userId = useStore((s) => s.user?.id ?? null);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -26,6 +29,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const cancelOperation = useRef(0);
 
   useEffect(() => {
+    if (authStatus !== "authenticated" || !userId) {
+      startTransition(() => {
+        setOrder(null);
+        setLoading(authStatus === "idle" || authStatus === "checking");
+        setCancelling(false);
+        setCancelError(null);
+      });
+      orderOperation.current++;
+      cancelOperation.current++;
+      return;
+    }
     const operation = ++orderOperation.current;
     cancelOperation.current++;
     let cancelled = false;
@@ -50,7 +64,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       orderOperation.current++;
       cancelOperation.current++;
     };
-  }, [id]);
+  }, [authStatus, id, userId]);
 
   async function onCancel() {
     const order = orderOperation.current;
@@ -73,7 +87,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  if (loading) return <RowsPageSkeleton rows={1} />;
+  if (authStatus === "idle" || authStatus === "checking" || loading) {
+    return <RowsPageSkeleton rows={1} />;
+  }
+
+  if (authStatus !== "authenticated") {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-semibold">Your order</h1>
+        <p className="mt-2 text-sm text-[var(--clr-text-secondary)]">Sign in to view this order.</p>
+        <Link href={`/login?redirect=${encodeURIComponent(`/orders/${id}`)}`} className="mt-5 btn btn-accent inline-flex">
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
