@@ -4,11 +4,11 @@ import { request } from './http';
 export const paymentsApi = {
   /** One order has one payment intent; reusing this key lets a lost response or a
    * dismissed checkout replay the existing intent instead of creating a second attempt. */
-  create: (orderId: string) =>
+  create: (orderId: string, idempotencyKey = `payment-${orderId}`) =>
     request<CreatePaymentResponse>('/payments', {
       method: 'POST',
       body: { orderId },
-      headers: { 'Idempotency-Key': `payment-${orderId}` },
+      headers: { 'Idempotency-Key': idempotencyKey },
     }),
 
   /** `payload` carries whatever a real provider's client-side widget handed back for

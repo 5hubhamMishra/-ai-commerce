@@ -133,6 +133,7 @@ export default function CheckoutPage() {
   // Kept across retries (e.g. the user dismisses the Razorpay widget without paying) so a
   // retry only re-runs the payment-intent step, never mints a second order.
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentAttemptKey, setPaymentAttemptKey] = useState<string | null>(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
 
   const lines = serverCart?.items ?? [];
@@ -205,7 +206,10 @@ export default function CheckoutPage() {
   );
   const shippingFee = selectedQuote?.fee ?? 0;
   const total = subtotal + shippingFee;
-  const invalidatePendingOrder = () => setOrderId(null);
+  const invalidatePendingOrder = () => {
+    setOrderId(null);
+    setPaymentAttemptKey(null);
+  };
 
   if (!hydrated || authStatus === "idle" || authStatus === "checking") {
     return (
@@ -298,13 +302,15 @@ export default function CheckoutPage() {
       useStore.getState().authStatus === "authenticated";
     setError(null);
     setPlacing(true);
+    const currentPaymentKey = paymentAttemptKey ?? crypto.randomUUID();
+    if (!paymentAttemptKey) setPaymentAttemptKey(currentPaymentKey);
     try {
       const currentOrderId =
         orderId ?? (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as "STANDARD" | "EXPRESS" })).id;
       if (!isCurrentSession()) return;
       setOrderId(currentOrderId);
 
-      const payment = await paymentsApi.create(currentOrderId);
+      const payment = await paymentsApi.create(currentOrderId, currentPaymentKey);
       if (!isCurrentSession()) return;
 
       if (payment.provider !== "RAZORPAY") {
@@ -337,6 +343,9 @@ export default function CheckoutPage() {
               router.push(`/orders/${order.id}`);
             } catch (err) {
               if (!isCurrentSession()) return;
+              if (err instanceof Error && (err as Error & { paymentFailed?: boolean }).paymentFailed) {
+                setPaymentAttemptKey(null);
+              }
               setError(err instanceof Error ? err.message : "Couldn't confirm your payment. Please try again.");
               setPlacing(false);
             }
@@ -353,6 +362,9 @@ export default function CheckoutPage() {
       razorpay.open();
     } catch (err) {
       if (!isCurrentSession()) return;
+      if (err instanceof Error && (err as Error & { paymentFailed?: boolean }).paymentFailed) {
+        setPaymentAttemptKey(null);
+      }
       setError(err instanceof Error ? err.message : "Couldn't place your order. Please try again.");
       setPlacing(false);
     }

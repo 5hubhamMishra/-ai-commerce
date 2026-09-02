@@ -284,7 +284,11 @@ export const useStore = create<StoreState>((set, get) => ({
     const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
     if (operation !== authOperation) throw new Error('Session changed.');
     if (confirmed.status !== 'SUCCEEDED') {
-      throw new Error(confirmed.failureReason ?? 'Payment was not successful. Please try again.');
+      const error = new Error(
+        confirmed.failureReason ?? 'Payment was not successful. Please try again.',
+      ) as Error & { paymentFailed?: boolean };
+      error.paymentFailed = true;
+      throw error;
     }
     const finalOrder = await ordersApi.get(orderId);
     if (operation !== authOperation) throw new Error('Session changed.');

@@ -685,10 +685,11 @@ export const useStore = create<StoreState>()(
         const userId = get().user?.id;
         const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
         if (confirmed.status !== "SUCCEEDED") {
-          throw new Error(
-            confirmed.failureReason ??
-              "Payment was not successful. Please try again.",
-          );
+          const error = new Error(
+            confirmed.failureReason ?? "Payment was not successful. Please try again.",
+          ) as Error & { paymentFailed?: boolean };
+          error.paymentFailed = true;
+          throw error;
         }
         const finalOrder = await ordersApi.get(orderId);
         if (session !== authOperation || get().user?.id !== userId) {

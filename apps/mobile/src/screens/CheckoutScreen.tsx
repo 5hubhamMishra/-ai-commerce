@@ -62,6 +62,7 @@ export default function CheckoutScreen({ navigation }: Props) {
   // Kept across retries (e.g. the shopper dismisses the Razorpay widget without paying) so a
   // retry only re-runs the payment-intent step, never mints a second order — mirrors apps/web.
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentAttemptKey, setPaymentAttemptKey] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<CreatePaymentResponse | null>(null);
 
   useEffect(() => {
@@ -110,6 +111,7 @@ export default function CheckoutScreen({ navigation }: Props) {
   const total = subtotal + shippingFee;
   const invalidatePendingOrder = () => {
     setOrderId(null);
+    setPaymentAttemptKey(null);
     setPendingPayment(null);
   };
 
@@ -166,7 +168,9 @@ export default function CheckoutScreen({ navigation }: Props) {
         orderId ??
         (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as 'STANDARD' | 'EXPRESS' })).id;
       setOrderId(currentOrderId);
-      const payment = await paymentsApi.create(currentOrderId);
+      const currentPaymentKey = paymentAttemptKey ?? crypto.randomUUID();
+      if (!paymentAttemptKey) setPaymentAttemptKey(currentPaymentKey);
+      const payment = await paymentsApi.create(currentOrderId, currentPaymentKey);
 
       if (payment.provider !== 'RAZORPAY') {
         if (!SIMULATED_PAYMENTS_ALLOWED) {
@@ -182,6 +186,9 @@ export default function CheckoutScreen({ navigation }: Props) {
       }
       setPendingPayment(payment);
     } catch (err) {
+      if (err instanceof Error && (err as Error & { paymentFailed?: boolean }).paymentFailed) {
+        setPaymentAttemptKey(null);
+      }
       setError(err instanceof Error ? err.message : "Couldn't place your order. Please try again.");
       setPlacing(false);
     }
@@ -194,6 +201,9 @@ export default function CheckoutScreen({ navigation }: Props) {
       setPendingPayment(null);
       navigation.replace('OrderDetail', { id: order.id });
     } catch (err) {
+      if (err instanceof Error && (err as Error & { paymentFailed?: boolean }).paymentFailed) {
+        setPaymentAttemptKey(null);
+      }
       setError(err instanceof Error ? err.message : "Couldn't confirm your payment. Please try again.");
       setPendingPayment(null);
       setPlacing(false);
