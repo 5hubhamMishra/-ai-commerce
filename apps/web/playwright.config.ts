@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
+const HOST = process.env.CI ? "127.0.0.1" : "localhost";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -21,7 +22,7 @@ export default defineConfig({
   // needs a bit more headroom, not a real slowdown in the app itself.
   timeout: 45_000,
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: `http://${HOST}:${PORT}`,
     trace: "retain-on-failure",
   },
   webServer: {
@@ -31,11 +32,9 @@ export default defineConfig({
     // navigation. A prod server has no such warm-up latency and is what these flows
     // will actually run as.
     command: `npx next build && npx next start -p ${PORT}`,
-    url: `http://localhost:${PORT}`,
+    url: `http://${HOST}:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });

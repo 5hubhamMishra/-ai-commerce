@@ -59,7 +59,7 @@ jobs:
       DATABASE_URL: postgresql://ai_commerce:ai_commerce_test@localhost:5432/ai_commerce
       DIRECT_URL: postgresql://ai_commerce:ai_commerce_test@localhost:5432/ai_commerce
       REDIS_URL: redis://localhost:6379
-      WEB_ORIGIN: http://localhost:3000,http://localhost:3100
+      WEB_ORIGIN: http://localhost:3000,http://localhost:3100,http://127.0.0.1:3100
       JWT_ACCESS_SECRET: ci-access-secret-012345678901234567890123
       JWT_REFRESH_SECRET: ci-refresh-secret-012345678901234567890123
       ANTHROPIC_API_KEY: ci-anthropic-key-placeholder
