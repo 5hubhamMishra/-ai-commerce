@@ -83,11 +83,13 @@ export default function AdminPage() {
   }, [authStatus, authorized, userId]);
 
   async function reindexEmbeddings() {
+    if (!window.confirm("Reindex embeddings for the full catalog?")) return;
     setReindexing(true);
     setReindexMessage(null);
     try {
       const result = await recommendationsApi.reindexEmbeddings();
       setReindexMessage(`Reindexed ${result.productCount} products.`);
+      analyticsApi.getDashboard().then(setDashboard).catch(() => undefined);
     } catch (err) {
       setReindexMessage(accessDeniedMessage(err, "Couldn't reindex embeddings."));
     } finally {
@@ -248,7 +250,7 @@ export default function AdminPage() {
                 <Metric label={`Hit rate @${dashboard.recommendations.offlineBacktest.k}`} value={dashboard.recommendations.offlineBacktest.hitRateAtK == null ? "No data" : `${Math.round(dashboard.recommendations.offlineBacktest.hitRateAtK * 100)}%`} />
               </dl>
               <div className="border-t border-[var(--clr-border)] pt-4">
-                <button type="button" className="btn btn-accent text-sm" onClick={reindexEmbeddings} disabled={reindexing}>
+                <button type="button" className="btn btn-accent text-sm" onClick={reindexEmbeddings} disabled={reindexing} aria-busy={reindexing}>
                   {reindexing ? "Reindexing..." : "Reindex embeddings"}
                 </button>
                 {reindexMessage && <p className="mt-2 text-xs" style={{ color: "var(--clr-text-secondary)" }}>{reindexMessage}</p>}
