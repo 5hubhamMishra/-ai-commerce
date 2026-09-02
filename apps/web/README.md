@@ -11,7 +11,7 @@ graceful fallback when the API is unavailable, so the storefront can still rende
 
 ## What's implemented
 
-- Catalog browsing across seeded API data, with a 112-product demo fallback in
+- Catalog browsing across seeded API data, with a small presentation-catalog fallback in
   `src/lib/demo-catalog.ts`.
 - Product browsing, category pages, filters, sorting, product detail, reviews, compare.
 - Natural-language API search with budget, category, brand, and use-case filters.
