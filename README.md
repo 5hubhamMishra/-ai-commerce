@@ -40,8 +40,10 @@ npm run dev:api                 # NestJS API on http://localhost:4000
 npm run dev:web                 # Next.js app on http://localhost:3000
 ```
 
-Copy `.env.example` to `apps/api/.env` and fill the required API secrets before starting the
-API. `EMBEDDING_PROVIDER=hashing` is the default local mode; set it to `openai`, provide
+Copy `.env.example` to `apps/api/.env` and fill `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`,
+and `ANTHROPIC_API_KEY` before starting the API. The Anthropic key is required at boot even
+when ShopAI is not being exercised, so configuration errors fail early and clearly.
+`EMBEDDING_PROVIDER=hashing` is the default local mode; set it to `openai`, provide
 `OPENAI_API_KEY`, run the admin embedding reindex endpoint, and only then use hosted embeddings.
 
 See `apps/web/README.md` for storefront-specific notes carried over from the original MVP build.
