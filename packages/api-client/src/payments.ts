@@ -2,11 +2,13 @@ import type { ConfirmPaymentResponse, CreatePaymentResponse } from '@ai-commerce
 import { request } from './http';
 
 export const paymentsApi = {
+  /** One order has one payment intent; reusing this key lets a lost response or a
+   * dismissed checkout replay the existing intent instead of creating a second attempt. */
   create: (orderId: string) =>
     request<CreatePaymentResponse>('/payments', {
       method: 'POST',
       body: { orderId },
-      headers: { 'Idempotency-Key': crypto.randomUUID() },
+      headers: { 'Idempotency-Key': `payment-${orderId}` },
     }),
 
   /** `payload` carries whatever a real provider's client-side widget handed back for
