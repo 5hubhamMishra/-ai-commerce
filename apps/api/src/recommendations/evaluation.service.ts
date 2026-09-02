@@ -5,7 +5,10 @@ import {
   ProductStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { RecommendationsService } from './recommendations.service';
+import {
+  hasAvailableVariant,
+  RecommendationsService,
+} from './recommendations.service';
 
 export type EvaluationReport = {
   catalog: { purchasableProducts: number };
@@ -52,30 +55,55 @@ export class EvaluationService {
   ) {}
 
   async evaluate(k = DEFAULT_K): Promise<EvaluationReport> {
-    const [catalogCount, categoryCount, coverage, engagement, backtest] =
-      await Promise.all([
-        this.prisma.product.count({
-          where: { status: ProductStatus.ACTIVE, deletedAt: null },
-        }),
-        this.prisma.category.count({
-          where: { isActive: true, deletedAt: null, products: { some: {} } },
-        }),
-        this.computeCoverage(),
-        this.computeEngagement(),
-        this.runOfflineBacktest(k),
-      ]);
+    const [catalog, coverage, engagement, backtest] = await Promise.all([
+      this.computeCatalog(),
+      this.computeCoverage(),
+      this.computeEngagement(),
+      this.runOfflineBacktest(k),
+    ]);
 
     return {
-      catalog: { purchasableProducts: catalogCount },
+      catalog: { purchasableProducts: catalog.productCount },
       coverage: {
         productCoverage:
-          catalogCount > 0 ? coverage.distinctProducts / catalogCount : 0,
+          catalog.productCount > 0
+            ? coverage.distinctProducts / catalog.productCount
+            : 0,
         categoryCoverage:
-          categoryCount > 0 ? coverage.distinctCategories / categoryCount : 0,
+          catalog.categoryCount > 0
+            ? coverage.distinctCategories / catalog.categoryCount
+            : 0,
         totalImpressions: coverage.totalImpressions,
       },
       engagement,
       offlineBacktest: backtest,
+    };
+  }
+
+  private async computeCatalog() {
+    const products = await this.prisma.product.findMany({
+      where: { status: ProductStatus.ACTIVE, deletedAt: null },
+      select: {
+        categoryId: true,
+        variants: {
+          where: { isActive: true, deletedAt: null },
+          select: {
+            inventory: {
+              select: {
+                quantityOnHand: true,
+                quantityReserved: true,
+                quantityCommitted: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    const purchasable = products.filter(hasAvailableVariant);
+    return {
+      productCount: purchasable.length,
+      categoryCount: new Set(purchasable.map((product) => product.categoryId))
+        .size,
     };
   }
 

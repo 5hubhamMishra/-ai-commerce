@@ -556,7 +556,7 @@ function firstAvailableVariant<
   );
 }
 
-function hasAvailableVariant(product: {
+export function hasAvailableVariant(product: {
   variants: readonly {
     inventory: readonly {
       quantityOnHand: number;
