@@ -107,7 +107,7 @@ export class SellerCatalogService {
   async addImage(userId: string, productId: string, dto: CreateImageDto) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.images.create(productId, dto);
+    return this.images.create(productId, dto, userId);
   }
 
   async updateImage(
@@ -118,13 +118,13 @@ export class SellerCatalogService {
   ) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.images.update(productId, imageId, dto);
+    return this.images.update(productId, imageId, dto, userId);
   }
 
   async removeImage(userId: string, productId: string, imageId: string) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.images.remove(productId, imageId);
+    return this.images.remove(productId, imageId, userId);
   }
 
   async addSpecification(
@@ -134,7 +134,7 @@ export class SellerCatalogService {
   ) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.specifications.create(productId, dto);
+    return this.specifications.create(productId, dto, userId);
   }
 
   async updateSpecification(
@@ -145,25 +145,25 @@ export class SellerCatalogService {
   ) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.specifications.update(productId, specId, dto);
+    return this.specifications.update(productId, specId, dto, userId);
   }
 
   async removeSpecification(userId: string, productId: string, specId: string) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.specifications.remove(productId, specId);
+    return this.specifications.remove(productId, specId, userId);
   }
 
   async assignTag(userId: string, productId: string, dto: AssignTagDto) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.tags.assign(productId, dto.name);
+    return this.tags.assign(productId, dto.name, userId);
   }
 
   async removeTag(userId: string, productId: string, tagId: string) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.tags.remove(productId, tagId);
+    return this.tags.remove(productId, tagId, userId);
   }
 
   // ---- Inventory ----------------------------------------------------------------

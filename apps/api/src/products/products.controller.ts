@@ -169,24 +169,33 @@ export class ProductsController {
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Post(':id/images')
-  addImage(@Param('id') id: string, @Body() dto: CreateImageDto) {
-    return this.imagesService.create(id, dto);
+  addImage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CreateImageDto,
+  ) {
+    return this.imagesService.create(id, dto, user.id);
   }
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Patch(':id/images/:imageId')
   updateImage(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Param('imageId') imageId: string,
     @Body() dto: UpdateImageDto,
   ) {
-    return this.imagesService.update(id, imageId, dto);
+    return this.imagesService.update(id, imageId, dto, user.id);
   }
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Delete(':id/images/:imageId')
-  removeImage(@Param('id') id: string, @Param('imageId') imageId: string) {
-    return this.imagesService.remove(id, imageId);
+  removeImage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.imagesService.remove(id, imageId, user.id);
   }
 
   // ---- Specifications -------------------------------------------------------
@@ -194,42 +203,53 @@ export class ProductsController {
   @Roles(...CATALOG_WRITE_ROLES)
   @Post(':id/specifications')
   addSpecification(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: CreateSpecificationDto,
   ) {
-    return this.specificationsService.create(id, dto);
+    return this.specificationsService.create(id, dto, user.id);
   }
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Patch(':id/specifications/:specId')
   updateSpecification(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Param('specId') specId: string,
     @Body() dto: UpdateSpecificationDto,
   ) {
-    return this.specificationsService.update(id, specId, dto);
+    return this.specificationsService.update(id, specId, dto, user.id);
   }
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Delete(':id/specifications/:specId')
   removeSpecification(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Param('specId') specId: string,
   ) {
-    return this.specificationsService.remove(id, specId);
+    return this.specificationsService.remove(id, specId, user.id);
   }
 
   // ---- Tags ---------------------------------------------------------------
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Post(':id/tags')
-  assignTag(@Param('id') id: string, @Body() dto: AssignTagDto) {
-    return this.tagsService.assign(id, dto.name);
+  assignTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: AssignTagDto,
+  ) {
+    return this.tagsService.assign(id, dto.name, user.id);
   }
 
   @Roles(...CATALOG_WRITE_ROLES)
   @Delete(':id/tags/:tagId')
-  removeTag(@Param('id') id: string, @Param('tagId') tagId: string) {
-    return this.tagsService.remove(id, tagId);
+  removeTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('tagId') tagId: string,
+  ) {
+    return this.tagsService.remove(id, tagId, user.id);
   }
 }
