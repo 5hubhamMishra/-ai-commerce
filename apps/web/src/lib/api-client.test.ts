@@ -211,6 +211,28 @@ describe("api-client http", () => {
     );
   });
 
+  it("removes trailing slashes from a configured apiBaseUrl", async () => {
+    configureApiClient({
+      getAccessToken: () => accessToken,
+      setAccessToken: (t) => {
+        accessToken = t;
+      },
+      onAuthExpired: () => {
+        onAuthExpiredCalls++;
+      },
+      apiBaseUrl: "https://mobile-api.example.com/api/v1///",
+    });
+    const fetchMock = vi.fn(async () => jsonResponse(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await request("/health");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://mobile-api.example.com/api/v1/health",
+      expect.anything(),
+    );
+  });
+
   it("posts the admin embedding reindex request", async () => {
     const fetchMock = vi.fn(async () => jsonResponse(201, { productCount: 112 }));
     vi.stubGlobal("fetch", fetchMock);

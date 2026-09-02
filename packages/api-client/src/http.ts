@@ -73,7 +73,7 @@ export type RequestOptions = {
 
 async function rawRequest<T>(path: string, options: RequestOptions): Promise<T> {
   const token = clientConfig.getAccessToken();
-  const apiUrl = clientConfig.apiBaseUrl ?? DEFAULT_API_URL;
+  const apiUrl = (clientConfig.apiBaseUrl ?? DEFAULT_API_URL).replace(/\/+$/, '');
 
   const res = await fetch(`${apiUrl}${path}`, {
     method: options.method ?? 'GET',
