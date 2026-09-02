@@ -13,9 +13,7 @@ test.describe("browse, add to cart, and checkout", () => {
     await expect(
       page.getByRole("banner").getByRole("link", { name: "Veloura" }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /Shopping that/i }),
-    ).toBeVisible();
+    await expect(page.getByText(/Shopping that gets you/i)).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Browse the catalog" }),
     ).toBeVisible();
@@ -110,9 +108,10 @@ test.describe("browse, add to cart, and checkout", () => {
     await expect(page.getByText("Your cart is empty")).toBeVisible();
   });
 
-  test("checkout redirects an empty cart to the empty-cart state, not a broken order", async ({
+  test("an authenticated shopper sees the empty-cart checkout state", async ({
     page,
   }) => {
+    await registerAndSignIn(page);
     await page.goto("/checkout");
     await expect(page.getByText("Your cart is empty")).toBeVisible();
     await expect(

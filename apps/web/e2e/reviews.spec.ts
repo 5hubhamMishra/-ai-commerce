@@ -8,7 +8,8 @@ import { expect, request, test } from "@playwright/test";
 // APIRequestContext resolves "localhost" to the IPv6 ::1 first on this machine and gets
 // ECONNREFUSED — a separate bug from the one above, found immediately after fixing it.
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000/api/v1"}/`;
-const PRODUCT_SLUG = "spigen-extreme-pro-pro-9-p112";
+const PRODUCT_SLUG =
+  "spigen-tough-armor-magfit-for-iphone-15-series-showcase-spigen-tough-armor-iphone15";
 const PASSWORD = "Playwright123!";
 
 /**
@@ -37,18 +38,28 @@ test.describe("product reviews", () => {
       data: { email: "admin@veloura.dev", password: "ChangeMe123!" },
     });
     expect(admin.ok()).toBe(true);
-    const { accessToken: adminToken } = (await admin.json()) as { accessToken: string };
+    const { accessToken: adminToken } = (await admin.json()) as {
+      accessToken: string;
+    };
     const adminHeaders = { Authorization: `Bearer ${adminToken}` };
 
     const product = await api.get(`products/${PRODUCT_SLUG}`);
     expect(product.ok()).toBe(true);
-    const productBody = (await product.json()) as { variants: { id: string; availableQuantity: number }[] };
+    const productBody = (await product.json()) as {
+      variants: { id: string; availableQuantity: number }[];
+    };
     const variant = productBody.variants.find((v) => v.availableQuantity > 0);
     if (!variant) throw new Error(`No purchasable variant for ${PRODUCT_SLUG}`);
 
     const address = await api.post("addresses", {
       headers: authHeaders,
-      data: { line1: "221B Baker Street", city: "Mumbai", state: "Maharashtra", postalCode: "400001", country: "India" },
+      data: {
+        line1: "221B Baker Street",
+        city: "Mumbai",
+        state: "Maharashtra",
+        postalCode: "400001",
+        country: "India",
+      },
     });
     expect(address.ok()).toBe(true);
     const { id: addressId } = (await address.json()) as { id: string };
@@ -74,7 +85,10 @@ test.describe("product reviews", () => {
     const { paymentId } = (await payment.json()) as { paymentId: string };
 
     const confirm = await api.post(`payments/${paymentId}/confirm`, {
-      headers: { ...authHeaders, "Idempotency-Key": `review-confirm-${suffix}` },
+      headers: {
+        ...authHeaders,
+        "Idempotency-Key": `review-confirm-${suffix}`,
+      },
       data: {},
     });
     expect(confirm.ok()).toBe(true);
@@ -88,7 +102,11 @@ test.describe("product reviews", () => {
     }
     const shipped = await api.patch(`orders/admin/${orderId}/status`, {
       headers: adminHeaders,
-      data: { status: "SHIPPED", carrier: "BlueDart", trackingNumber: `TRK-${suffix}` },
+      data: {
+        status: "SHIPPED",
+        carrier: "BlueDart",
+        trackingNumber: `TRK-${suffix}`,
+      },
     });
     expect(shipped.ok()).toBe(true);
     for (const status of ["OUT_FOR_DELIVERY", "DELIVERED"]) {
@@ -116,7 +134,9 @@ test.describe("product reviews", () => {
     await page.getByRole("button", { name: "Write a review" }).click();
     await page.getByRole("radio", { name: "5 stars" }).click();
     await page.getByPlaceholder("Title (optional)").fill(reviewTitle);
-    await page.getByPlaceholder("Share your thoughts (optional)").fill(reviewBody);
+    await page
+      .getByPlaceholder("Share your thoughts (optional)")
+      .fill(reviewBody);
     await page.getByRole("button", { name: "Submit review" }).click();
     await expect(page.getByText("Thanks for your review")).toBeVisible();
 
@@ -124,6 +144,8 @@ test.describe("product reviews", () => {
     await expect(page.getByText(reviewTitle)).toBeVisible();
     await expect(page.getByText(reviewBody)).toBeVisible();
     await expect(page.getByText("Verified purchase").first()).toBeVisible();
-    await expect(page.getByText("Review Playwright Shopper").first()).toBeVisible();
+    await expect(
+      page.getByText("Review Playwright Shopper").first(),
+    ).toBeVisible();
   });
 });
