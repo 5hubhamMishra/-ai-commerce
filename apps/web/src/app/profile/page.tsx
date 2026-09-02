@@ -87,12 +87,17 @@ export default function ProfilePage() {
   }
 
   async function handleDeleteAccount() {
+    const requestUserId = user?.id;
+    if (!requestUserId) return;
     setDeleteError(null);
     setDeleteStatus("loading");
     try {
       await deleteAccount(deletePassword);
+      const currentUserId = useStore.getState().user?.id;
+      if (currentUserId && currentUserId !== requestUserId) return;
       router.push("/");
     } catch (err) {
+      if (useStore.getState().user?.id !== requestUserId) return;
       setDeleteStatus("idle");
       setDeleteError(
         err instanceof ApiError && err.status === 401
