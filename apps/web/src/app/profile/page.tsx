@@ -108,11 +108,15 @@ export default function ProfilePage() {
   }
 
   async function handleClearActivity() {
+    const requestUserId = user?.id ?? null;
     setActivityError(false);
     try {
       await clearActivity();
+      if (requestUserId && useStore.getState().user?.id !== requestUserId) return;
     } catch {
-      setActivityError(true);
+      if (!requestUserId || useStore.getState().user?.id === requestUserId) {
+        setActivityError(true);
+      }
     }
   }
 
