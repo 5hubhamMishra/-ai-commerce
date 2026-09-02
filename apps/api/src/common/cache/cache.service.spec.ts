@@ -62,6 +62,17 @@ describe('CacheService failure modes', () => {
     expect(redis.del).not.toHaveBeenCalled();
   });
 
+  it('deletes each scan batch without retaining all matching keys', async () => {
+    redis.scan
+      .mockResolvedValueOnce(['1', ['products:1', 'products:2']])
+      .mockResolvedValueOnce(['0', ['products:3']]);
+
+    await service.delByPrefix('products:');
+
+    expect(redis.del).toHaveBeenNthCalledWith(1, 'products:1', 'products:2');
+    expect(redis.del).toHaveBeenNthCalledWith(2, 'products:3');
+  });
+
   it('stays a no-op when Redis is intentionally disabled', async () => {
     const serviceWithoutRedis = new CacheService(null);
 

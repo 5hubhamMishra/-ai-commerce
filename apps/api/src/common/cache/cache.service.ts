@@ -43,7 +43,6 @@ export class CacheService implements OnModuleDestroy {
     if (!this.redis) return;
     try {
       let cursor = '0';
-      const keysToDelete: string[] = [];
       do {
         const [nextCursor, keys] = await this.redis.scan(
           cursor,
@@ -53,11 +52,8 @@ export class CacheService implements OnModuleDestroy {
           100,
         );
         cursor = nextCursor;
-        keysToDelete.push(...keys);
+        if (keys.length > 0) await this.redis.del(...keys);
       } while (cursor !== '0');
-      if (keysToDelete.length > 0) {
-        await this.redis.del(...keysToDelete);
-      }
     } catch (error) {
       this.warnRedis(
         `Cache invalidation failed for prefix "${prefix}": ${errorMessage(error)}`,
