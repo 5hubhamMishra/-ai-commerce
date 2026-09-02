@@ -169,6 +169,11 @@ describe('RecommendationsService verification audit', () => {
     expect(behavioralScoring.getAffinity).not.toHaveBeenCalled();
     expect(cache.get).not.toHaveBeenCalled();
     expect(cache.set).not.toHaveBeenCalled();
+    expect(prisma.behavioralEvent.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ personalizationEligible: true }),
+      }),
+    );
     expect(result).toEqual([
       {
         productId: 'product-1',

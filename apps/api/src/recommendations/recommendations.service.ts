@@ -489,6 +489,7 @@ export class RecommendationsService {
       by: ['entityId'],
       where: {
         eventType: BehavioralEventType.PRODUCT_VIEWED,
+        personalizationEligible: true,
         occurredAt: { gte: since },
         entityId: { not: null },
       },
