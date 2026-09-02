@@ -7,7 +7,8 @@ TypeScript, Tailwind CSS, and Zustand.
 
 This is the web client in the monorepo. It uses the NestJS API for the real catalog, account,
 commerce, review, recommendation, and ShopAI flows. A small seeded demo catalog remains as a
-graceful fallback when the API is unavailable, so the storefront can still render locally.
+graceful fallback during local development when the API is unavailable. Production builds never
+expose those fabricated records; they require the deployed API for catalog content.
 
 ## What's implemented
 
@@ -35,8 +36,8 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. With no API configured, the public storefront falls back to demo
-data; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` for the full experience. For the API
+Open http://localhost:3000. With no API configured, the development storefront falls back to
+demo data; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` for the full experience. For the API
 and database setup, use the repository root README.
 
 ## Deploy the web client

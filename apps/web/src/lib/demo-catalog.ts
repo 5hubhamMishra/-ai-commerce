@@ -27,6 +27,7 @@ type RawProduct = {
 
 const rawProducts = productsRaw as unknown as RawProduct[];
 const now = "2026-08-25T00:00:00.000Z";
+const demoCatalogEnabled = process.env.NODE_ENV !== "production";
 
 function slugify(value: string): string {
   return value
@@ -42,31 +43,35 @@ function productSlug(product: RawProduct): string {
 const categoryNames = Array.from(new Set(rawProducts.map((p) => p.category)));
 const brandNames = Array.from(new Set(rawProducts.map((p) => p.brand)));
 
-export const demoCategories: Category[] = categoryNames.map((name, index) => ({
-  id: `demo-category-${slugify(name)}`,
-  name,
-  slug: slugify(name),
-  description: `Shop ${name} at Veloura.`,
-  imageUrl: null,
-  parentId: null,
-  sortOrder: index,
-  isActive: true,
-  returnWindowDays: null,
-  createdAt: now,
-  updatedAt: now,
-  children: [],
-}));
+export const demoCategories: Category[] = demoCatalogEnabled
+  ? categoryNames.map((name, index) => ({
+      id: `demo-category-${slugify(name)}`,
+      name,
+      slug: slugify(name),
+      description: `Shop ${name} at Veloura.`,
+      imageUrl: null,
+      parentId: null,
+      sortOrder: index,
+      isActive: true,
+      returnWindowDays: null,
+      createdAt: now,
+      updatedAt: now,
+      children: [],
+    }))
+  : [];
 
-export const demoBrands: Brand[] = brandNames.map((name) => ({
-  id: `demo-brand-${slugify(name)}`,
-  name,
-  slug: slugify(name),
-  description: null,
-  logoUrl: null,
-  isActive: true,
-  createdAt: now,
-  updatedAt: now,
-}));
+export const demoBrands: Brand[] = demoCatalogEnabled
+  ? brandNames.map((name) => ({
+      id: `demo-brand-${slugify(name)}`,
+      name,
+      slug: slugify(name),
+      description: null,
+      logoUrl: null,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    }))
+  : [];
 
 const categoriesByName = new Map(demoCategories.map((c) => [c.name, c]));
 const brandsByName = new Map(demoBrands.map((b) => [b.name, b]));
@@ -98,6 +103,7 @@ export function listDemoProducts(
 ): ListProductsResponse {
   const page = query.page ?? 1;
   const pageSize = query.pageSize ?? 20;
+  if (!demoCatalogEnabled) return { items: [], total: 0, page, pageSize };
   const search = query.search?.trim().toLowerCase();
 
   let items = rawProducts.filter((product) => {
@@ -179,10 +185,12 @@ export function mergeDemoProducts(
 }
 
 export function getDemoCategoryBySlug(slug: string): Category | null {
+  if (!demoCatalogEnabled) return null;
   return demoCategories.find((category) => category.slug === slug) ?? null;
 }
 
 export function getDemoProductBySlug(slug: string): ProductDetail | null {
+  if (!demoCatalogEnabled) return null;
   const product = rawProducts.find(
     (candidate) => productSlug(candidate) === slug,
   );
@@ -190,6 +198,7 @@ export function getDemoProductBySlug(slug: string): ProductDetail | null {
 }
 
 export function getDemoProductById(id: string): ProductDetail | null {
+  if (!demoCatalogEnabled) return null;
   const product = rawProducts.find((candidate) => candidate.id === id);
   return product ? toDetail(product) : null;
 }
