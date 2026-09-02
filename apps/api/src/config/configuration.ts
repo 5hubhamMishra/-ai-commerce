@@ -50,7 +50,7 @@ export default () => ({
     // 'development' | 'razorpay' — selects which PaymentProvider payments.module.ts binds.
     // Defaults to 'development' so every existing dev/test/e2e environment (including the
     // whole e2e suite) is unaffected without needing any env changes.
-    provider: process.env.PAYMENT_PROVIDER ?? 'development',
+    provider: process.env.PAYMENT_PROVIDER?.trim() || 'development',
     razorpay: {
       keyId: process.env.RAZORPAY_KEY_ID,
       keySecret: process.env.RAZORPAY_KEY_SECRET,
