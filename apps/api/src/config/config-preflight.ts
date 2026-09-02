@@ -33,16 +33,14 @@ export function validateConfigPreflight(
   const paymentProvider =
     getOptionalString(config, 'PAYMENT_PROVIDER') ?? 'development';
   const isVercel = getOptionalString(config, 'VERCEL') === '1';
-  const isPreview = getOptionalString(config, 'VERCEL_ENV') === 'preview';
+  const vercelEnv = getOptionalString(config, 'VERCEL_ENV');
+  const isPreview = vercelEnv === 'preview';
   const isCustomerFacingProduction =
-    env === 'production' ||
-    getOptionalString(config, 'VERCEL_ENV') === 'production';
+    vercelEnv === 'production' || (!isPreview && env === 'production');
   const isProductionLike =
     env === 'production' ||
     isVercel ||
-    ['production', 'preview'].includes(
-      getOptionalString(config, 'VERCEL_ENV') ?? '',
-    );
+    ['production', 'preview'].includes(vercelEnv ?? '');
 
   oneOf(issues, config, 'NODE_ENV', ['development', 'test', 'production'], {
     optional: true,

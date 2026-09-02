@@ -127,6 +127,7 @@ describe('config preflight', () => {
     expect(
       validateConfigPreflight({
         ...validConfig,
+        NODE_ENV: 'production',
         VERCEL: '1',
         VERCEL_ENV: 'preview',
       }),
