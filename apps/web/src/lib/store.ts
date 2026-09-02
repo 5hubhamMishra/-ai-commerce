@@ -710,8 +710,6 @@ export const useStore = create<StoreState>()(
         recentlyViewed: state.recentlyViewed,
         events: state.events,
         orders: state.orders,
-        user: state.user,
-        personalizationEnabled: state.personalizationEnabled,
         anonymousId: state.anonymousId,
         shopaiConversationId: state.shopaiConversationId,
         recentlyViewedReal: state.recentlyViewedReal,

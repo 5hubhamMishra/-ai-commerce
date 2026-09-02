@@ -96,6 +96,15 @@ describe("wishlist actions", () => {
 });
 
 describe("personalization / event tracking", () => {
+  it("does not persist account identity or profile preferences", () => {
+    window.localStorage.removeItem("ai-commerce-store");
+    useStore.setState({ user: authenticatedUser, personalizationEnabled: false });
+
+    const persisted = JSON.parse(window.localStorage.getItem("ai-commerce-store") ?? "{}");
+    expect(persisted.state).not.toHaveProperty("user");
+    expect(persisted.state).not.toHaveProperty("personalizationEnabled");
+  });
+
   it("persists signed-in personalization changes and rolls back on failure", async () => {
     useStore.setState({ user: { id: "u1", email: "a@b.com", name: "Ada", isActive: true, createdAt: "2026-01-01T00:00:00.000Z", roles: ["CUSTOMER"] } });
     const fetchSpy = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
