@@ -114,6 +114,7 @@ export default function CheckoutPage() {
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const hydrated = useStore((s) => s.hydrated);
   const authStatus = useStore((s) => s.authStatus);
+  const userId = useStore((s) => s.user?.id ?? null);
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
@@ -254,6 +255,8 @@ export default function CheckoutPage() {
 
   async function onSaveAddress() {
     if (!newAddressComplete) return;
+    const requestUserId = userId;
+    if (authStatus !== "authenticated" || !requestUserId) return;
     setError(null);
     setSavingAddress(true);
     try {
@@ -267,6 +270,12 @@ export default function CheckoutPage() {
         country: newAddress.country.trim(),
         isDefault: !addresses || addresses.length === 0,
       });
+      if (
+        useStore.getState().user?.id !== requestUserId ||
+        useStore.getState().authStatus !== "authenticated"
+      ) {
+        return;
+      }
       setSelectedAddressId(created.id);
       setAddingNew(false);
       setNewAddress(EMPTY_ADDRESS);
@@ -279,19 +288,26 @@ export default function CheckoutPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!effectiveAddressId || !selectedMethod) return;
+    const requestUserId = userId;
+    if (authStatus !== "authenticated" || !requestUserId || !effectiveAddressId || !selectedMethod) return;
+    const isCurrentSession = () =>
+      useStore.getState().user?.id === requestUserId &&
+      useStore.getState().authStatus === "authenticated";
     setError(null);
     setPlacing(true);
     try {
       const currentOrderId =
         orderId ?? (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as "STANDARD" | "EXPRESS" })).id;
+      if (!isCurrentSession()) return;
       setOrderId(currentOrderId);
 
       const payment = await paymentsApi.create(currentOrderId);
+      if (!isCurrentSession()) return;
 
       if (!RAZORPAY_KEY_ID) {
         // Simulated path — unchanged from before, no widget.
         const order = await finalizeServerOrder(currentOrderId, payment.paymentId);
+        if (!isCurrentSession()) return;
         router.push(`/orders/${order.id}`);
         return;
       }
@@ -305,12 +321,15 @@ export default function CheckoutPage() {
         handler: (response) => {
           void (async () => {
             try {
+              if (!isCurrentSession()) return;
               const order = await finalizeServerOrder(currentOrderId, payment.paymentId, {
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpaySignature: response.razorpay_signature,
               });
+              if (!isCurrentSession()) return;
               router.push(`/orders/${order.id}`);
             } catch (err) {
+              if (!isCurrentSession()) return;
               setError(err instanceof Error ? err.message : "Couldn't confirm your payment. Please try again.");
               setPlacing(false);
             }
@@ -318,6 +337,7 @@ export default function CheckoutPage() {
         },
         modal: {
           ondismiss: () => {
+            if (!isCurrentSession()) return;
             setError("Payment was not completed. You can try again — your order hasn't been lost.");
             setPlacing(false);
           },
@@ -325,6 +345,7 @@ export default function CheckoutPage() {
       });
       razorpay.open();
     } catch (err) {
+      if (!isCurrentSession()) return;
       setError(err instanceof Error ? err.message : "Couldn't place your order. Please try again.");
       setPlacing(false);
     }
