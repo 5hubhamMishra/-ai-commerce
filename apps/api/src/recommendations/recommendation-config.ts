@@ -1,11 +1,9 @@
 import { BehavioralEventType } from '@prisma/client';
 
 /**
- * Centralized constants, not scattered magic numbers — mirrors
- * `apps/web/src/lib/recommend.ts`'s own `EVENT_WEIGHTS` precedent and
- * satisfies the spec's "weights must be configurable rather than hard-coded
- * throughout the application" the same honest way that reference
- * implementation did: one place to tune, not yet a runtime-editable/
+ * Centralized constants, not scattered magic numbers — satisfies the spec's
+ * "weights must be configurable rather than hard-coded throughout the
+ * application" honestly: one place to tune, not yet a runtime-editable/
  * admin-UI setting (see docs/AI_ARCHITECTURE.md).
  */
 export const EVENT_WEIGHTS: Partial<Record<BehavioralEventType, number>> = {

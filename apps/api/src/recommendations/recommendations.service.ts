@@ -28,9 +28,8 @@ export type ScoredProduct = {
   reasons: string[];
 };
 
-/** Complementary-category compatibility rules — the same real merchandising
- *  heuristic `apps/web/src/lib/recommend.ts` used, kept as the fallback for
- *  when real collaborative (co-purchase) data is too thin — cold start,
+/** Complementary-category compatibility rules — a real merchandising heuristic,
+ *  kept as the fallback for when collaborative (co-purchase) data is too thin — cold start,
  *  same principle as everywhere else the ranker degrades gracefully instead
  *  of returning nothing. */
 const COMPLEMENTARY_CATEGORIES: Record<string, string[]> = {
