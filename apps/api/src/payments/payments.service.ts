@@ -292,6 +292,11 @@ export class PaymentsService {
         message: 'Webhook payload is invalid.',
       });
     }
+    const isCaptured = envelope.event === 'payment.captured';
+    const isFailed = envelope.event === 'payment.failed';
+    if (!isCaptured && !isFailed) {
+      return { received: true, ignored: true };
+    }
 
     const payment = await this.prisma.payment.findFirst({
       where: { providerRef: paymentEntity.order_id },
@@ -299,21 +304,23 @@ export class PaymentsService {
     if (!payment) {
       return { received: true };
     }
-    if (payment.status !== PaymentStatus.PENDING) {
+    if (
+      payment.status !== PaymentStatus.PENDING &&
+      !(isCaptured && payment.status === PaymentStatus.FAILED)
+    ) {
       return { received: true, alreadyProcessed: true };
     }
 
     await this.applyConfirmationResult(payment, null, {
-      success: envelope.event === 'payment.captured',
+      success: isCaptured,
       raw: {
         razorpayPaymentId: paymentEntity.id,
         razorpayOrderId: paymentEntity.order_id,
         source: 'webhook',
       },
-      failureReason:
-        envelope.event === 'payment.captured'
-          ? undefined
-          : `Razorpay event: ${envelope.event}`,
+      failureReason: isCaptured
+        ? undefined
+        : `Razorpay event: ${envelope.event}`,
     });
     return { received: true };
   }
@@ -336,7 +343,10 @@ export class PaymentsService {
       const [updatedPayment, transition] = await this.prisma.$transaction(
         async (tx) => {
           const claimed = await tx.payment.updateMany({
-            where: { id: payment.id, status: PaymentStatus.PENDING },
+            where: {
+              id: payment.id,
+              status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+            },
             data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef },
           });
           const updatedPayment = await tx.payment.findUniqueOrThrow({

@@ -44,6 +44,31 @@ describe('PaymentsService settlement race', () => {
     expect(findFirst).not.toHaveBeenCalled();
   });
 
+  it('acknowledges non-terminal Razorpay events without changing payment state', async () => {
+    const findFirst = jest.fn();
+    const service = new PaymentsService(
+      { payment: { findFirst } } as never,
+      { verifyWebhookSignature: jest.fn().mockReturnValue(true) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.handleRazorpayWebhook(
+        JSON.stringify({
+          event: 'payment.authorized',
+          payload: {
+            payment: { entity: { id: 'pay_1', order_id: 'order_1' } },
+          },
+        }),
+        'valid-signature',
+      ),
+    ).resolves.toEqual({ received: true, ignored: true });
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+
   it('maps a concurrent pending-payment race to a conflict', async () => {
     const paymentCreate = jest.fn().mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -207,9 +232,66 @@ describe('PaymentsService settlement race', () => {
     ).resolves.toEqual(settledPayment);
 
     expect(tx.payment.updateMany).toHaveBeenCalledWith({
-      where: { id: 'payment-1', status: PaymentStatus.PENDING },
+      where: {
+        id: 'payment-1',
+        status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+      },
       data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef: undefined },
     });
     expect(orders.confirmPaymentTransition).not.toHaveBeenCalled();
+  });
+
+  it('allows a later capture to settle a previously failed payment attempt', async () => {
+    const payment = {
+      id: 'payment-1',
+      orderId: 'order-1',
+      status: PaymentStatus.FAILED,
+    };
+    const settledPayment = { ...payment, status: PaymentStatus.SUCCEEDED };
+    const tx = {
+      payment: {
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue(settledPayment),
+      },
+    };
+    const orders = {
+      confirmPaymentTransition: jest.fn().mockResolvedValue({
+        userId: 'user-1',
+      }),
+    };
+    const service = new PaymentsService(
+      {
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
+        ),
+      } as never,
+      {} as never,
+      orders as never,
+      {} as never,
+      { record: jest.fn().mockResolvedValue(undefined) } as never,
+      { paymentSucceeded: jest.fn() } as never,
+    );
+    const apply = (
+      service as unknown as {
+        applyConfirmationResult: (
+          payment: unknown,
+          actorId: string | null,
+          result: unknown,
+        ) => Promise<unknown>;
+      }
+    ).applyConfirmationResult;
+
+    await expect(
+      apply.call(service, payment, null, { success: true, raw: {} }),
+    ).resolves.toEqual(settledPayment);
+
+    expect(tx.payment.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'payment-1',
+        status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+      },
+      data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef: undefined },
+    });
+    expect(orders.confirmPaymentTransition).toHaveBeenCalled();
   });
 });
