@@ -82,7 +82,7 @@ export default async function Home() {
         <CatalogProductGrid products={featuredCards} />
       </Section>
 
-      <HomeDynamicSections />
+      <HomeDynamicSections fallbackProducts={featuredCards} />
 
       <section
         id="categories"

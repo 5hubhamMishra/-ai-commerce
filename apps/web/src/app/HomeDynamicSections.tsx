@@ -5,12 +5,17 @@ import { useStore } from "@/lib/store";
 import { useRecommendations } from "@/lib/hooks/useRecommendations";
 import { useProductIndex } from "@/lib/hooks/useProductIndex";
 import { fromProductListItem } from "@/lib/catalog-mappers";
+import type { CatalogCardProduct } from "@/components/catalog/CatalogProductCard";
 import { listDemoProducts } from "@/lib/demo-catalog";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
 import Section from "@/components/Section";
 import { SkeletonBlock } from "@/components/Skeleton";
 
-export default function HomeDynamicSections() {
+export default function HomeDynamicSections({
+  fallbackProducts,
+}: {
+  fallbackProducts: CatalogCardProduct[];
+}) {
   const hydrated = useStore((s) => s.hydrated);
   const events = useStore((s) => s.events);
   const user = useStore((s) => s.user);
@@ -39,6 +44,8 @@ export default function HomeDynamicSections() {
       ),
     [],
   );
+  const featuredFallback =
+    fallbackProducts.length > 0 ? fallbackProducts : demoFeaturedCards;
   const recommendedCards = useMemo(
     () => recommended?.map((r) => fromProductListItem(r.product)) ?? null,
     [recommended],
@@ -85,7 +92,7 @@ export default function HomeDynamicSections() {
         {recommendedCards ? (
           <CatalogProductGrid
             products={
-              recommendedCards.length > 0 ? recommendedCards : demoFeaturedCards
+              recommendedCards.length > 0 ? recommendedCards : featuredFallback
             }
             reasons={reasons}
           />
@@ -98,7 +105,7 @@ export default function HomeDynamicSections() {
         {trendingCards ? (
           <CatalogProductGrid
             products={
-              trendingCards.length > 0 ? trendingCards : demoFeaturedCards
+              trendingCards.length > 0 ? trendingCards : featuredFallback
             }
           />
         ) : (
