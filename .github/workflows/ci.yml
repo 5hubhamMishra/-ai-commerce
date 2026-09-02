@@ -47,3 +47,64 @@ jobs:
           npm test --workspace=apps/mobile -- --runInBand
           npm run lint --workspace=apps/mobile
           npm run typecheck --workspace=apps/mobile
+
+  api-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://ai_commerce:ai_commerce_test@localhost:5432/ai_commerce
+      DIRECT_URL: postgresql://ai_commerce:ai_commerce_test@localhost:5432/ai_commerce
+      REDIS_URL: redis://localhost:6379
+      WEB_ORIGIN: http://localhost:3000
+      JWT_ACCESS_SECRET: ci-access-secret-012345678901234567890123
+      JWT_REFRESH_SECRET: ci-refresh-secret-012345678901234567890123
+      ANTHROPIC_API_KEY: ci-anthropic-key-placeholder
+      EMBEDDING_PROVIDER: hashing
+      PAYMENT_PROVIDER: development
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: ai_commerce
+          POSTGRES_PASSWORD: ai_commerce_test
+          POSTGRES_DB: ai_commerce
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ai_commerce -d ai_commerce"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Apply test migrations
+        run: npm run db:migrate
+
+      - name: Seed test catalog
+        run: npm run prisma:seed --workspace=apps/api
+
+      - name: Run API end-to-end suite
+        run: npm run test:e2e --workspace=apps/api -- --runInBand
