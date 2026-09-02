@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import type { ProductReview, ProductReviewSummary } from "@ai-commerce/types";
 import { reviewsApi } from "@ai-commerce/api-client";
 import StarRating from "@/components/StarRating";
@@ -23,41 +23,50 @@ export default function ProductReviews({
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
   useEffect(() => {
+    const version = ++requestVersion.current;
     let cancelled = false;
+    startTransition(() => {
+      setReviews(summary.count === 0 ? [] : null);
+      setTotal(summary.count);
+      setPage(1);
+      setLoadingMore(false);
+      setError(null);
+    });
     if (summary.count === 0) {
-      startTransition(() => setReviews([]));
       return;
     }
     reviewsApi
       .listForProduct(productSlug, { page: 1, pageSize: PAGE_SIZE })
       .then((res) => {
-        if (cancelled) return;
+        if (cancelled || version !== requestVersion.current) return;
         setReviews(res.items);
         setTotal(res.total);
       })
       .catch(() => {
-        if (!cancelled) setError("Couldn't load reviews.");
+        if (!cancelled && version === requestVersion.current) setError("Couldn't load reviews.");
       });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productSlug]);
+  }, [productSlug, summary.count]);
 
   async function loadMore() {
+    const version = requestVersion.current;
     setLoadingMore(true);
     setError(null);
     try {
       const nextPage = page + 1;
       const res = await reviewsApi.listForProduct(productSlug, { page: nextPage, pageSize: PAGE_SIZE });
+      if (version !== requestVersion.current) return;
       setReviews((prev) => [...(prev ?? []), ...res.items]);
       setPage(nextPage);
     } catch {
       setError("Couldn't load more reviews.");
     } finally {
-      setLoadingMore(false);
+      if (version === requestVersion.current) setLoadingMore(false);
     }
   }
 
