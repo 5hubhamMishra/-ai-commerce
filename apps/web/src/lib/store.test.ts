@@ -987,6 +987,28 @@ describe("real event tracking and behavioral profile", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("starts a new analytics session after clearing an account session", async () => {
+    const sessionIds: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = JSON.parse(init!.body as string) as { events: { sessionId: string }[] };
+        sessionIds.push(body.events[0].sessionId);
+        return { ok: true, status: 202, json: async () => ({ accepted: 1 }) } as Response;
+      }),
+    );
+
+    useStore.getState().clearSession();
+    useStore.getState().trackRealEvent("PRODUCT_VIEWED", "p1");
+    await vi.waitFor(() => expect(sessionIds).toHaveLength(1));
+
+    useStore.getState().clearSession();
+    useStore.getState().trackRealEvent("PRODUCT_VIEWED", "p2");
+    await vi.waitFor(() => expect(sessionIds).toHaveLength(2));
+
+    expect(sessionIds[1]).not.toBe(sessionIds[0]);
+  });
+
   it("a PRODUCT_VIEWED event also updates the real recently-viewed list, most-recent-first and deduplicated", () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 202, json: async () => ({ accepted: 1 }) }) as Response));
 

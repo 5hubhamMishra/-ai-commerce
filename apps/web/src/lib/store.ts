@@ -357,6 +357,7 @@ export const useStore = create<StoreState>()(
 
       clearSession: () => {
         authOperation++;
+        sessionId = null;
         personalizationOperation++;
         cartFetchOperation++;
         wishlistFetchOperation++;
