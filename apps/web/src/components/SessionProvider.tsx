@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import * as apiClient from "@ai-commerce/api-client";
-import { getAuthOperation, useStore } from "@/lib/store";
+import { getAuthOperation, SESSION_HINT_KEY, useStore } from "@/lib/store";
 
 /**
  * The access token is deliberately never persisted to localStorage (see store.ts's
@@ -22,6 +22,10 @@ export default function SessionProvider() {
 
     async function restore() {
       const operation = getAuthOperation();
+      if (window.localStorage.getItem(SESSION_HINT_KEY) !== "true") {
+        useStore.getState().clearSession();
+        return;
+      }
       useStore.setState({ authStatus: "checking" });
       try {
         const accessToken = await apiClient.refreshAccessToken();

@@ -13,7 +13,9 @@ test.describe("browse, add to cart, and checkout", () => {
     await expect(
       page.getByRole("banner").getByRole("link", { name: "Veloura" }),
     ).toBeVisible();
-    await expect(page.getByText(/Shopping that gets you/i)).toBeVisible();
+    await expect(
+      page.locator("main").getByText(/Shopping that gets you/i),
+    ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Browse the catalog" }),
     ).toBeVisible();

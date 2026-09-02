@@ -29,10 +29,17 @@ import {
   usersApi,
   wishlistApi,
 } from "@ai-commerce/api-client";
-import type { BehaviorEvent, CartItem, EventType, Order, OrderItem } from "./types";
+import type {
+  BehaviorEvent,
+  CartItem,
+  EventType,
+  Order,
+  OrderItem,
+} from "./types";
 import { getProduct } from "./data";
 
-export type AuthStatus = "idle" | "checking" | "authenticated" | "unauthenticated";
+export type AuthStatus =
+  "idle" | "checking" | "authenticated" | "unauthenticated";
 type AsyncStatus = "idle" | "loading" | "error";
 
 /** One id per browser tab-session (module-scope, not persisted — a reload starts a new
@@ -40,6 +47,13 @@ type AsyncStatus = "idle" | "loading" | "error";
  *  event so a page that never tracks anything never pays for it. */
 let sessionId: string | null = null;
 let authOperation = 0;
+export const SESSION_HINT_KEY = "veloura-session-active";
+
+function setSessionHint(active: boolean): void {
+  if (typeof window === "undefined") return;
+  if (active) window.localStorage.setItem(SESSION_HINT_KEY, "true");
+  else window.localStorage.removeItem(SESSION_HINT_KEY);
+}
 let personalizationOperation = 0;
 let cartFetchOperation = 0;
 let wishlistFetchOperation = 0;
@@ -128,7 +142,10 @@ type StoreState = {
   serverAddressesStatus: AsyncStatus;
   fetchServerAddresses: () => Promise<void>;
   createServerAddress: (input: CreateAddressInput) => Promise<Address>;
-  updateServerAddress: (id: string, input: UpdateAddressInput) => Promise<Address>;
+  updateServerAddress: (
+    id: string,
+    input: UpdateAddressInput,
+  ) => Promise<Address>;
   removeServerAddress: (id: string) => Promise<void>;
 
   /** Confirms an already-created payment (the checkout page owns order/payment *creation*
@@ -163,7 +180,11 @@ type StoreState = {
    *  (real cart/wishlist/orders/catalog), never the legacy fake-catalog surfaces, so a fake
    *  id never pollutes real affinity/recommendation data. Fire-and-forget: a failed request
    *  never surfaces to the caller, matching how apps/api treats its own impression logging. */
-  trackRealEvent: (eventType: BehavioralEventType, entityId?: string, metadata?: Record<string, unknown>) => void;
+  trackRealEvent: (
+    eventType: BehavioralEventType,
+    entityId?: string,
+    metadata?: Record<string, unknown>,
+  ) => void;
 
   behavioralProfile: BehavioralProfileView | null;
   behavioralProfileStatus: AsyncStatus;
@@ -190,7 +211,11 @@ export const useStore = create<StoreState>()(
         set((state) => {
           const existing = state.cart.find((c) => c.productId === productId);
           const cart = existing
-            ? state.cart.map((c) => (c.productId === productId ? { ...c, quantity: c.quantity + quantity } : c))
+            ? state.cart.map((c) =>
+                c.productId === productId
+                  ? { ...c, quantity: c.quantity + quantity }
+                  : c,
+              )
             : [...state.cart, { productId, quantity }];
           return { cart };
         });
@@ -198,15 +223,20 @@ export const useStore = create<StoreState>()(
       },
 
       removeFromCart: (productId) => {
-        set((state) => ({ cart: state.cart.filter((c) => c.productId !== productId) }));
+        set((state) => ({
+          cart: state.cart.filter((c) => c.productId !== productId),
+        }));
         get().trackEvent("PRODUCT_REMOVED_FROM_CART", { productId });
       },
 
       updateCartQuantity: (productId, quantity) => {
         set((state) => ({
-          cart: quantity <= 0
-            ? state.cart.filter((c) => c.productId !== productId)
-            : state.cart.map((c) => (c.productId === productId ? { ...c, quantity } : c)),
+          cart:
+            quantity <= 0
+              ? state.cart.filter((c) => c.productId !== productId)
+              : state.cart.map((c) =>
+                  c.productId === productId ? { ...c, quantity } : c,
+                ),
         }));
       },
 
@@ -219,18 +249,29 @@ export const useStore = create<StoreState>()(
             ? state.wishlist.filter((id) => id !== productId)
             : [...state.wishlist, productId],
         }));
-        get().trackEvent(isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED", { productId });
+        get().trackEvent(
+          isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED",
+          { productId },
+        );
       },
 
       trackEvent: (eventType, data = {}) => {
-        if (!get().personalizationEnabled && eventType !== "AI_ASSISTANT_QUERY") return;
-        const event: BehaviorEvent = { eventType, timestamp: Date.now(), ...data };
+        if (!get().personalizationEnabled && eventType !== "AI_ASSISTANT_QUERY")
+          return;
+        const event: BehaviorEvent = {
+          eventType,
+          timestamp: Date.now(),
+          ...data,
+        };
         set((state) => ({ events: [...state.events.slice(-499), event] }));
       },
 
       recordView: (productId) => {
         set((state) => ({
-          recentlyViewed: [productId, ...state.recentlyViewed.filter((id) => id !== productId)].slice(0, 20),
+          recentlyViewed: [
+            productId,
+            ...state.recentlyViewed.filter((id) => id !== productId),
+          ].slice(0, 20),
         }));
         get().trackEvent("PRODUCT_VIEWED", { productId });
       },
@@ -241,9 +282,16 @@ export const useStore = create<StoreState>()(
           items ??
           state.cart.map((c) => {
             const product = getProduct(c.productId);
-            return { productId: c.productId, quantity: c.quantity, priceAtPurchase: product?.price || 0 };
+            return {
+              productId: c.productId,
+              quantity: c.quantity,
+              priceAtPurchase: product?.price || 0,
+            };
           });
-        const total = orderItems.reduce((sum, i) => sum + i.priceAtPurchase * i.quantity, 0);
+        const total = orderItems.reduce(
+          (sum, i) => sum + i.priceAtPurchase * i.quantity,
+          0,
+        );
         const order: Order = {
           id: `ORD-${Date.now().toString(36).toUpperCase()}`,
           items: orderItems,
@@ -253,7 +301,9 @@ export const useStore = create<StoreState>()(
           address,
         };
         set((s) => ({ orders: [order, ...s.orders], cart: [] }));
-        get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: order.id } });
+        get().trackEvent("ORDER_COMPLETED", {
+          metadata: { orderId: order.id },
+        });
         return order;
       },
 
@@ -263,24 +313,26 @@ export const useStore = create<StoreState>()(
         const userId = get().user?.id;
         set({ personalizationEnabled: enabled });
         if (!userId) return;
-        const request = personalizationQueue.catch(() => undefined).then(async () => {
-          if (
-            operation !== personalizationOperation ||
-            get().user?.id !== userId
-          ) {
-            return;
-          }
-          try {
-            await usersApi.updateProfile({ personalizationEnabled: enabled });
-          } catch {
+        const request = personalizationQueue
+          .catch(() => undefined)
+          .then(async () => {
             if (
-              operation === personalizationOperation &&
-              get().user?.id === userId
+              operation !== personalizationOperation ||
+              get().user?.id !== userId
             ) {
-              set({ personalizationEnabled: previous });
+              return;
             }
-          }
-        });
+            try {
+              await usersApi.updateProfile({ personalizationEnabled: enabled });
+            } catch {
+              if (
+                operation === personalizationOperation &&
+                get().user?.id === userId
+              ) {
+                set({ personalizationEnabled: previous });
+              }
+            }
+          });
         personalizationQueue = request;
         await request;
       },
@@ -289,10 +341,7 @@ export const useStore = create<StoreState>()(
         const userId = get().user?.id;
         if (userId) {
           await activityApi.clear();
-          if (
-            operation !== activityOperation ||
-            get().user?.id !== userId
-          ) {
+          if (operation !== activityOperation || get().user?.id !== userId) {
             return;
           }
         }
@@ -320,7 +369,12 @@ export const useStore = create<StoreState>()(
           const me = await authApi.me();
           const profile = await usersApi.getProfile();
           if (operation !== authOperation) return;
-          set({ user: me, personalizationEnabled: profile.personalizationEnabled, authStatus: "authenticated" });
+          set({
+            user: me,
+            personalizationEnabled: profile.personalizationEnabled,
+            authStatus: "authenticated",
+          });
+          setSessionHint(true);
           void get().fetchServerCart();
           void get().fetchServerWishlist();
           void get().fetchBehavioralProfile();
@@ -339,7 +393,12 @@ export const useStore = create<StoreState>()(
           const me = await authApi.me();
           const profile = await usersApi.getProfile();
           if (operation !== authOperation) return;
-          set({ user: me, personalizationEnabled: profile.personalizationEnabled, authStatus: "authenticated" });
+          set({
+            user: me,
+            personalizationEnabled: profile.personalizationEnabled,
+            authStatus: "authenticated",
+          });
+          setSessionHint(true);
           void get().fetchServerCart();
           void get().fetchServerWishlist();
           void get().fetchBehavioralProfile();
@@ -357,6 +416,7 @@ export const useStore = create<StoreState>()(
 
       clearSession: () => {
         authOperation++;
+        setSessionHint(false);
         sessionId = null;
         personalizationOperation++;
         cartFetchOperation++;
@@ -387,10 +447,7 @@ export const useStore = create<StoreState>()(
         const operation = authOperation;
         const userId = get().user?.id;
         await usersApi.deleteAccount({ password });
-        if (
-          operation === authOperation &&
-          get().user?.id === userId
-        ) {
+        if (operation === authOperation && get().user?.id === userId) {
           get().clearSession();
         }
       },
@@ -405,7 +462,8 @@ export const useStore = create<StoreState>()(
         set({ serverCartStatus: "loading" });
         try {
           const cart = await cartApi.getCart();
-          if (operation !== cartFetchOperation || get().user?.id !== userId) return;
+          if (operation !== cartFetchOperation || get().user?.id !== userId)
+            return;
           set({ serverCart: cart, serverCartStatus: "idle" });
         } catch {
           if (operation === cartFetchOperation && get().user?.id === userId) {
@@ -423,16 +481,24 @@ export const useStore = create<StoreState>()(
           const cart = await cartApi.addItem(variantId, quantity);
           if (session !== authOperation || get().user?.id !== userId) return;
           set({ serverCart: cart });
-          const productId = cart.items.find((i) => i.variantId === variantId)?.productId;
-          get().trackRealEvent("PRODUCT_ADDED_TO_CART", productId, { variantId, quantity });
+          const productId = cart.items.find(
+            (i) => i.variantId === variantId,
+          )?.productId;
+          get().trackRealEvent("PRODUCT_ADDED_TO_CART", productId, {
+            variantId,
+            quantity,
+          });
         });
       },
 
       updateServerCartItem: async (itemId, quantity) => {
         const userId = get().user?.id;
         const session = authOperation;
-        const currentQuantity = get().serverCart?.items.find((i) => i.id === itemId)?.quantity;
-        const delta = currentQuantity === undefined ? null : quantity - currentQuantity;
+        const currentQuantity = get().serverCart?.items.find(
+          (i) => i.id === itemId,
+        )?.quantity;
+        const delta =
+          currentQuantity === undefined ? null : quantity - currentQuantity;
         await enqueueCartMutation(async () => {
           if (session !== authOperation || get().user?.id !== userId) return;
           const current = get().serverCart?.items.find((i) => i.id === itemId);
@@ -452,7 +518,9 @@ export const useStore = create<StoreState>()(
         const session = authOperation;
         await enqueueCartMutation(async () => {
           if (session !== authOperation || get().user?.id !== userId) return;
-          const productId = get().serverCart?.items.find((i) => i.id === itemId)?.productId;
+          const productId = get().serverCart?.items.find(
+            (i) => i.id === itemId,
+          )?.productId;
           if (!productId) return;
           cartFetchOperation++;
           const cart = await cartApi.removeItem(itemId);
@@ -503,23 +571,34 @@ export const useStore = create<StoreState>()(
 
       toggleServerWishlistItem: async (productId) => {
         const session = authOperation;
-        const previous = wishlistToggleQueues.get(productId) ?? Promise.resolve();
-        const operation = previous.catch(() => undefined).then(async () => {
-          const userId = get().user?.id;
-          if (session !== authOperation) return;
-          const isWishlisted =
-            get().serverWishlist?.items.some((i) => i.productId === productId) ?? false;
-          const wishlist = isWishlisted
-            ? await wishlistApi.remove(productId)
-            : await wishlistApi.add(productId);
-          if (session !== authOperation || get().user?.id !== userId) return;
-          set({ serverWishlist: wishlist });
-          get().trackRealEvent(isWishlisted ? "PRODUCT_REMOVED_FROM_WISHLIST" : "PRODUCT_WISHLISTED", productId);
-        }).finally(() => {
-          if (wishlistToggleQueues.get(productId) === operation) {
-            wishlistToggleQueues.delete(productId);
-          }
-        });
+        const previous =
+          wishlistToggleQueues.get(productId) ?? Promise.resolve();
+        const operation = previous
+          .catch(() => undefined)
+          .then(async () => {
+            const userId = get().user?.id;
+            if (session !== authOperation) return;
+            const isWishlisted =
+              get().serverWishlist?.items.some(
+                (i) => i.productId === productId,
+              ) ?? false;
+            const wishlist = isWishlisted
+              ? await wishlistApi.remove(productId)
+              : await wishlistApi.add(productId);
+            if (session !== authOperation || get().user?.id !== userId) return;
+            set({ serverWishlist: wishlist });
+            get().trackRealEvent(
+              isWishlisted
+                ? "PRODUCT_REMOVED_FROM_WISHLIST"
+                : "PRODUCT_WISHLISTED",
+              productId,
+            );
+          })
+          .finally(() => {
+            if (wishlistToggleQueues.get(productId) === operation) {
+              wishlistToggleQueues.delete(productId);
+            }
+          });
         wishlistToggleQueues.set(productId, operation);
         await operation;
       },
@@ -555,10 +634,17 @@ export const useStore = create<StoreState>()(
         const session = authOperation;
         const userId = get().user?.id;
         const address = await addressesApi.create(input);
-        if (session !== authOperation || get().user?.id !== userId) return address;
+        if (session !== authOperation || get().user?.id !== userId)
+          return address;
         set((state) => ({
           serverAddresses: address.isDefault
-            ? [address, ...(state.serverAddresses ?? []).map((a) => ({ ...a, isDefault: false }))]
+            ? [
+                address,
+                ...(state.serverAddresses ?? []).map((a) => ({
+                  ...a,
+                  isDefault: false,
+                })),
+              ]
             : [...(state.serverAddresses ?? []), address],
         }));
         return address;
@@ -568,10 +654,15 @@ export const useStore = create<StoreState>()(
         const session = authOperation;
         const userId = get().user?.id;
         const address = await addressesApi.update(id, input);
-        if (session !== authOperation || get().user?.id !== userId) return address;
+        if (session !== authOperation || get().user?.id !== userId)
+          return address;
         set((state) => ({
           serverAddresses: (state.serverAddresses ?? []).map((a) =>
-            a.id === id ? address : address.isDefault ? { ...a, isDefault: false } : a,
+            a.id === id
+              ? address
+              : address.isDefault
+                ? { ...a, isDefault: false }
+                : a,
           ),
         }));
         return address;
@@ -583,7 +674,9 @@ export const useStore = create<StoreState>()(
         await addressesApi.remove(id);
         if (session !== authOperation || get().user?.id !== userId) return;
         set((state) => ({
-          serverAddresses: (state.serverAddresses ?? []).filter((a) => a.id !== id),
+          serverAddresses: (state.serverAddresses ?? []).filter(
+            (a) => a.id !== id,
+          ),
         }));
       },
 
@@ -592,14 +685,19 @@ export const useStore = create<StoreState>()(
         const userId = get().user?.id;
         const confirmed = await paymentsApi.confirm(paymentId, confirmPayload);
         if (confirmed.status !== "SUCCEEDED") {
-          throw new Error(confirmed.failureReason ?? "Payment was not successful. Please try again.");
+          throw new Error(
+            confirmed.failureReason ??
+              "Payment was not successful. Please try again.",
+          );
         }
         const finalOrder = await ordersApi.get(orderId);
         if (session !== authOperation || get().user?.id !== userId) {
           return finalOrder;
         }
         void get().fetchServerCart();
-        get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
+        get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, {
+          total: finalOrder.total,
+        });
         return finalOrder;
       },
 
@@ -625,12 +723,17 @@ export const useStore = create<StoreState>()(
         try {
           const conversationId = get().shopaiConversationId ?? undefined;
           const result = await send(conversationId);
-          if (identityIsCurrent()) set({ shopaiConversationId: result.conversationId });
+          if (identityIsCurrent())
+            set({ shopaiConversationId: result.conversationId });
           return result.message;
         } catch (err) {
-          if (err instanceof ApiError && err.code === "CONVERSATION_NOT_FOUND") {
+          if (
+            err instanceof ApiError &&
+            err.code === "CONVERSATION_NOT_FOUND"
+          ) {
             const result = await send(undefined);
-            if (identityIsCurrent()) set({ shopaiConversationId: result.conversationId });
+            if (identityIsCurrent())
+              set({ shopaiConversationId: result.conversationId });
             return result.message;
           }
           throw err;
@@ -649,7 +752,10 @@ export const useStore = create<StoreState>()(
         if (!get().personalizationEnabled) return;
         if (eventType === "PRODUCT_VIEWED" && entityId) {
           set((state) => ({
-            recentlyViewedReal: [entityId, ...state.recentlyViewedReal.filter((id) => id !== entityId)].slice(0, 20),
+            recentlyViewedReal: [
+              entityId,
+              ...state.recentlyViewedReal.filter((id) => id !== entityId),
+            ].slice(0, 20),
           }));
         }
         const anonymousId = get().ensureAnonymousId();
@@ -720,8 +826,8 @@ export const useStore = create<StoreState>()(
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },
-    }
-  )
+    },
+  ),
 );
 
 configureApiClient({

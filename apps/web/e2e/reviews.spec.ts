@@ -8,8 +8,6 @@ import { expect, request, test } from "@playwright/test";
 // APIRequestContext resolves "localhost" to the IPv6 ::1 first on this machine and gets
 // ECONNREFUSED — a separate bug from the one above, found immediately after fixing it.
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000/api/v1"}/`;
-const PRODUCT_SLUG =
-  "spigen-tough-armor-magfit-for-iphone-15-series-showcase-spigen-tough-armor-iphone15";
 const PASSWORD = "Playwright123!";
 
 /**
@@ -43,13 +41,23 @@ test.describe("product reviews", () => {
     };
     const adminHeaders = { Authorization: `Bearer ${adminToken}` };
 
-    const product = await api.get(`products/${PRODUCT_SLUG}`);
+    const products = await api.get("products?page=1&pageSize=100");
+    expect(products.ok()).toBe(true);
+    const productList = (await products.json()) as {
+      items: { slug: string; name: string; inStock: boolean }[];
+    };
+    const productSlug = productList.items.find(
+      (item) => item.inStock && item.name.includes("Spigen Tough Armor"),
+    )?.slug;
+    expect(productSlug).toEqual(expect.any(String));
+
+    const product = await api.get(`products/${productSlug}`);
     expect(product.ok()).toBe(true);
     const productBody = (await product.json()) as {
       variants: { id: string; availableQuantity: number }[];
     };
     const variant = productBody.variants.find((v) => v.availableQuantity > 0);
-    if (!variant) throw new Error(`No purchasable variant for ${PRODUCT_SLUG}`);
+    if (!variant) throw new Error(`No purchasable variant for ${productSlug}`);
 
     const address = await api.post("addresses", {
       headers: authHeaders,
@@ -140,7 +148,7 @@ test.describe("product reviews", () => {
     await page.getByRole("button", { name: "Submit review" }).click();
     await expect(page.getByText("Thanks for your review")).toBeVisible();
 
-    await page.goto(`/products/${PRODUCT_SLUG}`);
+    await page.goto(`/products/${productSlug}`);
     await expect(page.getByText(reviewTitle)).toBeVisible();
     await expect(page.getByText(reviewBody)).toBeVisible();
     await expect(page.getByText("Verified purchase").first()).toBeVisible();
