@@ -4,7 +4,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminDashboardReport, ListOrdersResponse } from "@ai-commerce/types";
-import { analyticsApi, ApiError, ordersApi } from "@ai-commerce/api-client";
+import { analyticsApi, ApiError, eventsApi, ordersApi } from "@ai-commerce/api-client";
 import { useStore } from "@/lib/store";
 import { hasAnyRole, ADMIN_SURFACE_ROLES } from "@/lib/roles";
 import { formatPrice } from "@/lib/format";
@@ -31,6 +31,8 @@ export default function AdminPage() {
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [orders, setOrders] = useState<ListOrdersResponse | null>(null);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [aggregationStatus, setAggregationStatus] = useState<Awaited<ReturnType<typeof eventsApi.getAggregationStatus>> | null>(null);
+  const [aggregationError, setAggregationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -45,6 +47,8 @@ export default function AdminPage() {
       setDashboardError(null);
       setOrders(null);
       setOrdersError(null);
+      setAggregationStatus(null);
+      setAggregationError(null);
     });
     analyticsApi
       .getDashboard()
@@ -61,6 +65,14 @@ export default function AdminPage() {
       })
       .catch((err) => {
         if (!cancelled) setOrdersError(accessDeniedMessage(err, "Couldn't load orders."));
+      });
+    eventsApi
+      .getAggregationStatus()
+      .then((status) => {
+        if (!cancelled) setAggregationStatus(status);
+      })
+      .catch((err) => {
+        if (!cancelled) setAggregationError(accessDeniedMessage(err, "Couldn't load queue status."));
       });
     return () => {
       cancelled = true;
@@ -242,6 +254,15 @@ export default function AdminPage() {
             </dl>
           )}
         </Card>
+
+        <Card title="Personalization Queue">
+          {aggregationError ? <ErrorNote message={aggregationError} /> : !aggregationStatus ? <SkeletonBlock className="h-32 w-full" /> : (
+            <dl className="space-y-2 text-sm">
+              <Metric label="Waiting events" value={aggregationStatus.unprocessedEvents.toString()} />
+              <Metric label="Oldest wait" value={formatAge(aggregationStatus.oldestUnprocessedAgeMs)} />
+            </dl>
+          )}
+        </Card>
       </div>
 
       <div className="mt-6 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -329,6 +350,14 @@ function Metric({ label, value }: { label: string; value: string }) {
       <dd className="font-semibold" style={{ color: "var(--clr-text-primary)" }}>{value}</dd>
     </div>
   );
+}
+
+function formatAge(ageMs: number | null): string {
+  if (ageMs === null) return "Clear";
+  const minutes = Math.floor(ageMs / 60_000);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} hr${hours === 1 ? "" : "s"}`;
 }
 
 function BarList({ items }: { items: { label: string; share: number; count: number }[] }) {

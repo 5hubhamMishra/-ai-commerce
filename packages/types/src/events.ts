@@ -54,6 +54,15 @@ export type TrackEventsResponse = {
   accepted: number;
 };
 
+export type BehavioralAggregationStatus = {
+  totalEvents: number;
+  unprocessedEvents: number;
+  oldestUnprocessedReceivedAt: string | null;
+  newestUnprocessedReceivedAt: string | null;
+  oldestUnprocessedAgeMs: number | null;
+  newestProcessedAt: string | null;
+};
+
 export type ActivityEventItem = {
   id: string;
   eventType: BehavioralEventType;
