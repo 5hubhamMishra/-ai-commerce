@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { catalogApi } from "@ai-commerce/api-client";
 import { demoCategories } from "@/lib/demo-catalog";
 import FooterAccountLinks from "./FooterAccountLinks";
 
@@ -27,7 +28,14 @@ function FooterCol({
   );
 }
 
-export default function Footer() {
+export default async function Footer() {
+  let categories = demoCategories;
+  try {
+    categories = await catalogApi.listCategories();
+  } catch {
+    // Keep local/offline builds usable; production demo fallback remains disabled by default.
+  }
+
   return (
     <footer className="bg-stone-950 text-stone-300 border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 pt-14 pb-10 grid grid-cols-2 md:grid-cols-4 gap-10">
@@ -48,7 +56,7 @@ export default function Footer() {
 
         <FooterCol
           title="Shop"
-          links={demoCategories.map((c) => ({
+          links={categories.map((c) => ({
             label: c.name,
             href: `/category/${c.slug}`,
           }))}
