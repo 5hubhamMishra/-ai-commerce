@@ -1,5 +1,5 @@
 export default () => ({
-  env: process.env.NODE_ENV ?? 'development',
+  env: process.env.NODE_ENV?.trim() || 'development',
   port: parseInt(process.env.PORT ?? '4000', 10),
   // Comma-separated allow-list, not a single origin — local dev legitimately needs more
   // than one (npm run dev:web on 3000, apps/web's Playwright suite building+serving its

@@ -100,7 +100,7 @@ export class AuthController {
   private setRefreshCookie(res: Response, token: string) {
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV?.trim() === 'production',
       sameSite: 'lax',
       path: REFRESH_COOKIE_PATH,
       maxAge: 30 * 24 * 60 * 60 * 1000,
