@@ -28,6 +28,7 @@ export function useRecommendations(
       return;
     }
     let cancelled = false;
+    startTransition(() => setScored(null));
     const query = { limit, anonymousId };
     const request =
       kind === "personalized"
