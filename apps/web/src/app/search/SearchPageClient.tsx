@@ -17,7 +17,6 @@ export default function SearchPageClient({
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const products = initialResult
     ? initialResult.items.map(fromSearchResultItem)
@@ -26,9 +25,8 @@ export default function SearchPageClient({
 
   useEffect(() => {
     if (!initialQuery) return;
-    trackEvent("PRODUCT_SEARCHED", { query: initialQuery });
     trackRealEvent("PRODUCT_SEARCHED", undefined, { query: initialQuery });
-  }, [initialQuery, trackEvent, trackRealEvent]);
+  }, [initialQuery, trackRealEvent]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();

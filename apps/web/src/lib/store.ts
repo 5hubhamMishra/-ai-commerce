@@ -598,7 +598,6 @@ export const useStore = create<StoreState>()(
           return finalOrder;
         }
         void get().fetchServerCart();
-        get().trackEvent("ORDER_COMPLETED", { metadata: { orderId: finalOrder.id } });
         get().trackRealEvent("ORDER_COMPLETED", finalOrder.id, { total: finalOrder.total });
         return finalOrder;
       },

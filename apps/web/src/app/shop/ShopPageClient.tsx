@@ -47,7 +47,6 @@ export default function ShopPageClient({
   initialCategories: Category[];
   initialBrands: Brand[];
 }) {
-  const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const didHydrate = useRef(false);
   const filterPanelRef = useRef<HTMLDivElement>(null);
@@ -131,11 +130,6 @@ export default function ShopPageClient({
   function handleFilterChange(next: FilterState) {
     setState(next);
     setPage(1);
-    trackEvent("FILTER_USED", {
-      category: next.category,
-      brand: next.brand,
-      metadata: { sort: next.sort },
-    });
     trackRealEvent("FILTER_USED", undefined, {
       category: next.category,
       brand: next.brand,

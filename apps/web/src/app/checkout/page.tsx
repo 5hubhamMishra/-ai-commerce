@@ -110,7 +110,6 @@ export default function CheckoutPage() {
   const fetchServerAddresses = useStore((s) => s.fetchServerAddresses);
   const createServerAddress = useStore((s) => s.createServerAddress);
   const finalizeServerOrder = useStore((s) => s.finalizeServerOrder);
-  const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const hydrated = useStore((s) => s.hydrated);
   const authStatus = useStore((s) => s.authStatus);
@@ -138,7 +137,6 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (hydrated && authStatus === "authenticated" && lines.length > 0) {
-      trackEvent("CHECKOUT_STARTED", {});
       trackRealEvent("CHECKOUT_STARTED");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

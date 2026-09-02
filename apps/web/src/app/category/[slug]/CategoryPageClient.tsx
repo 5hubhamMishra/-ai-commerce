@@ -20,7 +20,6 @@ export default function CategoryPageClient({
   initialResult: ListProductsResponse;
 }) {
   const category = initialCategory;
-  const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const didHydrate = useRef(false);
   const [page, setPage] = useState(1);
@@ -30,7 +29,6 @@ export default function CategoryPageClient({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    trackEvent("CATEGORY_VIEWED", { category: category.name });
     trackRealEvent("CATEGORY_VIEWED", category.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category.slug]);
