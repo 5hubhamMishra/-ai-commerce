@@ -48,6 +48,9 @@ The fastest path is Vercel, since this is a Next.js app:
 2. Set `NEXT_PUBLIC_API_URL` to the deployed API's `/api/v1` URL.
 3. Deploy the web app, then configure the API's `WEB_ORIGIN` with the resulting storefront URL.
 
+Vercel builds fail early when `NEXT_PUBLIC_API_URL` is missing, rather than shipping a
+storefront that silently targets localhost.
+
 The demo fallback can run without an API, but authenticated commerce and live catalog data
 require the API and its database/Redis services.
 

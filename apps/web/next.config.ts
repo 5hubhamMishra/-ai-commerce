@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+if (process.env.VERCEL === "1" && !process.env.NEXT_PUBLIC_API_URL?.trim()) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL is required for Vercel web builds; set it to the deployed API /api/v1 URL.",
+  );
+}
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
