@@ -64,8 +64,8 @@ export class DevelopmentPaymentAdapter implements PaymentProvider {
    * Simulates a real provider's HMAC-signed webhook (e.g. Razorpay's `X-Razorpay-Signature`,
    * Stripe's `Stripe-Signature`) rather than trusting every request unconditionally — even
    * though this is the development adapter, `POST /payments/webhook` is `@Public()` today
-   * (no provider is real yet to gate it), so an unconditional `true` here would let anyone
-   * forge a payment-succeeded event against a real `providerRef`. Unset `PAYMENT_SECRET`
+   * (a provider cannot hold our JWT), so an unconditional `true` here would let anyone
+   * forge a payment-succeeded event against a provider reference. Unset `PAYMENT_SECRET`
    * fails closed (rejects every webhook), never open.
    */
   verifyWebhookSignature(

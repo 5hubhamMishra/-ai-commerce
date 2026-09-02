@@ -43,9 +43,9 @@ export type RefundResult = {
  * Provider abstraction so payment gateways can be swapped without touching
  * PaymentsService (spec: "Create a provider abstraction so payment providers can
  * be replaced" — example given: PaymentProvider -> RazorpayAdapter | StripeAdapter
- * | DevelopmentPaymentAdapter). Only DevelopmentPaymentAdapter is implemented in
- * Phase 3 ("Do not integrate a real payment provider until the abstraction is
- * tested") — Razorpay/Stripe adapters are future work behind this same interface.
+ * | DevelopmentPaymentAdapter). DevelopmentPaymentAdapter supports local/test
+ * flows, while RazorpayPaymentAdapter provides the configured hosted-payment path;
+ * additional gateways can use the same interface.
  */
 export interface PaymentProvider {
   readonly type: PaymentProviderType;
