@@ -108,3 +108,27 @@ jobs:
 
       - name: Run API end-to-end suite
         run: npm run test:e2e --workspace=apps/api -- --runInBand
+
+      - name: Build API for browser tests
+        run: npm run build --workspace=apps/api
+
+      - name: Start API for browser tests
+        run: |
+          nohup npm run start:prod --workspace=apps/api >/tmp/veloura-api.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/veloura-api.log
+          exit 1
+
+      - name: Run web end-to-end suite
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4000/api/v1
+        run: npm run test:e2e --workspace=apps/web
+
+      - name: Print API log on browser-test failure
+        if: ${{ failure() }}
+        run: cat /tmp/veloura-api.log
