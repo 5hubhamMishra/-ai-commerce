@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Category, ListProductsResponse } from "@ai-commerce/types";
@@ -22,6 +22,7 @@ export default function CategoryPageClient({
   const category = initialCategory;
   const trackEvent = useStore((s) => s.trackEvent);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
+  const didHydrate = useRef(false);
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<ListProductsResponse | null>(
     initialResult,
@@ -35,6 +36,11 @@ export default function CategoryPageClient({
   }, [category.slug]);
 
   useEffect(() => {
+    if (!didHydrate.current) {
+      didHydrate.current = true;
+      return;
+    }
+
     let cancelled = false;
     startTransition(() => setLoading(true));
     catalogApi
