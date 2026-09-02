@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
@@ -57,10 +57,10 @@ function limitSavedHistory(turns: ChatTurn[]): ChatTurn[] {
   return [GREETING, ...conversationTurns.slice(-MAX_SAVED_TURNS)];
 }
 
-function loadVisibleHistory(): ChatTurn[] {
+function loadVisibleHistory(storageKey: string): ChatTurn[] {
   if (typeof window === "undefined") return [GREETING];
   try {
-    const saved = window.localStorage.getItem(SHOPAI_VISIBLE_HISTORY_KEY);
+    const saved = window.localStorage.getItem(storageKey);
     if (!saved) return [GREETING];
     const parsed = JSON.parse(saved) as ChatTurn[];
     if (!Array.isArray(parsed)) return [GREETING];
@@ -110,7 +110,7 @@ export default function AiShoppingPage() {
   const sendShopAIMessage = useStore((s) => s.sendShopAIMessage);
   const hydrated = useStore((s) => s.hydrated);
 
-  const [history, setHistory] = useState<ChatTurn[]>(loadVisibleHistory);
+  const [history, setHistory] = useState<ChatTurn[]>([GREETING]);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const [sendingUser, setSendingUser] = useState(user);
@@ -120,29 +120,49 @@ export default function AiShoppingPage() {
       typeof window !== "undefined" &&
       window.localStorage.getItem(FORGET_SHOPAI_ON_LEAVE_KEY) === "true",
   );
+  const historyKey = hydrated
+    ? `${SHOPAI_VISIBLE_HISTORY_KEY}:${user?.id ?? "guest"}`
+    : null;
+  const loadedHistoryKey = useRef<string | null>(null);
+  const hasSavedHistory = useRef(false);
 
   useEffect(() => {
+    if (!historyKey) return;
+    const switched =
+      loadedHistoryKey.current !== null && loadedHistoryKey.current !== historyKey;
+    const loaded = loadVisibleHistory(historyKey);
+    loadedHistoryKey.current = historyKey;
+    hasSavedHistory.current = loaded.length > 1;
+    startTransition(() => setHistory(loaded));
+    window.localStorage.removeItem(SHOPAI_VISIBLE_HISTORY_KEY);
+    if (switched) useStore.setState({ shopaiConversationId: null });
+  }, [historyKey]);
+
+  useEffect(() => {
+    if (!hydrated || !historyKey) return;
     window.localStorage.setItem(
       FORGET_SHOPAI_ON_LEAVE_KEY,
       String(forgetOnLeave),
     );
-  }, [forgetOnLeave]);
+  }, [forgetOnLeave, historyKey, hydrated]);
 
   useEffect(() => {
+    if (!hydrated || !historyKey) return;
     if (forgetOnLeave) {
-      window.localStorage.removeItem(SHOPAI_VISIBLE_HISTORY_KEY);
+      window.localStorage.removeItem(historyKey);
       return;
     }
     window.localStorage.setItem(
-      SHOPAI_VISIBLE_HISTORY_KEY,
+      historyKey,
       JSON.stringify(limitSavedHistory(history).slice(1)),
     );
-  }, [forgetOnLeave, history]);
+  }, [forgetOnLeave, history, historyKey, hydrated]);
 
   useEffect(() => {
     if (!forgetOnLeave) return;
     const clearConversation = () => {
       useStore.setState({ shopaiConversationId: null });
+      if (historyKey) window.localStorage.removeItem(historyKey);
       window.localStorage.removeItem(SHOPAI_VISIBLE_HISTORY_KEY);
     };
     window.addEventListener("pagehide", clearConversation);
@@ -152,15 +172,18 @@ export default function AiShoppingPage() {
       window.removeEventListener("pagehide", clearConversation);
       window.removeEventListener("beforeunload", clearConversation);
     };
-  }, [forgetOnLeave]);
+  }, [forgetOnLeave, historyKey]);
 
   // Restore a previous conversation (persisted across reloads) instead of always
   // starting over — real conversations have server-side history worth keeping.
   useEffect(() => {
     if (
       !hydrated ||
+      !historyKey ||
       !shopaiConversationId ||
       forgetOnLeave ||
+      loadedHistoryKey.current !== historyKey ||
+      hasSavedHistory.current ||
       history.length > 1
     ) {
       return;
@@ -194,9 +217,10 @@ export default function AiShoppingPage() {
     anonymousId,
     forgetOnLeave,
     history.length,
+    historyKey,
     hydrated,
     shopaiConversationId,
-    user,
+    user?.id,
   ]);
 
   useEffect(() => {
