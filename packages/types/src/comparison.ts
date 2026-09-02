@@ -1,7 +1,7 @@
 /** Matches `GET /comparison`'s response — apps/api/src/comparison/comparison.service.ts.
  *  Stateless by design: which product ids to compare is client-owned local state; this
- *  endpoint only answers "given these ids, here's the side-by-side spec table." No rating/
- *  review data — apps/api has no reviews model at all. */
+ *  endpoint only answers "given these ids, here's the side-by-side spec table." Review
+ *  data is intentionally served by the product review endpoint instead. */
 export type ComparisonItem = {
   id: string;
   slug: string;
