@@ -116,4 +116,84 @@ describe('EvaluationService', () => {
     expect(report.catalog.purchasableProducts).toBe(1);
     expect(report.coverage.categoryCoverage).toBe(0);
   });
+
+  it('matches engagement against the latest event without quadratic scans', async () => {
+    const prisma = {
+      product: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            categoryId: 'category-1',
+            variants: [
+              {
+                inventory: [
+                  {
+                    quantityOnHand: 1,
+                    quantityReserved: 0,
+                    quantityCommitted: 0,
+                  },
+                ],
+              },
+            ],
+          },
+        ]),
+      },
+      recommendationImpression: {
+        count: jest.fn().mockResolvedValue(2),
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([{ product: { categoryId: 'category-1' } }])
+          .mockResolvedValueOnce([
+            {
+              userId: 'user-1',
+              anonymousId: null,
+              productId: 'product-1',
+              createdAt: new Date('2026-08-30T10:00:00.000Z'),
+            },
+            {
+              userId: 'user-1',
+              anonymousId: null,
+              productId: 'product-1',
+              createdAt: new Date('2026-08-30T12:00:00.000Z'),
+            },
+          ]),
+      },
+      behavioralEvent: {
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([
+            {
+              userId: 'user-1',
+              anonymousId: null,
+              entityId: 'product-1',
+              occurredAt: new Date('2026-08-30T09:00:00.000Z'),
+            },
+            {
+              userId: 'user-1',
+              anonymousId: null,
+              entityId: 'product-1',
+              occurredAt: new Date('2026-08-30T11:00:00.000Z'),
+            },
+          ])
+          .mockResolvedValueOnce([
+            {
+              userId: 'user-1',
+              anonymousId: null,
+              entityId: 'product-1',
+              occurredAt: new Date('2026-08-30T13:00:00.000Z'),
+            },
+          ]),
+      },
+      order: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+    const recommendations = { getPersonalized: jest.fn() };
+
+    const report = await new EvaluationService(
+      prisma as unknown as PrismaService,
+      recommendations as unknown as RecommendationsService,
+    ).evaluate();
+
+    expect(report.engagement.distinctImpressionPairs).toBe(1);
+    expect(report.engagement.clickThroughRate).toBe(1);
+    expect(report.engagement.conversionRate).toBe(1);
+  });
 });

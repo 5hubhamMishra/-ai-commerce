@@ -170,16 +170,23 @@ export class EvaluationService {
     });
 
     const matchesAnyPair = (events: typeof clickEvents) => {
+      const latestEventByPair = new Map<string, Date>();
+      for (const event of events) {
+        if (!event.entityId) continue;
+        for (const identity of [event.userId, event.anonymousId]) {
+          if (!identity) continue;
+          const key = `${identity}|${event.entityId}`;
+          const latest = latestEventByPair.get(key);
+          if (!latest || event.occurredAt > latest) {
+            latestEventByPair.set(key, event.occurredAt);
+          }
+        }
+      }
+
       let matched = 0;
       for (const [key, impressedAt] of pairs) {
-        const [identity, productId] = key.split('|');
-        const hit = events.some(
-          (e) =>
-            (e.userId === identity || e.anonymousId === identity) &&
-            e.entityId === productId &&
-            e.occurredAt >= impressedAt,
-        );
-        if (hit) matched++;
+        const occurredAt = latestEventByPair.get(key);
+        if (occurredAt && occurredAt >= impressedAt) matched++;
       }
       return matched;
     };
