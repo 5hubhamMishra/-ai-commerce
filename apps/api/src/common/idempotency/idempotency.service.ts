@@ -1,6 +1,11 @@
 import { ConflictException, Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+
+export function fingerprintRequest(value: Record<string, unknown>): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
 
 export type IdempotentResult<T> = {
   statusCode: number;

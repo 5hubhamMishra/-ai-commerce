@@ -15,7 +15,10 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
 import { OrderEventsService } from '../common/events/order-events.service';
-import { IdempotencyService } from '../common/idempotency/idempotency.service';
+import {
+  fingerprintRequest,
+  IdempotencyService,
+} from '../common/idempotency/idempotency.service';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { InventoryService } from '../inventory/inventory.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -91,6 +94,10 @@ export class OrdersService {
         const order = await this.createOrderTransactional(userId, dto);
         return { statusCode: 201, body: order };
       },
+      fingerprintRequest({
+        addressId: dto.addressId,
+        shippingMethod: dto.shippingMethod,
+      }),
     );
     return result.body;
   }

@@ -2,6 +2,33 @@ import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
+  it('fingerprints payment create and confirm inputs when claiming keys', async () => {
+    const run = jest.fn().mockResolvedValue({ body: {} });
+    const service = new PaymentsService(
+      {} as never,
+      {} as never,
+      {} as never,
+      { run } as never,
+      {} as never,
+      {} as never,
+    );
+
+    await service.createPayment('user-1', { orderId: 'order-1' }, 'key-1');
+    await service.createPayment('user-1', { orderId: 'order-2' }, 'key-1');
+    await service.confirmPayment('user-1', 'payment-1', {}, 'key-2');
+    await service.confirmPayment(
+      'user-1',
+      'payment-1',
+      { simulateFailure: true },
+      'key-2',
+    );
+
+    expect(run.mock.calls[0][4]).toEqual(expect.any(String));
+    expect(run.mock.calls[0][4]).not.toBe(run.mock.calls[1][4]);
+    expect(run.mock.calls[2][4]).toEqual(expect.any(String));
+    expect(run.mock.calls[2][4]).not.toBe(run.mock.calls[3][4]);
+  });
+
   it('rejects a malformed signed Razorpay payload as a bad request', async () => {
     const service = new PaymentsService(
       {} as never,

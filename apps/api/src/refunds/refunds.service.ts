@@ -5,10 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { createHash } from 'node:crypto';
 import { Prisma, RefundStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
-import { IdempotencyService } from '../common/idempotency/idempotency.service';
+import {
+  fingerprintRequest,
+  IdempotencyService,
+} from '../common/idempotency/idempotency.service';
 import { OrdersService } from '../orders/orders.service';
 import {
   PAYMENT_PROVIDER,
@@ -116,7 +118,11 @@ export class RefundsService {
         statusCode: 201,
         body: await this.createStandaloneInternal(actorId, dto, idempotencyKey),
       }),
-      fingerprintRefundRequest(dto),
+      fingerprintRequest({
+        orderId: dto.orderId,
+        amount: Number(dto.amount),
+        reason: dto.reason,
+      }),
     );
     return result.body;
   }
@@ -285,16 +291,4 @@ function toRefundView(refund: {
     failureReason: refund.failureReason,
     createdAt: refund.createdAt,
   };
-}
-
-function fingerprintRefundRequest(dto: CreateRefundDto): string {
-  return createHash('sha256')
-    .update(
-      JSON.stringify({
-        orderId: dto.orderId,
-        amount: Number(dto.amount),
-        reason: dto.reason,
-      }),
-    )
-    .digest('hex');
 }

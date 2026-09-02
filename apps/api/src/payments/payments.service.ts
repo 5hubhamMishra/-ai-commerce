@@ -9,7 +9,10 @@ import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import type { Payment } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { OrderEventsService } from '../common/events/order-events.service';
-import { IdempotencyService } from '../common/idempotency/idempotency.service';
+import {
+  fingerprintRequest,
+  IdempotencyService,
+} from '../common/idempotency/idempotency.service';
 import { OrdersService } from '../orders/orders.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ConfirmPaymentDto } from './dto/confirm-payment.dto';
@@ -58,6 +61,7 @@ export class PaymentsService {
           idempotencyKey,
         ),
       }),
+      fingerprintRequest({ orderId: dto.orderId }),
     );
     return result.body;
   }
@@ -171,6 +175,7 @@ export class PaymentsService {
         statusCode: 201,
         body: await this.confirmPaymentInternal(userId, paymentId, dto),
       }),
+      fingerprintRequest({ paymentId, ...dto }),
     );
     return result.body;
   }

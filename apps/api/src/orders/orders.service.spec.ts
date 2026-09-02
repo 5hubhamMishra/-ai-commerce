@@ -2,6 +2,33 @@ import { OrderStatus, PaymentStatus } from '@prisma/client';
 import { OrdersService } from './orders.service';
 
 describe('OrdersService state claims', () => {
+  it('fingerprints order inputs when claiming an idempotency key', async () => {
+    const run = jest.fn().mockResolvedValue({ body: { id: 'order-1' } });
+    const service = new OrdersService(
+      {} as never,
+      {} as never,
+      {} as never,
+      { run } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await service.create(
+      'user-1',
+      { addressId: 'address-1', shippingMethod: 'STANDARD' },
+      'key-1',
+    );
+    await service.create(
+      'user-1',
+      { addressId: 'address-2', shippingMethod: 'STANDARD' },
+      'key-1',
+    );
+
+    expect(run.mock.calls[0][4]).toEqual(expect.any(String));
+    expect(run.mock.calls[0][4]).not.toBe(run.mock.calls[1][4]);
+  });
+
   it('rejects a mixed-currency cart before reserving inventory', async () => {
     const reserveForOrder = jest.fn();
     const tx = {
