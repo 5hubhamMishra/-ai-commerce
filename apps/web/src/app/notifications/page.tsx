@@ -148,6 +148,12 @@ export default function NotificationsPage() {
           <p className="text-sm text-[var(--clr-text-secondary)]">Couldn&apos;t load your notifications.</p>
           <button onClick={() => void loadNotifications()} className="mt-4 btn btn-accent text-sm">Try again</button>
         </div>
+      ) : status === "loading" && notifications.length === 0 ? (
+        <div className="mt-6 space-y-3" aria-busy="true">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonBlock key={index} className="h-28 w-full" />
+          ))}
+        </div>
       ) : notifications.length === 0 ? (
         <div className="mt-6 border border-[var(--clr-border)] p-10 text-center">
           <h2 className="font-display text-lg font-semibold">No notifications yet</h2>
