@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { SITE_URL } from "../src/lib/site-url";
 
 test("homepage raw HTML contains meaningful server-rendered Veloura content", async ({
   request,
@@ -241,7 +242,7 @@ test("noindex public utility pages use route-specific canonicals", async ({
     expect(response.status(), path).toBe(200);
     expect(html, path).toContain('name="robots" content="noindex, follow"');
     expect(html, path).toContain(
-      `rel="canonical" href="https://web-lyart-three-94.vercel.app${path}"`,
+      `rel="canonical" href="${SITE_URL}${path}"`,
     );
   }
 });
