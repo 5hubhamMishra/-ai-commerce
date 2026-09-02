@@ -151,7 +151,7 @@ describe('CheckoutScreen', () => {
     await waitFor(async () => expect(await findByLabelText('Place order')).toBeTruthy());
     await fireEvent.press(await findByLabelText('Place order'));
 
-    await waitFor(() => expect(placeOrder).toHaveBeenCalledWith('addr-1', 'STANDARD'));
+    await waitFor(() => expect(placeOrder).toHaveBeenCalledWith('addr-1', 'STANDARD', expect.any(String)));
     expect(replace).toHaveBeenCalledWith('OrderDetail', { id: 'ord-1' });
   });
 

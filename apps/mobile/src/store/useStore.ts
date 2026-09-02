@@ -66,7 +66,7 @@ type StoreState = {
    *  simulated dev-adapter path only; the real-payment path uses finalizeOrder below,
    *  since a Razorpay confirmation needs a widget interaction in between order/payment
    *  creation and confirm that a single store action can't drive itself. */
-  placeOrder: (addressId: string, shippingMethod: 'STANDARD' | 'EXPRESS') => Promise<OrderDetail>;
+  placeOrder: (addressId: string, shippingMethod: 'STANDARD' | 'EXPRESS', idempotencyKey?: string) => Promise<OrderDetail>;
 
   /** Mirrors apps/web's finalizeServerOrder: confirms an already-created payment (the screen
    *  owns order/payment *creation* itself for this path, since opening the Razorpay widget has
@@ -259,9 +259,12 @@ export const useStore = create<StoreState>((set, get) => ({
     return address;
   },
 
-  placeOrder: async (addressId, shippingMethod) => {
+  placeOrder: async (addressId, shippingMethod, idempotencyKey) => {
     const operation = authOperation;
-    const created = await ordersApi.create({ addressId, shippingMethod });
+    const input = { addressId, shippingMethod };
+    const created = idempotencyKey
+      ? await ordersApi.create(input, idempotencyKey)
+      : await ordersApi.create(input);
     if (operation !== authOperation) throw new Error('Session changed.');
     const payment = await paymentsApi.create(created.id);
     if (operation !== authOperation) throw new Error('Session changed.');

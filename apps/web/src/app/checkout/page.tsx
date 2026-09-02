@@ -133,6 +133,7 @@ export default function CheckoutPage() {
   // Kept across retries (e.g. the user dismisses the Razorpay widget without paying) so a
   // retry only re-runs the payment-intent step, never mints a second order.
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderAttemptKey, setOrderAttemptKey] = useState<string | null>(null);
   const [paymentAttemptKey, setPaymentAttemptKey] = useState<string | null>(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
 
@@ -208,6 +209,7 @@ export default function CheckoutPage() {
   const total = subtotal + shippingFee;
   const invalidatePendingOrder = () => {
     setOrderId(null);
+    setOrderAttemptKey(null);
     setPaymentAttemptKey(null);
   };
 
@@ -302,11 +304,17 @@ export default function CheckoutPage() {
       useStore.getState().authStatus === "authenticated";
     setError(null);
     setPlacing(true);
+    const currentOrderKey = orderAttemptKey ?? crypto.randomUUID();
+    if (!orderAttemptKey) setOrderAttemptKey(currentOrderKey);
     const currentPaymentKey = paymentAttemptKey ?? crypto.randomUUID();
     if (!paymentAttemptKey) setPaymentAttemptKey(currentPaymentKey);
     try {
       const currentOrderId =
-        orderId ?? (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as "STANDARD" | "EXPRESS" })).id;
+        orderId ??
+        (await ordersApi.create(
+          { addressId: effectiveAddressId, shippingMethod: selectedMethod as "STANDARD" | "EXPRESS" },
+          currentOrderKey,
+        )).id;
       if (!isCurrentSession()) return;
       setOrderId(currentOrderId);
 

@@ -9,13 +9,13 @@ import type {
 import { request, toQueryString } from './http';
 
 export const ordersApi = {
-  /** Requires a fresh Idempotency-Key per checkout attempt so a network retry or a
+  /** Uses a caller-supplied key when checkout needs to replay a lost response; otherwise
    *  double-click can't create two orders — apps/api replays the first response instead. */
-  create: (input: CreateOrderInput) =>
+  create: (input: CreateOrderInput, idempotencyKey: string = crypto.randomUUID()) =>
     request<OrderDetail>('/orders', {
       method: 'POST',
       body: input,
-      headers: { 'Idempotency-Key': crypto.randomUUID() },
+      headers: { 'Idempotency-Key': idempotencyKey },
     }),
 
   list: (query: ListOrdersQuery = {}) =>

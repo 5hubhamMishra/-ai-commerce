@@ -62,6 +62,7 @@ export default function CheckoutScreen({ navigation }: Props) {
   // Kept across retries (e.g. the shopper dismisses the Razorpay widget without paying) so a
   // retry only re-runs the payment-intent step, never mints a second order — mirrors apps/web.
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderAttemptKey, setOrderAttemptKey] = useState<string | null>(null);
   const [paymentAttemptKey, setPaymentAttemptKey] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<CreatePaymentResponse | null>(null);
 
@@ -111,6 +112,7 @@ export default function CheckoutScreen({ navigation }: Props) {
   const total = subtotal + shippingFee;
   const invalidatePendingOrder = () => {
     setOrderId(null);
+    setOrderAttemptKey(null);
     setPaymentAttemptKey(null);
     setPendingPayment(null);
   };
@@ -152,6 +154,8 @@ export default function CheckoutScreen({ navigation }: Props) {
     if (!effectiveAddressId || !selectedMethod) return;
     setError(null);
     setPlacing(true);
+    const currentOrderKey = orderAttemptKey ?? crypto.randomUUID();
+    if (!orderAttemptKey) setOrderAttemptKey(currentOrderKey);
     try {
       if (!RAZORPAY_KEY_ID && !SIMULATED_PAYMENTS_ALLOWED) {
         throw new Error('Online payment is not configured for this release. Please try again later.');
@@ -159,14 +163,21 @@ export default function CheckoutScreen({ navigation }: Props) {
 
       if (!RAZORPAY_KEY_ID && SIMULATED_PAYMENTS_ALLOWED) {
         // Simulated path — unchanged from before, no widget.
-        const order = await placeOrder(effectiveAddressId, selectedMethod as 'STANDARD' | 'EXPRESS');
+        const order = await placeOrder(
+          effectiveAddressId,
+          selectedMethod as 'STANDARD' | 'EXPRESS',
+          currentOrderKey,
+        );
         navigation.replace('OrderDetail', { id: order.id });
         return;
       }
 
       const currentOrderId =
         orderId ??
-        (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as 'STANDARD' | 'EXPRESS' })).id;
+        (await ordersApi.create(
+          { addressId: effectiveAddressId, shippingMethod: selectedMethod as 'STANDARD' | 'EXPRESS' },
+          currentOrderKey,
+        )).id;
       setOrderId(currentOrderId);
       const currentPaymentKey = paymentAttemptKey ?? crypto.randomUUID();
       if (!paymentAttemptKey) setPaymentAttemptKey(currentPaymentKey);
