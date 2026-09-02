@@ -253,7 +253,7 @@ export default function AdminPage() {
                 <button type="button" className="btn btn-accent text-sm" onClick={reindexEmbeddings} disabled={reindexing} aria-busy={reindexing}>
                   {reindexing ? "Reindexing..." : "Reindex embeddings"}
                 </button>
-                {reindexMessage && <p className="mt-2 text-xs" style={{ color: "var(--clr-text-secondary)" }}>{reindexMessage}</p>}
+                {reindexMessage && <p className="mt-2 text-xs" role="status" aria-live="polite" style={{ color: "var(--clr-text-secondary)" }}>{reindexMessage}</p>}
               </div>
             </div>
           )}
