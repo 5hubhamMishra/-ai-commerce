@@ -17,12 +17,15 @@ export default function RecommendationsPageClient({
   const user = useStore((s) => s.user);
   const anonymousId = useStore((s) => s.anonymousId);
   const behavioralProfile = useStore((s) => s.behavioralProfile);
+  const recentlyViewedReal = useStore((s) => s.recentlyViewedReal);
   const personalizationEnabled = useStore((s) => s.personalizationEnabled);
 
   const hasHistory =
     hydrated &&
     personalizationEnabled &&
-    (user ? (behavioralProfile?.eventCount ?? 0) > 0 : events.length >= 3);
+    (user
+      ? (behavioralProfile?.eventCount ?? 0) > 0
+      : recentlyViewedReal.length > 0 || events.length >= 3);
 
   const recommended = useRecommendations("personalized", {
     limit: 24,

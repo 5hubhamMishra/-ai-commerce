@@ -21,7 +21,9 @@ export default function HomeDynamicSections() {
 
   const hasHistory =
     personalizationEnabled &&
-    (user ? (behavioralProfile?.eventCount ?? 0) > 0 : events.length >= 3);
+    (user
+      ? (behavioralProfile?.eventCount ?? 0) > 0
+      : recentlyViewedReal.length > 0 || events.length >= 3);
 
   const recommended = useRecommendations("personalized", {
     limit: 10,
