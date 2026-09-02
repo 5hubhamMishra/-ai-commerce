@@ -242,6 +242,19 @@ function originList(
         issues.push({ key, reason: 'origins must use http or https' });
         return;
       }
+      if (
+        url.pathname !== '/' ||
+        url.search ||
+        url.hash ||
+        url.username ||
+        url.password
+      ) {
+        issues.push({
+          key,
+          reason: 'must contain origins only, without paths or credentials',
+        });
+        return;
+      }
     } catch {
       issues.push({ key, reason: 'must be a comma-separated list of URLs' });
       return;

@@ -44,6 +44,28 @@ describe('config preflight', () => {
     });
   });
 
+  it('rejects browser origins that include a path or credentials', () => {
+    expect(
+      validateConfigPreflight({
+        ...validConfig,
+        WEB_ORIGIN: 'https://shop.example/account',
+      }),
+    ).toContainEqual({
+      key: 'WEB_ORIGIN',
+      reason: 'must contain origins only, without paths or credentials',
+    });
+
+    expect(
+      validateConfigPreflight({
+        ...validConfig,
+        WEB_ORIGIN: 'https://user:password@shop.example',
+      }),
+    ).toContainEqual({
+      key: 'WEB_ORIGIN',
+      reason: 'must contain origins only, without paths or credentials',
+    });
+  });
+
   it('requires DIRECT_URL for build preflight before Prisma migrations run', () => {
     const withoutDirectUrl: Record<string, unknown> = { ...validConfig };
     delete withoutDirectUrl.DIRECT_URL;

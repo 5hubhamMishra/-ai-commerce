@@ -1,7 +1,12 @@
 import configuration from './configuration';
 
 describe('configuration', () => {
-  const keys = ['NODE_ENV', 'EMBEDDING_PROVIDER', 'PAYMENT_PROVIDER'];
+  const keys = [
+    'NODE_ENV',
+    'EMBEDDING_PROVIDER',
+    'PAYMENT_PROVIDER',
+    'WEB_ORIGIN',
+  ];
   const original = Object.fromEntries(
     keys.map((key) => [key, process.env[key]]),
   );
@@ -24,5 +29,14 @@ describe('configuration', () => {
       embeddings: { provider: 'openai' },
       payments: { provider: 'razorpay' },
     });
+  });
+
+  it('normalizes allowed web origins before CORS wiring uses them', () => {
+    process.env.WEB_ORIGIN = ' https://shop.example/,http://localhost:3000/ ';
+
+    expect(configuration().webOrigin).toEqual([
+      'https://shop.example',
+      'http://localhost:3000',
+    ]);
   });
 });

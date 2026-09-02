@@ -6,7 +6,14 @@ export default () => ({
   // own instance on 3100 to avoid dev-mode compile latency under parallel workers).
   webOrigin: (process.env.WEB_ORIGIN ?? '')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => {
+      const trimmed = origin.trim();
+      try {
+        return new URL(trimmed).origin;
+      } catch {
+        return trimmed;
+      }
+    })
     .filter(Boolean),
   database: {
     url: process.env.DATABASE_URL,
