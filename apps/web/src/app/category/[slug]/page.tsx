@@ -9,8 +9,7 @@ import {
 } from "@/lib/demo-catalog";
 import CategoryPageClient from "./CategoryPageClient";
 import { safeJsonLd } from "@/lib/jsonLd";
-
-const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
+import { SITE_URL } from "@/lib/site-url";
 const PAGE_SIZE = 20;
 
 async function fetchCategory(slug: string) {

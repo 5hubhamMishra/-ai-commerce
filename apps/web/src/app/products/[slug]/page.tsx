@@ -9,8 +9,7 @@ import {
 } from "@/lib/demo-catalog";
 import ProductDetailClient from "./ProductDetailClient";
 import { safeJsonLd } from "@/lib/jsonLd";
-
-const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
+import { SITE_URL } from "@/lib/site-url";
 
 async function fetchProduct(slug: string) {
   try {

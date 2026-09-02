@@ -48,7 +48,9 @@ The fastest path is Vercel, since this is a Next.js app:
 
 1. Import the repository into Vercel and set the project Root Directory to `apps/web`.
 2. Set `NEXT_PUBLIC_API_URL` to the deployed API's `/api/v1` URL.
-3. Deploy the web app, then configure the API's `WEB_ORIGIN` with the resulting storefront URL.
+3. Set `NEXT_PUBLIC_SITE_URL` to the storefront's canonical public origin, including the
+   `https://` scheme and no path.
+4. Deploy the web app, then configure the API's `WEB_ORIGIN` with the resulting storefront URL.
 
 Vercel builds fail early when `NEXT_PUBLIC_API_URL` is missing, rather than shipping a
 storefront that silently targets localhost.

@@ -1,10 +1,7 @@
 import type { MetadataRoute } from "next";
 import { catalogApi } from "@ai-commerce/api-client";
 import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
-
-// Vercel sets this automatically to the production domain (no scheme) on every deploy —
-// falls back to the current known deployment for local builds / before a custom domain exists.
-const BASE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
+import { SITE_URL as BASE_URL } from "@/lib/site-url";
 
 export const revalidate = 3600;
 
