@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Category } from "@ai-commerce/types";
+import { catalogApi } from "@ai-commerce/api-client";
 import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
 import { fromProductListItem } from "@/lib/catalog-mappers";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
@@ -9,12 +11,31 @@ import { safeJsonLd } from "@/lib/jsonLd";
 
 const SITE_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "web-lyart-three-94.vercel.app"}`;
 
-export default function Home() {
-  const featuredCards = listDemoProducts({
-    featured: true,
-    pageSize: 10,
-  }).items.map(fromProductListItem);
-  const categories = demoCategories;
+export const revalidate = 300;
+
+async function loadHomeCatalog() {
+  try {
+    const [categories, featured] = await Promise.all([
+      catalogApi.listCategories(),
+      catalogApi.listProducts({ featured: true, pageSize: 10 }),
+    ]);
+    return {
+      categories,
+      featuredCards: featured.items.map(fromProductListItem),
+    };
+  } catch {
+    return {
+      categories: demoCategories,
+      featuredCards: listDemoProducts({
+        featured: true,
+        pageSize: 10,
+      }).items.map(fromProductListItem),
+    };
+  }
+}
+
+export default async function Home() {
+  const { categories, featuredCards } = await loadHomeCatalog();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": ["WebSite", "OnlineStore"],
@@ -77,8 +98,8 @@ export default function Home() {
             Shop by category
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-[var(--clr-text-secondary)]">
-            Start with a department, then refine by brand, price,
-            availability, and product details as you move through the catalog.
+            Start with a department, then refine by brand, price, availability,
+            and product details as you move through the catalog.
           </p>
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {categories.map((c) => (
@@ -107,7 +128,7 @@ export default function Home() {
   );
 }
 
-function Hero({ categories }: { categories: typeof demoCategories }) {
+function Hero({ categories }: { categories: Category[] }) {
   return (
     <section
       className="relative overflow-hidden"
