@@ -8,7 +8,6 @@ import {
 import { createHash } from 'node:crypto';
 import { Prisma, RefundStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
-import { OrderEventsService } from '../common/events/order-events.service';
 import { IdempotencyService } from '../common/idempotency/idempotency.service';
 import { OrdersService } from '../orders/orders.service';
 import {
@@ -29,7 +28,6 @@ export class RefundsService {
     private readonly ordersService: OrdersService,
     private readonly idempotency: IdempotencyService,
     private readonly audit: AuditService,
-    private readonly orderEvents: OrderEventsService,
   ) {}
 
   /** Calls the payment provider — deliberately outside any DB transaction,
@@ -237,10 +235,6 @@ export class RefundsService {
         idempotencyKey,
       },
     });
-    if (result.success) {
-      this.orderEvents.paymentSucceeded(dto.orderId, payment.id, order.userId);
-    }
-
     return toRefundView(updatedRefund);
   }
 

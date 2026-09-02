@@ -45,7 +45,6 @@ describe('RefundsService', () => {
   let provider: { refund: jest.Mock };
   let idempotency: { run: jest.Mock };
   let audit: { record: jest.Mock };
-  let orderEvents: { paymentSucceeded: jest.Mock };
   let service: RefundsService;
 
   beforeEach(() => {
@@ -84,14 +83,12 @@ describe('RefundsService', () => {
       ),
     };
     audit = { record: jest.fn().mockResolvedValue(undefined) };
-    orderEvents = { paymentSucceeded: jest.fn() };
     service = new RefundsService(
       prisma as never,
       provider as never,
       {} as never,
       idempotency as never,
       audit as never,
-      orderEvents as never,
     );
   });
 
