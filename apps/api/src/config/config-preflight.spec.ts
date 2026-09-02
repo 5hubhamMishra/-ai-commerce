@@ -112,6 +112,30 @@ describe('config preflight', () => {
     });
   });
 
+  it('rejects the simulated payment provider in customer-facing production', () => {
+    expect(
+      validateConfigPreflight({
+        ...validConfig,
+        NODE_ENV: 'production',
+        CRON_SECRET: 'cron-secret-present',
+      }),
+    ).toContainEqual({
+      key: 'PAYMENT_PROVIDER',
+      reason: 'customer-facing production must select razorpay',
+    });
+
+    expect(
+      validateConfigPreflight({
+        ...validConfig,
+        VERCEL: '1',
+        VERCEL_ENV: 'preview',
+      }),
+    ).not.toContainEqual({
+      key: 'PAYMENT_PROVIDER',
+      reason: 'customer-facing production must select razorpay',
+    });
+  });
+
   it('requires Razorpay credentials and webhook secret when Razorpay is selected', () => {
     const issues = validateConfigPreflight({
       ...validConfig,

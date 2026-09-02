@@ -34,6 +34,9 @@ export function validateConfigPreflight(
     getOptionalString(config, 'PAYMENT_PROVIDER') ?? 'development';
   const isVercel = getOptionalString(config, 'VERCEL') === '1';
   const isPreview = getOptionalString(config, 'VERCEL_ENV') === 'preview';
+  const isCustomerFacingProduction =
+    env === 'production' ||
+    getOptionalString(config, 'VERCEL_ENV') === 'production';
   const isProductionLike =
     env === 'production' ||
     isVercel ||
@@ -83,6 +86,13 @@ export function validateConfigPreflight(
   oneOf(issues, config, 'PAYMENT_PROVIDER', ['development', 'razorpay'], {
     optional: true,
   });
+
+  if (isCustomerFacingProduction && paymentProvider !== 'razorpay') {
+    issues.push({
+      key: 'PAYMENT_PROVIDER',
+      reason: 'customer-facing production must select razorpay',
+    });
+  }
 
   if (paymentProvider === 'razorpay') {
     requiredString(issues, config, 'RAZORPAY_KEY_ID');
