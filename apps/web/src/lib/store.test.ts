@@ -299,13 +299,14 @@ describe("auth", () => {
 
   it("logout clears the session", async () => {
     vi.stubGlobal("fetch", mockFetch({ "POST /api/v1/auth/logout": { status: 204 } }));
-    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated" });
+    useStore.setState({ user: authenticatedUser, accessToken: "tok-1", authStatus: "authenticated", personalizationEnabled: false });
 
     await useStore.getState().logout();
 
     expect(useStore.getState().user).toBeNull();
     expect(useStore.getState().accessToken).toBeNull();
     expect(useStore.getState().authStatus).toBe("unauthenticated");
+    expect(useStore.getState().personalizationEnabled).toBe(true);
   });
 
   it("does not let an old account deletion clear a new session", async () => {

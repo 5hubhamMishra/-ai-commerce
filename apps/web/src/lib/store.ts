@@ -365,6 +365,7 @@ export const useStore = create<StoreState>()(
           user: null,
           accessToken: null,
           authStatus: "unauthenticated",
+          personalizationEnabled: true,
           serverCart: null,
           serverCartStatus: "idle",
           serverWishlist: null,
