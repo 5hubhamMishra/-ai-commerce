@@ -50,6 +50,8 @@ const wishlistToggleQueues = new Map<string, Promise<void>>();
 let cartMutationQueue: Promise<void> = Promise.resolve();
 let personalizationQueue: Promise<void> = Promise.resolve();
 
+export const getAuthOperation = () => authOperation;
+
 function enqueueCartMutation(operation: () => Promise<void>) {
   const next = cartMutationQueue.catch(() => undefined).then(operation);
   cartMutationQueue = next;

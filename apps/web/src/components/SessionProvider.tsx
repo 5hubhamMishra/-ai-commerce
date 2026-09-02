@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { authApi, refreshAccessToken, usersApi } from "@ai-commerce/api-client";
-import { useStore } from "@/lib/store";
+import * as apiClient from "@ai-commerce/api-client";
+import { getAuthOperation, useStore } from "@/lib/store";
 
 /**
  * The access token is deliberately never persisted to localStorage (see store.ts's
@@ -21,15 +21,16 @@ export default function SessionProvider() {
     let cancelled = false;
 
     async function restore() {
+      const operation = getAuthOperation();
       useStore.setState({ authStatus: "checking" });
       try {
-        const accessToken = await refreshAccessToken();
-        if (cancelled) return;
+        const accessToken = await apiClient.refreshAccessToken();
+        if (cancelled || getAuthOperation() !== operation) return;
         if (!accessToken) throw new Error("Session restore failed");
         useStore.setState({ accessToken });
-        const me = await authApi.me();
-        const profile = await usersApi.getProfile();
-        if (cancelled) return;
+        const me = await apiClient.authApi.me();
+        const profile = await apiClient.usersApi.getProfile();
+        if (cancelled || getAuthOperation() !== operation) return;
         useStore.setState({
           user: me,
           personalizationEnabled: profile.personalizationEnabled,
@@ -39,7 +40,7 @@ export default function SessionProvider() {
         void useStore.getState().fetchServerWishlist();
         void useStore.getState().fetchBehavioralProfile();
       } catch {
-        if (cancelled) return;
+        if (cancelled || getAuthOperation() !== operation) return;
         useStore.getState().clearSession();
       }
     }
