@@ -30,6 +30,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Generate Prisma client
+        run: npm run db:generate
+
       - name: Verify API
         run: |
           npm test --workspace=apps/api -- --runInBand
@@ -100,6 +103,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Generate Prisma client
+        run: npm run db:generate
+
       - name: Apply test migrations
         run: npm run db:migrate
 
@@ -131,4 +137,4 @@ jobs:
 
       - name: Print API log on browser-test failure
         if: ${{ failure() }}
-        run: cat /tmp/veloura-api.log
+        run: test -f /tmp/veloura-api.log && cat /tmp/veloura-api.log || true
