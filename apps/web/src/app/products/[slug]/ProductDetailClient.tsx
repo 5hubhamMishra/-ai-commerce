@@ -27,6 +27,7 @@ export default function ProductDetailClient({
   const product = initialProduct;
   const router = useRouter();
   const authStatus = useStore((s) => s.authStatus);
+  const userId = useStore((s) => s.user?.id ?? null);
   const addServerCartItem = useStore((s) => s.addServerCartItem);
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const inWishlist = useStore(
@@ -84,9 +85,16 @@ export default function ProductDetailClient({
     }
     if (authStatus !== "authenticated") return;
     if (!selectedVariant) return;
+    const requestUserId = userId;
     setAdding(true);
     try {
       await addServerCartItem(selectedVariant.id, qty);
+      if (
+        useStore.getState().user?.id !== requestUserId ||
+        useStore.getState().authStatus !== "authenticated"
+      ) {
+        return;
+      }
       setAdded(true);
       setTimeout(() => setAdded(false), 1400);
     } catch (err) {
@@ -100,11 +108,12 @@ export default function ProductDetailClient({
         requireAuth(`/products/${product.slug}`);
         return;
       }
+      if (useStore.getState().user?.id !== requestUserId) return;
       setError(err instanceof Error ? err.message : "Couldn't add this to your cart.");
     } finally {
       setAdding(false);
     }
-  }, [authStatus, selectedVariant, qty, addServerCartItem, product.slug, requireAuth]);
+  }, [authStatus, userId, selectedVariant, qty, addServerCartItem, product.slug, requireAuth]);
 
   const handleWishlist = useCallback(async () => {
     if (authStatus === "unauthenticated") {
