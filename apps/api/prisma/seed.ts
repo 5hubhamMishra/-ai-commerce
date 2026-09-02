@@ -13,7 +13,7 @@ import { seedPresentationProducts } from './seed-presentation-products';
 const prisma = new PrismaClient();
 
 async function main() {
-  const inProduction = process.env.NODE_ENV === 'production';
+  const inProduction = process.env.NODE_ENV?.trim() === 'production';
 
   if (inProduction && process.env.SEED_CATALOG_IN_PRODUCTION !== 'true') {
     throw new Error(
