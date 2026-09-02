@@ -5,7 +5,14 @@ describe('PaymentsService settlement race', () => {
   it('returns the selected provider with a created payment intent', async () => {
     const service = new PaymentsService(
       {
-        payment: { findFirst: jest.fn().mockResolvedValue(null) },
+        payment: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          update: jest.fn().mockResolvedValue({
+            id: 'payment-1',
+            provider: PaymentProviderType.RAZORPAY,
+            status: PaymentStatus.PENDING,
+          }),
+        },
         $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
           callback({
             order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
@@ -201,11 +208,66 @@ describe('PaymentsService settlement race', () => {
       response: expect.objectContaining({ code: 'PAYMENT_ALREADY_PENDING' }),
     });
     expect(paymentCreate).toHaveBeenCalled();
-    expect(createIntent).toHaveBeenCalledWith({
-      orderId: 'order1',
-      amount: 100,
-      currency: 'INR',
-      idempotencyKey: 'payment-order1',
+    expect(createIntent).not.toHaveBeenCalled();
+  });
+
+  it('marks the claimed payment failed when the provider cannot create an intent', async () => {
+    const providerError = new Error('provider unavailable');
+    const paymentUpdate = jest.fn().mockResolvedValue({ count: 1 });
+    const service = new PaymentsService(
+      {
+        payment: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          updateMany: paymentUpdate,
+        },
+        $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+          callback({
+            order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+            payment: {
+              create: jest.fn().mockResolvedValue({
+                id: 'payment-1',
+                provider: PaymentProviderType.RAZORPAY,
+                status: PaymentStatus.PENDING,
+              }),
+            },
+          }),
+        ),
+      } as never,
+      {
+        type: PaymentProviderType.RAZORPAY,
+        createIntent: jest.fn().mockRejectedValue(providerError),
+      } as never,
+      {
+        assertOwnership: jest.fn().mockResolvedValue({
+          status: OrderStatus.PENDING_PAYMENT,
+          total: 100,
+          currency: 'INR',
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    const createInternal = (
+      service as unknown as {
+        createPaymentInternal: (
+          userId: string,
+          orderId: string,
+          key: string,
+        ) => Promise<unknown>;
+      }
+    ).createPaymentInternal;
+
+    await expect(
+      createInternal.call(service, 'user-1', 'order-1', 'key-1'),
+    ).rejects.toBe(providerError);
+    expect(paymentUpdate).toHaveBeenCalledWith({
+      where: { id: 'payment-1', status: PaymentStatus.PENDING },
+      data: {
+        status: PaymentStatus.FAILED,
+        failureReason: 'Payment provider could not create an intent.',
+      },
     });
   });
 

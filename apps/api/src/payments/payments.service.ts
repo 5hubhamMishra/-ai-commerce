@@ -93,18 +93,11 @@ export class PaymentsService {
     // there is no client-supplied amount anywhere in this path (spec: never
     // trust the frontend for payment amount/state).
     const amount = Number(order.total);
-    const intent = await this.provider.createIntent({
-      orderId,
-      amount,
-      currency: order.currency,
-      // Different client keys can race for the same order; the provider must
-      // still see one logical intent rather than one intent per request.
-      idempotencyKey: `payment-${orderId}`,
-    });
-
-    let payment: Awaited<ReturnType<typeof this.prisma.payment.create>>;
     try {
-      payment = await this.prisma.$transaction(async (tx) => {
+      // Claim the order before calling a provider. Otherwise two different
+      // idempotency keys can both create a provider intent before the pending
+      // payment unique index rejects one of them.
+      const payment = await this.prisma.$transaction(async (tx) => {
         const claimed = await tx.order.updateMany({
           where: {
             id: orderId,
@@ -123,7 +116,7 @@ export class PaymentsService {
           data: {
             orderId,
             provider: this.provider.type,
-            providerRef: intent.providerRef,
+            providerRef: null,
             status: PaymentStatus.PENDING,
             amount,
             currency: order.currency,
@@ -131,6 +124,41 @@ export class PaymentsService {
           },
         });
       });
+
+      let intent: Awaited<ReturnType<PaymentProvider['createIntent']>>;
+      try {
+        intent = await this.provider.createIntent({
+          orderId,
+          amount,
+          currency: order.currency,
+          idempotencyKey: `payment-${orderId}`,
+        });
+      } catch (error) {
+        await this.prisma.payment.updateMany({
+          where: { id: payment.id, status: PaymentStatus.PENDING },
+          data: {
+            status: PaymentStatus.FAILED,
+            failureReason: 'Payment provider could not create an intent.',
+          },
+        });
+        throw error;
+      }
+
+      const updatedPayment = await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { providerRef: intent.providerRef },
+      });
+
+      return {
+        paymentId: updatedPayment.id,
+        orderId,
+        provider: updatedPayment.provider,
+        providerRef: intent.providerRef,
+        clientSecret: intent.clientSecret,
+        amount,
+        currency: order.currency,
+        status: updatedPayment.status,
+      };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -143,17 +171,6 @@ export class PaymentsService {
       }
       throw error;
     }
-
-    return {
-      paymentId: payment.id,
-      orderId,
-      provider: payment.provider,
-      providerRef: intent.providerRef,
-      clientSecret: intent.clientSecret,
-      amount,
-      currency: order.currency,
-      status: payment.status,
-    };
   }
 
   async confirmPayment(
