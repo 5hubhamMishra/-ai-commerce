@@ -3,8 +3,8 @@ import { availableProductLink, registerAndSignIn } from "./helpers";
 
 /**
  * The critical shopper journey against the real backend: land on the home page, browse a
- * category, open a product, add it to the real cart, review the cart, and complete the
- * (still-simulated, ADR-027) checkout through to an order confirmation. Adding to cart
+ * category, open a product, add it to the real cart, review the cart, and complete checkout
+ * through to an order confirmation. Adding to cart
  * requires a signed-in session — there is no guest cart in the real API.
  */
 test.describe("browse, add to cart, and checkout", () => {

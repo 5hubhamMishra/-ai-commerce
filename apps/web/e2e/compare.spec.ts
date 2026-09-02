@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 /**
  * /compare now calls apps/api's real GET /comparison (public, 2-4 product ids, returns a
- * grouped spec matrix) instead of deriving everything from the static fake catalog. Which
+ * grouped spec matrix) instead of deriving everything from a client-side catalog. Which
  * ids are selected stays client-local state — that's the real endpoint's own intended
  * design (stateless, no server-side "compare tray").
  */
