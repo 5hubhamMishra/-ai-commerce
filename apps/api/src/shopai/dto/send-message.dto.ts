@@ -2,6 +2,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -11,6 +12,7 @@ const MAX_MESSAGE_LENGTH = 2000;
 export class SendMessageDto {
   @IsString()
   @MinLength(1)
+  @Matches(/\S/, { message: 'message must contain non-whitespace characters' })
   @MaxLength(MAX_MESSAGE_LENGTH)
   message!: string;
 
