@@ -243,6 +243,6 @@ describe('EmbeddingsService batch reindex', () => {
     });
     expect((provider.embedMany as jest.Mock).mock.calls).toHaveLength(1);
     expect(prisma.productEmbedding.upsert).toHaveBeenCalledTimes(2);
-    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 });

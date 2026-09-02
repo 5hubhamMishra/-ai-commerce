@@ -82,6 +82,23 @@ export class EmbeddingsService {
   }
 
   private async storeEmbedding(productId: string, vector: number[]) {
+    await this.prisma.$transaction(this.embeddingOperations(productId, vector));
+  }
+
+  private async storeEmbeddingBatch(
+    products: EmbeddableProduct[],
+    results: { vector: number[] }[],
+  ) {
+    const operations = products.flatMap((product, index) => {
+      const result = results[index];
+      if (!result)
+        throw new Error('Embedding provider returned too few vectors');
+      return this.embeddingOperations(product.id, result.vector);
+    });
+    await this.prisma.$transaction(operations);
+  }
+
+  private embeddingOperations(productId: string, vector: number[]) {
     this.assertCompatibleVector(vector);
     const literal = vectorToLiteral(vector);
 
@@ -90,7 +107,7 @@ export class EmbeddingsService {
     // normal upsert and the vector itself through raw SQL, both in one
     // transaction so a crash between the two can never leave a
     // metadata-only row with no vector.
-    await this.prisma.$transaction([
+    return [
       this.prisma.productEmbedding.upsert({
         where: { productId },
         create: { productId, model: this.provider.model },
@@ -100,7 +117,7 @@ export class EmbeddingsService {
         UPDATE product_embeddings SET embedding = ${literal}::vector
         WHERE product_id = ${productId}
       `,
-    ]);
+    ];
   }
 
   /** Batch reindex — the initial backfill for products seeded before this
@@ -124,12 +141,7 @@ export class EmbeddingsService {
       const results = await this.provider.embedMany(
         batch.map(toEmbeddingInput),
       );
-      for (const [index, product] of batch.entries()) {
-        const result = results[index];
-        if (!result)
-          throw new Error('Embedding provider returned too few vectors');
-        await this.storeEmbedding(product.id, result.vector);
-      }
+      await this.storeEmbeddingBatch(batch, results);
     }
     this.logger.log(`Reindexed embeddings for ${products.length} products`);
     return { productCount: products.length };
