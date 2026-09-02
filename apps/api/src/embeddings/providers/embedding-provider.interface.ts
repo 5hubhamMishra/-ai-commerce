@@ -19,8 +19,8 @@ export type EmbeddingResult = {
  * without touching EmbeddingsService or anything that consumes it — same
  * interface-plus-injection-token-plus-dev-adapter shape as every other
  * pluggable integration point in this codebase (Payment/Shipping/Seller
- * verification/Seller payout — see DECISIONS.md ADR-015/ADR-020). Only
- * `HashingEmbeddingAdapter` exists as of Phase 8; see ADR-023/ADR-024 for why.
+ * verification/Seller payout — see DECISIONS.md ADR-015/ADR-020). The hashing
+ * adapter remains the default; hosted providers are opt-in by configuration.
  */
 export interface EmbeddingProvider {
   readonly model: EmbeddingModel;

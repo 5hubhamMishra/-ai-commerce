@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  STORED_EMBEDDING_DIMENSIONS,
-  STORED_EMBEDDING_MODEL,
-} from '../embedding-model-config';
+import { STORED_EMBEDDING_DIMENSIONS } from '../embedding-model-config';
+import { EmbeddingModel } from '@prisma/client';
 import type {
   EmbeddingInput,
   EmbeddingProvider,
@@ -53,7 +51,7 @@ function l2Normalize(vector: number[]): number[] {
 
 @Injectable()
 export class HashingEmbeddingAdapter implements EmbeddingProvider {
-  readonly model = STORED_EMBEDDING_MODEL;
+  readonly model = EmbeddingModel.HASHING_V1;
   readonly dimensions = DIMENSIONS;
 
   embed(input: EmbeddingInput): Promise<EmbeddingResult> {

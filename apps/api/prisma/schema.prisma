@@ -1351,15 +1351,11 @@ model CustomerProfile {
 
 // Phase 7 — AI Recommendations
 
-// Only one model exists this phase: a deterministic feature-hashing embedding
-// (see EmbeddingProvider), not a hosted ML model — no external AI provider is
-// wired up anywhere in this codebase yet, and introducing one is a bigger,
-// separate decision than this phase needs to make just to satisfy "product
-// similarity." Phase 8 (semantic search) is free to add a second value here
-// (a real hosted embedding model) behind the same provider interface without
-// this table's shape changing — see DECISIONS.md ADR-023.
+// Hashing remains the default local provider. The hosted model is opt-in behind
+// the same provider interface; rows are model-scoped in EmbeddingsService.
 enum EmbeddingModel {
   HASHING_V1
+  OPENAI_TEXT_EMBEDDING_3_SMALL
 }
 
 // Real pgvector column since Phase 8 (was a plain `double precision[]` through

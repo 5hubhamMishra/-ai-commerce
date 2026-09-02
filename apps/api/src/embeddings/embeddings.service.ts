@@ -1,10 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  STORED_EMBEDDING_DIMENSIONS,
-  STORED_EMBEDDING_MODEL,
-} from './embedding-model-config';
+import { STORED_EMBEDDING_DIMENSIONS } from './embedding-model-config';
 import {
   EMBEDDING_PROVIDER,
   type EmbeddingProvider,
@@ -113,7 +110,10 @@ export class EmbeddingsService {
       const target = await this.prisma.$queryRaw<
         { embedding: string | null }[]
       >`
-        SELECT embedding::text AS embedding FROM product_embeddings WHERE product_id = ${productId}
+        SELECT embedding::text AS embedding
+        FROM product_embeddings
+        WHERE product_id = ${productId}
+          AND model::text = ${this.provider.model}
       `;
       literal = target[0]?.embedding ?? null;
     } catch (error) {
@@ -168,6 +168,7 @@ export class EmbeddingsService {
           SELECT product_id, 1 - (embedding <=> ${literal}::vector) AS similarity
           FROM product_embeddings
           WHERE embedding IS NOT NULL
+            AND model::text = ${this.provider.model}
           ${excludeIds.length ? Prisma.sql`AND product_id NOT IN (${Prisma.join(excludeIds)})` : Prisma.empty}
           ORDER BY embedding <=> ${literal}::vector
           LIMIT ${limit}
@@ -186,14 +187,6 @@ export class EmbeddingsService {
   }
 
   private assertCompatibleVector(vector: number[]) {
-    if (this.provider.model !== STORED_EMBEDDING_MODEL) {
-      const providerModel = String(this.provider.model);
-      const storedModel = String(STORED_EMBEDDING_MODEL);
-      throw new EmbeddingCompatibilityError(
-        `Embedding provider model ${providerModel} does not match stored model ${storedModel}.`,
-      );
-    }
-
     if (this.provider.dimensions !== STORED_EMBEDDING_DIMENSIONS) {
       throw new EmbeddingCompatibilityError(
         `Embedding provider declares ${this.provider.dimensions} dimensions, but the store is vector(${STORED_EMBEDDING_DIMENSIONS}).`,

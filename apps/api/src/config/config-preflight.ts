@@ -61,6 +61,16 @@ export function validateConfigPreflight(
   originList(issues, config, 'WEB_ORIGIN', true);
   requiredString(issues, config, 'ANTHROPIC_API_KEY');
   optionalNonEmptyString(issues, config, 'ANTHROPIC_MODEL');
+  const embeddingProvider =
+    getOptionalString(config, 'EMBEDDING_PROVIDER') ?? 'hashing';
+  oneOf(issues, config, 'EMBEDDING_PROVIDER', ['hashing', 'openai'], {
+    optional: true,
+  });
+  if (embeddingProvider === 'openai') {
+    requiredString(issues, config, 'OPENAI_API_KEY');
+  } else {
+    optionalNonEmptyString(issues, config, 'OPENAI_API_KEY');
+  }
   positiveInteger(issues, config, 'SHOPAI_MAX_TOOL_ITERATIONS', {
     optional: true,
   });

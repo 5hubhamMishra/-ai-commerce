@@ -1,10 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { EmbeddingModel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  STORED_EMBEDDING_DIMENSIONS,
-  STORED_EMBEDDING_MODEL,
-} from './embedding-model-config';
+import { STORED_EMBEDDING_DIMENSIONS } from './embedding-model-config';
 import { EmbeddingsService } from './embeddings.service';
 import {
   EMBEDDING_PROVIDER,
@@ -21,7 +18,7 @@ describe('EmbeddingsService graceful degradation', () => {
 
   async function buildService(queryRawImpl: () => Promise<unknown>) {
     const provider: EmbeddingProvider = {
-      model: STORED_EMBEDDING_MODEL,
+      model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn(),
       embedText: jest.fn().mockResolvedValue({ vector: vector64 }),
@@ -64,7 +61,7 @@ describe('EmbeddingsService graceful degradation', () => {
 
   it('findSimilarToText degrades when the query provider returns the wrong dimensionality', async () => {
     const provider: EmbeddingProvider = {
-      model: STORED_EMBEDDING_MODEL,
+      model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn(),
       embedText: jest.fn().mockResolvedValue({ vector: [0.1, 0.2, 0.3] }),
@@ -130,7 +127,7 @@ describe('EmbeddingsService compatibility guards', () => {
 
   it('stores the provider model when reindexing a compatible product embedding', async () => {
     const provider: EmbeddingProvider = {
-      model: STORED_EMBEDDING_MODEL,
+      model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn().mockResolvedValue({ vector: compatibleVector }),
       embedText: jest.fn(),
@@ -152,7 +149,7 @@ describe('EmbeddingsService compatibility guards', () => {
 
   it('rejects product reindexing when the provider declares a different dimension count', async () => {
     const provider: EmbeddingProvider = {
-      model: STORED_EMBEDDING_MODEL,
+      model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS + 1,
       embed: jest.fn().mockResolvedValue({ vector: compatibleVector }),
       embedText: jest.fn(),
@@ -169,7 +166,7 @@ describe('EmbeddingsService compatibility guards', () => {
 
   it('rejects product reindexing when the vector has non-finite values', async () => {
     const provider: EmbeddingProvider = {
-      model: STORED_EMBEDDING_MODEL,
+      model: EmbeddingModel.HASHING_V1,
       dimensions: STORED_EMBEDDING_DIMENSIONS,
       embed: jest.fn().mockResolvedValue({
         vector: [Number.NaN, ...compatibleVector.slice(1)],

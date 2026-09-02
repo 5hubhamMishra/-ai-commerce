@@ -37,6 +37,10 @@ export default () => ({
       10,
     ),
   },
+  embeddings: {
+    provider: process.env.EMBEDDING_PROVIDER ?? 'hashing',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+  },
   payments: {
     // Verifies the (development-simulated, or real Razorpay) provider webhook's HMAC
     // signature. Unset means "reject every webhook" (fail closed) — never "accept every

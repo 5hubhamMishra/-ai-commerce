@@ -107,6 +107,22 @@ describe('config preflight', () => {
     ]);
   });
 
+  it('requires an OpenAI key only when hosted embeddings are selected', () => {
+    expect(
+      validateConfigPreflight({
+        ...validConfig,
+        EMBEDDING_PROVIDER: 'openai',
+      }),
+    ).toContainEqual({ key: 'OPENAI_API_KEY', reason: 'is required' });
+
+    expect(
+      validateConfigPreflight({
+        ...validConfig,
+        OPENAI_API_KEY: 'unused-local-key',
+      }),
+    ).toEqual([]);
+  });
+
   it('throws a sanitized error that lists names and reasons only', () => {
     const leakedValue = 'postgresql://user:super-secret@localhost:5432/app';
 
