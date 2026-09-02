@@ -32,11 +32,10 @@ export async function registerAndSignIn(
         .isVisible()
         .catch(() => false);
       if (!rateLimited || attempt === 4) throw err;
-      // The 60s throttle window needs real wall-clock time to clear — give the *test*
-      // (not just this wait) enough budget to survive that, instead of racing the
-      // default per-test timeout while a legitimate retry is still in flight.
+      // The 60s throttle window needs real wall-clock time to clear. Waiting for the full
+      // window keeps a real rate-limit response from becoming a flaky browser failure.
       test.slow();
-      await page.waitForTimeout(5000 * attempt);
+      await page.waitForTimeout(60_000);
     }
   }
   throw new Error("unreachable");

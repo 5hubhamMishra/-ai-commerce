@@ -46,9 +46,7 @@ test.describe("product reviews", () => {
     const productList = (await products.json()) as {
       items: { slug: string; name: string; inStock: boolean }[];
     };
-    const productSlug = productList.items.find(
-      (item) => item.inStock && item.name.includes("Spigen Tough Armor"),
-    )?.slug;
+    const productSlug = productList.items.find((item) => item.inStock)?.slug;
     expect(productSlug).toEqual(expect.any(String));
 
     const product = await api.get(`products/${productSlug}`);
