@@ -9,6 +9,7 @@ import type {
 } from './embedding-provider.interface';
 
 const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
+const OPENAI_REQUEST_TIMEOUT_MS = 10_000;
 
 @Injectable()
 export class OpenAIEmbeddingAdapter implements EmbeddingProvider {
@@ -43,6 +44,7 @@ export class OpenAIEmbeddingAdapter implements EmbeddingProvider {
         dimensions: STORED_EMBEDDING_DIMENSIONS,
         encoding_format: 'float',
       }),
+      signal: AbortSignal.timeout(OPENAI_REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
       throw new Error(`OpenAI embedding request failed (${response.status})`);
