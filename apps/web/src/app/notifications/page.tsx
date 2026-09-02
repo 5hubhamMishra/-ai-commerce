@@ -30,6 +30,7 @@ function NotificationLink({ notification }: { notification: Notification }) {
 export default function NotificationsPage() {
   const hydrated = useStore((s) => s.hydrated);
   const authStatus = useStore((s) => s.authStatus);
+  const userId = useStore((s) => s.user?.id ?? null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [actionError, setActionError] = useState(false);
@@ -49,14 +50,19 @@ export default function NotificationsPage() {
   }, []);
 
   useEffect(() => {
-    if (authStatus !== "authenticated") return;
+    if (authStatus !== "authenticated" || !userId) return;
+    startTransition(() => {
+      setNotifications([]);
+      setStatus("loading");
+      setActionError(false);
+    });
     startTransition(() => void loadNotifications());
     const interval = window.setInterval(() => void loadNotifications(), 60_000);
     return () => {
       notificationOperation.current++;
       window.clearInterval(interval);
     };
-  }, [authStatus, loadNotifications]);
+  }, [authStatus, loadNotifications, userId]);
 
   async function markRead(id: string) {
     const operation = ++notificationOperation.current;
