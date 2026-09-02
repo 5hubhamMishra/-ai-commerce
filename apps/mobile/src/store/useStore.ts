@@ -135,8 +135,11 @@ export const useStore = create<StoreState>((set, get) => ({
       user: null,
       authStatus: 'unauthenticated',
       cart: null,
+      cartStatus: 'idle',
       wishlist: null,
+      wishlistStatus: 'idle',
       addresses: null,
+      addressesStatus: 'idle',
       shopaiConversationId: null,
     });
   },
@@ -170,11 +173,14 @@ export const useStore = create<StoreState>((set, get) => ({
   cartStatus: 'idle',
 
   fetchCart: async () => {
+    const operation = authOperation;
     set({ cartStatus: 'loading' });
     try {
       const cart = await cartApi.getCart();
+      if (operation !== authOperation) return;
       set({ cart, cartStatus: 'idle' });
     } catch {
+      if (operation !== authOperation) return;
       set({ cartStatus: 'error' });
     }
   },
@@ -198,11 +204,14 @@ export const useStore = create<StoreState>((set, get) => ({
   wishlistStatus: 'idle',
 
   fetchWishlist: async () => {
+    const operation = authOperation;
     set({ wishlistStatus: 'loading' });
     try {
       const wishlist = await wishlistApi.list();
+      if (operation !== authOperation) return;
       set({ wishlist, wishlistStatus: 'idle' });
     } catch {
+      if (operation !== authOperation) return;
       set({ wishlistStatus: 'error' });
     }
   },
@@ -217,11 +226,14 @@ export const useStore = create<StoreState>((set, get) => ({
   addressesStatus: 'idle',
 
   fetchAddresses: async () => {
+    const operation = authOperation;
     set({ addressesStatus: 'loading' });
     try {
       const addresses = await addressesApi.list();
+      if (operation !== authOperation) return;
       set({ addresses, addressesStatus: 'idle' });
     } catch {
+      if (operation !== authOperation) return;
       set({ addressesStatus: 'error' });
     }
   },

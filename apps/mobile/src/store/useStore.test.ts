@@ -134,6 +134,23 @@ describe('auth actions', () => {
     expect(useStore.getState().authStatus).toBe('unauthenticated');
   });
 
+  it('does not restore account data from a fetch that finishes after logout', async () => {
+    let resolveCart!: (cart: typeof emptyCart) => void;
+    const pendingCart = new Promise<typeof emptyCart>((resolve) => {
+      resolveCart = resolve;
+    });
+    (cartApi.getCart as jest.Mock).mockReturnValue(pendingCart);
+    useStore.setState({ user: publicUser, authStatus: 'authenticated' });
+
+    const fetching = useStore.getState().fetchCart();
+    useStore.getState().clearSession();
+    resolveCart(emptyCart);
+    await fetching;
+
+    expect(useStore.getState().cart).toBeNull();
+    expect(useStore.getState().cartStatus).toBe('idle');
+  });
+
   describe('restoreSession', () => {
     it('restores the user when a stored refresh token is still valid', async () => {
       (mobileRefresh as jest.Mock).mockResolvedValue('access-new');
