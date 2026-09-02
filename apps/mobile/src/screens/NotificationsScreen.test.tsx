@@ -26,7 +26,27 @@ const navigate = jest.fn();
 const navigation = { navigate } as unknown as Parameters<typeof NotificationsScreen>[0]['navigation'];
 
 describe('NotificationsScreen', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+  });
+
+  it('keeps a newer poll result when an older request finishes later', async () => {
+    let resolveFirst!: (value: typeof notification[]) => void;
+    let resolveSecond!: (value: typeof notification[]) => void;
+    (notificationsApi.list as jest.Mock)
+      .mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockReturnValueOnce(new Promise((resolve) => { resolveSecond = resolve; }));
+
+    jest.useFakeTimers();
+    const { findByText } = await render(<NotificationsScreen navigation={navigation} route={{} as never} />);
+    jest.advanceTimersByTime(60_000);
+    resolveSecond([{ ...notification, id: 'notification-2', title: 'Newer update' }]);
+    expect(await findByText('Newer update')).toBeTruthy();
+    resolveFirst([notification]);
+
+    expect(await findByText('Newer update')).toBeTruthy();
+  });
 
   it('loads and renders unread notifications', async () => {
     (notificationsApi.list as jest.Mock).mockResolvedValue([notification]);

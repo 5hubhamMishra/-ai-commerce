@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Notification } from '@ai-commerce/types';
@@ -20,16 +20,20 @@ export default function NotificationsScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [actionError, setActionError] = useState(false);
+  const notificationOperation = useRef(0);
 
   const loadNotifications = useCallback(async () => {
+    const operation = ++notificationOperation.current;
     setLoading(true);
     try {
-      setNotifications(await notificationsApi.list());
+      const next = await notificationsApi.list();
+      if (operation !== notificationOperation.current) return;
+      setNotifications(next);
       setError(false);
     } catch {
-      setError(true);
+      if (operation === notificationOperation.current) setError(true);
     } finally {
-      setLoading(false);
+      if (operation === notificationOperation.current) setLoading(false);
     }
   }, []);
 
@@ -40,23 +44,27 @@ export default function NotificationsScreen({ navigation }: Props) {
   }, [loadNotifications]);
 
   async function markRead(id: string) {
+    const operation = ++notificationOperation.current;
     setActionError(false);
     try {
       const updated = await notificationsApi.markRead(id);
+      if (operation !== notificationOperation.current) return;
       setNotifications((current) =>
         current.map((notification) =>
           notification.id === id ? { ...notification, readAt: updated.readAt } : notification,
         ),
       );
     } catch {
-      setActionError(true);
+      if (operation === notificationOperation.current) setActionError(true);
     }
   }
 
   async function markAllRead() {
+    const operation = ++notificationOperation.current;
     setActionError(false);
     try {
       await notificationsApi.markAllRead();
+      if (operation !== notificationOperation.current) return;
       setNotifications((current) =>
         current.map((notification) => ({
           ...notification,
@@ -64,7 +72,7 @@ export default function NotificationsScreen({ navigation }: Props) {
         })),
       );
     } catch {
-      setActionError(true);
+      if (operation === notificationOperation.current) setActionError(true);
     }
   }
 
