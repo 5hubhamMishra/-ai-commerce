@@ -49,7 +49,7 @@ export default async function handler(
     return;
   }
 
-  const redisUrl = process.env.REDIS_URL;
+  const redisUrl = process.env.REDIS_URL?.trim();
   if (!redisUrl) {
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(
