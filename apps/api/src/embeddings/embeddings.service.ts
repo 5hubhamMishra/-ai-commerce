@@ -89,10 +89,11 @@ export class EmbeddingsService {
     products: EmbeddableProduct[],
     results: { vector: number[] }[],
   ) {
+    if (results.length !== products.length) {
+      throw new Error('Embedding provider vector count did not match products');
+    }
     const operations = products.flatMap((product, index) => {
       const result = results[index];
-      if (!result)
-        throw new Error('Embedding provider returned too few vectors');
       return this.embeddingOperations(product.id, result.vector);
     });
     await this.prisma.$transaction(operations);

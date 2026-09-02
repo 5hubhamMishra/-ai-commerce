@@ -245,4 +245,57 @@ describe('EmbeddingsService batch reindex', () => {
     expect(prisma.productEmbedding.upsert).toHaveBeenCalledTimes(2);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
+
+  it('rejects a provider batch whose result count does not match the products', async () => {
+    const provider: EmbeddingProvider = {
+      model: EmbeddingModel.HASHING_V1,
+      dimensions: STORED_EMBEDDING_DIMENSIONS,
+      embed: jest.fn(),
+      embedMany: jest
+        .fn()
+        .mockResolvedValue([
+          { vector: new Array(STORED_EMBEDDING_DIMENSIONS).fill(0) },
+        ]),
+      embedText: jest.fn(),
+    };
+    const prisma = {
+      product: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'product-1',
+            name: 'Headphones',
+            description: 'Wireless',
+            categoryId: 'cat-1',
+            brandId: null,
+            tags: [],
+            specifications: [],
+          },
+          {
+            id: 'product-2',
+            name: 'Backpack',
+            description: 'Travel',
+            categoryId: 'cat-2',
+            brandId: null,
+            tags: [],
+            specifications: [],
+          },
+        ]),
+      },
+      productEmbedding: { upsert: jest.fn() },
+      $executeRaw: jest.fn(),
+      $transaction: jest.fn(),
+    };
+    const module = await Test.createTestingModule({
+      providers: [
+        EmbeddingsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EMBEDDING_PROVIDER, useValue: provider },
+      ],
+    }).compile();
+
+    await expect(module.get(EmbeddingsService).reindexAll()).rejects.toThrow(
+      'vector count',
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
 });
