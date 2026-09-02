@@ -8,7 +8,9 @@ TypeScript, Tailwind CSS, and Zustand.
 This is the web client in the monorepo. It uses the NestJS API for the real catalog, account,
 commerce, review, recommendation, and ShopAI flows. A small seeded demo catalog remains as a
 graceful fallback during local development when the API is unavailable. Production builds never
-expose those fabricated records; they require the deployed API for catalog content.
+expose those fabricated records by default; they require the deployed API for catalog content.
+`NEXT_PUBLIC_ALLOW_DEMO_FALLBACK=true` is an explicit offline showcase/CI opt-in and should
+stay disabled for customer-facing production builds.
 
 ## What's implemented
 

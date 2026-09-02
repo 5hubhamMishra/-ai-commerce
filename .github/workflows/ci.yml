@@ -40,6 +40,9 @@ jobs:
           npm run build --workspace=apps/api
 
       - name: Verify web
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4000/api/v1
+          NEXT_PUBLIC_ALLOW_DEMO_FALLBACK: true
         run: |
           npm test --workspace=apps/web
           npm run lint --workspace=apps/web
@@ -66,6 +69,7 @@ jobs:
       EMBEDDING_PROVIDER: hashing
       PAYMENT_PROVIDER: development
       THROTTLE_DEFAULT_LIMIT: 1000
+      NEXT_PUBLIC_ALLOW_DEMO_FALLBACK: true
 
     services:
       postgres:
@@ -138,6 +142,7 @@ jobs:
       - name: Run web end-to-end suite
         env:
           NEXT_PUBLIC_API_URL: http://127.0.0.1:4000/api/v1
+          NEXT_PUBLIC_ALLOW_DEMO_FALLBACK: true
         run: npm run test:e2e --workspace=apps/web
 
       - name: Print API log on browser-test failure

@@ -20,4 +20,15 @@ describe("demo catalog production boundary", () => {
     });
     expect(demoCatalog.getDemoProductBySlug("anything")).toBeNull();
   });
+
+  it("allows an explicit offline showcase opt-in", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_ALLOW_DEMO_FALLBACK", "true");
+    vi.resetModules();
+
+    const demoCatalog = await import("./demo-catalog");
+
+    expect(demoCatalog.demoCategories.length).toBeGreaterThan(0);
+    expect(demoCatalog.listDemoProducts().items.length).toBeGreaterThan(0);
+  });
 });
