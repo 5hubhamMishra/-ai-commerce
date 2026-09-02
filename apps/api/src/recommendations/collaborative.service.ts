@@ -15,10 +15,9 @@ const PAID_ORDER_WHERE = { status: { notIn: UNPAID_STATUSES } };
 
 /**
  * Real collaborative filtering — "customers who bought X also bought Y" —
- * computed from actual `orders`/`order_items` co-occurrence, not the
- * hardcoded complementary-category table `apps/web/src/lib/recommend.ts`
- * used ("since we have no real order graph yet"). We do now (Phase 3). No
- * seed data creates orders (same "don't fake a transaction history"
+ * computed from actual `orders`/`order_items` co-occurrence, not a hardcoded
+ * complementary-category table. No seed data creates orders (same "don't fake
+ * a transaction history"
  * precedent as everywhere else in this codebase), so this genuinely returns
  * empty until real purchases happen — the honest, unforced cold-start case
  * `RecommendationsService` falls back from, not a special-cased branch.
