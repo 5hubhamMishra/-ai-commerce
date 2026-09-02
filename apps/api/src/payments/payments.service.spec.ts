@@ -1,7 +1,58 @@
-import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import { OrderStatus, PaymentProviderType, PaymentStatus, Prisma } from '@prisma/client';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
+  it('returns the selected provider with a created payment intent', async () => {
+    const service = new PaymentsService(
+      {
+        payment: { findFirst: jest.fn().mockResolvedValue(null) },
+        $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+          callback({
+            order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+            payment: {
+              create: jest.fn().mockResolvedValue({
+                id: 'payment-1',
+                provider: PaymentProviderType.RAZORPAY,
+                status: PaymentStatus.PENDING,
+              }),
+            },
+          }),
+        ),
+      } as never,
+      {
+        type: PaymentProviderType.RAZORPAY,
+        createIntent: jest.fn().mockResolvedValue({
+          providerRef: 'order-1',
+          clientSecret: undefined,
+        }),
+      } as never,
+      {
+        assertOwnership: jest.fn().mockResolvedValue({
+          status: OrderStatus.PENDING_PAYMENT,
+          total: 100,
+          currency: 'INR',
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    const createInternal = (
+      service as unknown as {
+        createPaymentInternal: (
+          userId: string,
+          orderId: string,
+          key: string,
+        ) => Promise<{ provider: PaymentProviderType }>;
+      }
+    ).createPaymentInternal;
+
+    await expect(
+      createInternal.call(service, 'user-1', 'order-1', 'key-1'),
+    ).resolves.toMatchObject({ provider: PaymentProviderType.RAZORPAY });
+  });
+
   it('fingerprints payment create and confirm inputs when claiming keys', async () => {
     const run = jest.fn().mockResolvedValue({ body: {} });
     const service = new PaymentsService(

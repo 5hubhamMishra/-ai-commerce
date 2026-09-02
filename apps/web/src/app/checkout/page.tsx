@@ -307,12 +307,16 @@ export default function CheckoutPage() {
       const payment = await paymentsApi.create(currentOrderId);
       if (!isCurrentSession()) return;
 
-      if (!RAZORPAY_KEY_ID) {
+      if (payment.provider !== "RAZORPAY") {
         // Simulated path — unchanged from before, no widget.
         const order = await finalizeServerOrder(currentOrderId, payment.paymentId);
         if (!isCurrentSession()) return;
         router.push(`/orders/${order.id}`);
         return;
+      }
+
+      if (!RAZORPAY_KEY_ID) {
+        throw new Error("Online payment is not configured for this storefront. Please try again later.");
       }
 
       const razorpay = new window.Razorpay!({

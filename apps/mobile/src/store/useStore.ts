@@ -265,6 +265,9 @@ export const useStore = create<StoreState>((set, get) => ({
     if (operation !== authOperation) throw new Error('Session changed.');
     const payment = await paymentsApi.create(created.id);
     if (operation !== authOperation) throw new Error('Session changed.');
+    if (payment.provider === 'RAZORPAY') {
+      throw new Error('Online payment is required for this order.');
+    }
     const confirmed = await paymentsApi.confirm(payment.paymentId);
     if (operation !== authOperation) throw new Error('Session changed.');
     if (confirmed.status !== 'SUCCEEDED') {

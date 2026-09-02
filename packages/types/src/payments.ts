@@ -5,6 +5,7 @@ import type { PaymentStatus } from "./orders";
 export type CreatePaymentResponse = {
   paymentId: string;
   orderId: string;
+  provider: "DEVELOPMENT" | "RAZORPAY";
   providerRef: string;
   clientSecret: string | null;
   amount: number;

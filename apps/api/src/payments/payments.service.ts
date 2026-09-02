@@ -147,6 +147,7 @@ export class PaymentsService {
     return {
       paymentId: payment.id,
       orderId,
+      provider: payment.provider,
       providerRef: intent.providerRef,
       clientSecret: intent.clientSecret,
       amount,

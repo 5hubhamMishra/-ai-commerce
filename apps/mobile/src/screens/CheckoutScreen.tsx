@@ -151,12 +151,11 @@ export default function CheckoutScreen({ navigation }: Props) {
     setError(null);
     setPlacing(true);
     try {
-      if (!RAZORPAY_KEY_ID) {
-        if (!SIMULATED_PAYMENTS_ALLOWED) {
-          setError('Online payment is not configured for this release. Please try again later.');
-          setPlacing(false);
-          return;
-        }
+      if (!RAZORPAY_KEY_ID && !SIMULATED_PAYMENTS_ALLOWED) {
+        throw new Error('Online payment is not configured for this release. Please try again later.');
+      }
+
+      if (!RAZORPAY_KEY_ID && SIMULATED_PAYMENTS_ALLOWED) {
         // Simulated path — unchanged from before, no widget.
         const order = await placeOrder(effectiveAddressId, selectedMethod as 'STANDARD' | 'EXPRESS');
         navigation.replace('OrderDetail', { id: order.id });
@@ -168,6 +167,19 @@ export default function CheckoutScreen({ navigation }: Props) {
         (await ordersApi.create({ addressId: effectiveAddressId, shippingMethod: selectedMethod as 'STANDARD' | 'EXPRESS' })).id;
       setOrderId(currentOrderId);
       const payment = await paymentsApi.create(currentOrderId);
+
+      if (payment.provider !== 'RAZORPAY') {
+        if (!SIMULATED_PAYMENTS_ALLOWED) {
+          throw new Error('Online payment is not configured for this release. Please try again later.');
+        }
+        const order = await finalizeOrder(currentOrderId, payment.paymentId);
+        navigation.replace('OrderDetail', { id: order.id });
+        return;
+      }
+
+      if (!RAZORPAY_KEY_ID) {
+        throw new Error('Online payment is not configured for this app. Please try again later.');
+      }
       setPendingPayment(payment);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't place your order. Please try again.");
