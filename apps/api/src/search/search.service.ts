@@ -111,16 +111,12 @@ export class SearchService {
       conditions.push(Prisma.sql`b.slug = ${query.brand}`);
     }
 
-    const havingConditions: Prisma.Sql[] = [];
     if (query.minPrice !== undefined) {
-      havingConditions.push(Prisma.sql`MIN(v.price) >= ${query.minPrice}`);
+      conditions.push(Prisma.sql`v.price >= ${query.minPrice}`);
     }
     if (query.maxPrice !== undefined) {
-      havingConditions.push(Prisma.sql`MIN(v.price) <= ${query.maxPrice}`);
+      conditions.push(Prisma.sql`v.price <= ${query.maxPrice}`);
     }
-    const havingClause = havingConditions.length
-      ? Prisma.sql`HAVING ${Prisma.join(havingConditions, ' AND ')}`
-      : Prisma.empty;
 
     const orderBy = buildOrderBy(query.sort, false, Prisma.sql`0`);
 
@@ -135,7 +131,6 @@ export class SearchService {
         LEFT JOIN brands b ON b.id = p.brand_id
         WHERE ${Prisma.join(conditions, ' AND ')}
         GROUP BY p.id
-        ${havingClause}
         ORDER BY ${orderBy}
         LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
       `,
@@ -344,7 +339,7 @@ function minVariantPrice(p: ProductRow): number {
   return prices.length ? Math.min(...prices) : Number.POSITIVE_INFINITY;
 }
 
-function matchesMetadata(
+export function matchesMetadata(
   p: ProductRow,
   effective: {
     category?: string;
@@ -357,12 +352,13 @@ function matchesMetadata(
   if (effective.category && p.category.slug !== effective.category)
     return false;
   if (effective.brand && p.brand?.slug !== effective.brand) return false;
-  const price = minVariantPrice(p);
-  if (effective.maxPrice !== undefined && price > effective.maxPrice)
-    return false;
-  if (effective.minPrice !== undefined && price < effective.minPrice)
-    return false;
-  return true;
+  return p.variants.some((variant) => {
+    const price = Number(variant.price);
+    return (
+      (effective.minPrice === undefined || price >= effective.minPrice) &&
+      (effective.maxPrice === undefined || price <= effective.maxPrice)
+    );
+  });
 }
 
 function attributeMatchesProduct(p: ProductRow, attribute: string): boolean {
