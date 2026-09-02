@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -7,20 +6,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
 import { safeJsonLd } from "@/lib/jsonLd";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  style: ["normal", "italic"],
-  weight: ["400", "600", "700"],
-  display: "swap",
-});
 
 // Vercel sets this automatically to the production domain (no scheme) on every deploy —
 // falls back to the current known deployment for local builds / before a custom domain exists.
@@ -90,7 +75,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full scroll-smooth ${inter.variable} ${playfair.variable}`}
+      className="h-full scroll-smooth"
     >
       <body
         className="min-h-full flex flex-col"
