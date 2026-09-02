@@ -107,6 +107,10 @@ export default function CheckoutScreen({ navigation }: Props) {
   const subtotal = cart?.subtotal ?? 0;
   const shippingFee = selectedQuote?.fee ?? 0;
   const total = subtotal + shippingFee;
+  const invalidatePendingOrder = () => {
+    setOrderId(null);
+    setPendingPayment(null);
+  };
 
   const newAddressComplete =
     !!newAddress.line1.trim() &&
@@ -117,6 +121,7 @@ export default function CheckoutScreen({ navigation }: Props) {
 
   async function onSaveAddress() {
     if (!newAddressComplete) return;
+    invalidatePendingOrder();
     setError(null);
     setSavingAddress(true);
     try {
@@ -213,7 +218,9 @@ export default function CheckoutScreen({ navigation }: Props) {
               key={a.id}
               address={a}
               selected={!showAddForm && effectiveAddressId === a.id}
+              disabled={placing}
               onSelect={() => {
+                invalidatePendingOrder();
                 setAddingNew(false);
                 setSelectedAddressId(a.id);
               }}
@@ -221,7 +228,11 @@ export default function CheckoutScreen({ navigation }: Props) {
           ))}
           {!showAddForm && (
             <Pressable
-              onPress={() => setAddingNew(true)}
+              onPress={() => {
+                invalidatePendingOrder();
+                setAddingNew(true);
+              }}
+              disabled={placing}
               accessibilityRole="button"
               accessibilityLabel="Use a new address"
             >
@@ -236,7 +247,10 @@ export default function CheckoutScreen({ navigation }: Props) {
           value={newAddress}
           onChange={setNewAddress}
           onSave={() => void onSaveAddress()}
-          onUseSaved={addresses && addresses.length > 0 ? () => setAddingNew(false) : null}
+          onUseSaved={addresses && addresses.length > 0 ? () => {
+            invalidatePendingOrder();
+            setAddingNew(false);
+          } : null}
           saving={savingAddress}
           complete={newAddressComplete}
         />
@@ -252,7 +266,11 @@ export default function CheckoutScreen({ navigation }: Props) {
               <Pressable
                 key={q.method}
                 style={[styles.quoteRow, selected && styles.quoteRowSelected]}
-                onPress={() => setSelectedMethod(q.method)}
+                onPress={() => {
+                  invalidatePendingOrder();
+                  setSelectedMethod(q.method);
+                }}
+                disabled={placing}
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 accessibilityLabel={q.label}
@@ -350,11 +368,12 @@ export default function CheckoutScreen({ navigation }: Props) {
   );
 }
 
-function AddressRow({ address, selected, onSelect }: { address: Address; selected: boolean; onSelect: () => void }) {
+function AddressRow({ address, selected, disabled, onSelect }: { address: Address; selected: boolean; disabled: boolean; onSelect: () => void }) {
   return (
     <Pressable
       style={[styles.addressRow, selected && styles.addressRowSelected]}
       onPress={onSelect}
+      disabled={disabled}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={address.line1}

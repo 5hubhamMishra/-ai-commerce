@@ -71,16 +71,19 @@ function AddressForm({
 function AddressCard({
   address,
   selected,
+  disabled,
   onSelect,
 }: {
   address: Address;
   selected: boolean;
+  disabled: boolean;
   onSelect: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
+      disabled={disabled}
       className={`w-full text-left rounded-2xl border p-4 transition-colors ${
         selected ? "border-[var(--clr-accent)] bg-[var(--clr-surface-2)]" : "border-[var(--clr-border)] hover:border-[var(--clr-border-strong)]"
       }`}
@@ -202,6 +205,7 @@ export default function CheckoutPage() {
   );
   const shippingFee = selectedQuote?.fee ?? 0;
   const total = subtotal + shippingFee;
+  const invalidatePendingOrder = () => setOrderId(null);
 
   if (!hydrated || authStatus === "idle" || authStatus === "checking") {
     return (
@@ -256,6 +260,7 @@ export default function CheckoutPage() {
     const requestUserId = userId;
     if (authStatus !== "authenticated" || !requestUserId) return;
     setError(null);
+    invalidatePendingOrder();
     setSavingAddress(true);
     try {
       const created = await createServerAddress({
@@ -399,7 +404,9 @@ export default function CheckoutPage() {
                     key={a.id}
                     address={a}
                     selected={!showAddForm && effectiveAddressId === a.id}
+                    disabled={placing}
                     onSelect={() => {
+                      invalidatePendingOrder();
                       setAddingNew(false);
                       setSelectedAddressId(a.id);
                     }}
@@ -408,7 +415,11 @@ export default function CheckoutPage() {
                 {!showAddForm && (
                   <button
                     type="button"
-                    onClick={() => setAddingNew(true)}
+                    onClick={() => {
+                      invalidatePendingOrder();
+                      setAddingNew(true);
+                    }}
+                    disabled={placing}
                     className="text-sm font-medium transition-colors"
                     style={{ color: "var(--clr-accent)" }}
                   >
@@ -433,7 +444,11 @@ export default function CheckoutPage() {
                   {addresses && addresses.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setAddingNew(false)}
+                      onClick={() => {
+                        invalidatePendingOrder();
+                        setAddingNew(false);
+                      }}
+                      disabled={placing}
                       className="text-sm font-medium transition-colors"
                       style={{ color: "var(--clr-accent)" }}
                     >
@@ -462,7 +477,11 @@ export default function CheckoutPage() {
                         type="radio"
                         name="shipping-method"
                         checked={selectedMethod === q.method}
-                        onChange={() => setSelectedMethod(q.method)}
+                        disabled={placing}
+                        onChange={() => {
+                          invalidatePendingOrder();
+                          setSelectedMethod(q.method);
+                        }}
                         className="accent-[var(--clr-accent)]"
                       />
                       <div>
