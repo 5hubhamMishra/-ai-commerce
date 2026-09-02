@@ -49,7 +49,10 @@ export class EventsService {
     // aggregate profile driving personalization/recommendations.
     if (!personalizationEnabled) {
       await this.prisma.behavioralEvent.updateMany({
-        where: { id: { in: rows.map((row) => row.id) } },
+        where: {
+          id: { in: rows.map((row) => row.id) },
+          personalizationEligible: false,
+        },
         data: { processedAt: new Date() },
       });
     } else {

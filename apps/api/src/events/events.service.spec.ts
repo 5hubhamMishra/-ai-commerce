@@ -110,7 +110,10 @@ describe('EventsService aggregation status', () => {
     ).resolves.toEqual({ accepted: 1 });
 
     expect(prisma.behavioralEvent.updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ['00000000-0000-4000-8000-000000000001'] } },
+      where: {
+        id: { in: ['00000000-0000-4000-8000-000000000001'] },
+        personalizationEligible: false,
+      },
       data: { processedAt: expect.any(Date) },
     });
     expect(prisma.behavioralEvent.createMany).toHaveBeenCalledWith({
