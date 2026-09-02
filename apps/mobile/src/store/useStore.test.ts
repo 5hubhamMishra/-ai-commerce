@@ -453,4 +453,21 @@ describe('sendShopAIMessage', () => {
     await expect(useStore.getState().sendShopAIMessage('hello')).rejects.toThrow('Rate limit exceeded.');
     expect(shopaiApi.sendMessage).toHaveBeenCalledTimes(1);
   });
+
+  it('does not restore a conversation from a reply that finishes after logout', async () => {
+    let resolveReply!: (reply: { conversationId: string; message: { role: 'assistant'; content: string }; toolActivity: never[] }) => void;
+    const pendingReply = new Promise<{ conversationId: string; message: { role: 'assistant'; content: string }; toolActivity: never[] }>((resolve) => {
+      resolveReply = resolve;
+    });
+    (shopaiApi.sendMessage as jest.Mock).mockReturnValue(pendingReply);
+    useStore.setState({ user: publicUser, authStatus: 'authenticated' });
+
+    const sending = useStore.getState().sendShopAIMessage('hello');
+    await waitFor(() => expect(shopaiApi.sendMessage).toHaveBeenCalled());
+    useStore.getState().clearSession();
+    resolveReply({ conversationId: 'stale-conv', message: { role: 'assistant', content: 'stale reply' }, toolActivity: [] });
+
+    await expect(sending).rejects.toThrow('Session changed.');
+    expect(useStore.getState().shopaiConversationId).toBeNull();
+  });
 });

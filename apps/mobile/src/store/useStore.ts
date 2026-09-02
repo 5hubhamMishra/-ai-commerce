@@ -270,15 +270,19 @@ export const useStore = create<StoreState>((set, get) => ({
   shopaiConversationId: null,
 
   sendShopAIMessage: async (text) => {
+    const operation = authOperation;
     const send = (conversationId?: string) => shopaiApi.sendMessage({ message: text, conversationId });
     try {
       const conversationId = get().shopaiConversationId ?? undefined;
       const result = await send(conversationId);
+      if (operation !== authOperation) throw new Error('Session changed.');
       set({ shopaiConversationId: result.conversationId });
       return result.message;
     } catch (err) {
+      if (operation !== authOperation) throw new Error('Session changed.');
       if (err instanceof ApiError && err.code === 'CONVERSATION_NOT_FOUND') {
         const result = await send(undefined);
+        if (operation !== authOperation) throw new Error('Session changed.');
         set({ shopaiConversationId: result.conversationId });
         return result.message;
       }
