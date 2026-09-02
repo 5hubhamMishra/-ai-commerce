@@ -151,6 +151,22 @@ describe('auth actions', () => {
     expect(useStore.getState().cartStatus).toBe('idle');
   });
 
+  it('does not store a cart mutation that finishes after logout', async () => {
+    let resolveCart!: (cart: typeof emptyCart) => void;
+    const pendingCart = new Promise<typeof emptyCart>((resolve) => {
+      resolveCart = resolve;
+    });
+    (cartApi.addItem as jest.Mock).mockReturnValue(pendingCart);
+    useStore.setState({ user: publicUser, authStatus: 'authenticated' });
+
+    const adding = useStore.getState().addCartItem('variant-1', 1);
+    useStore.getState().clearSession();
+    resolveCart(emptyCart);
+
+    await expect(adding).rejects.toThrow('Session changed.');
+    expect(useStore.getState().cart).toBeNull();
+  });
+
   describe('restoreSession', () => {
     it('restores the user when a stored refresh token is still valid', async () => {
       (mobileRefresh as jest.Mock).mockResolvedValue('access-new');

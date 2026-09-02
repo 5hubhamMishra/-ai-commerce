@@ -186,17 +186,23 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   addCartItem: async (variantId, quantity) => {
+    const operation = authOperation;
     const cart = await cartApi.addItem(variantId, quantity);
+    if (operation !== authOperation) throw new Error('Session changed.');
     set({ cart });
   },
 
   updateCartItem: async (itemId, quantity) => {
+    const operation = authOperation;
     const cart = await cartApi.updateItem(itemId, quantity);
+    if (operation !== authOperation) throw new Error('Session changed.');
     set({ cart });
   },
 
   removeCartItem: async (itemId) => {
+    const operation = authOperation;
     const cart = await cartApi.removeItem(itemId);
+    if (operation !== authOperation) throw new Error('Session changed.');
     set({ cart });
   },
 
@@ -217,8 +223,10 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   toggleWishlistItem: async (productId) => {
+    const operation = authOperation;
     const isWishlisted = get().wishlist?.items.some((i) => i.productId === productId) ?? false;
     const wishlist = isWishlisted ? await wishlistApi.remove(productId) : await wishlistApi.add(productId);
+    if (operation !== authOperation) throw new Error('Session changed.');
     set({ wishlist });
   },
 
@@ -239,7 +247,9 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   createAddress: async (input) => {
+    const operation = authOperation;
     const address = await addressesApi.create(input);
+    if (operation !== authOperation) throw new Error('Session changed.');
     set((state) => ({
       addresses: address.isDefault
         ? [address, ...(state.addresses ?? []).map((a) => ({ ...a, isDefault: false }))]
