@@ -111,4 +111,57 @@ describe('SellerCommerceService payouts', () => {
       idempotencyKey: 'seller-payout-payout-1',
     });
   });
+
+  it('does not combine earnings from different currencies', async () => {
+    const tx = {
+      sellerEarning: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'earning-inr', currency: 'INR', netAmount: 450 },
+          { id: 'earning-usd', currency: 'USD', netAmount: 20 },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      sellerPayout: {
+        create: jest.fn().mockResolvedValue({
+          id: 'payout-inr',
+          sellerId: 'seller-1',
+          amount: 450,
+          currency: 'INR',
+          status: PayoutStatus.PROCESSING,
+        }),
+        update: jest.fn().mockResolvedValue({ status: PayoutStatus.PAID }),
+      },
+    };
+    const payoutProvider = {
+      payout: jest.fn().mockResolvedValue({ success: true, raw: {} }),
+    };
+    const service = new SellerCommerceService(
+      {
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
+        ),
+      } as never,
+      {} as never,
+      payoutProvider,
+      { record: jest.fn().mockResolvedValue(undefined) } as never,
+    );
+
+    await service.createPayout('admin-1', 'seller-1');
+
+    expect(tx.sellerPayout.create).toHaveBeenCalledWith({
+      data: {
+        sellerId: 'seller-1',
+        amount: 450,
+        currency: 'INR',
+        status: PayoutStatus.PROCESSING,
+      },
+    });
+    expect(tx.sellerEarning.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['earning-inr'] }, payoutId: null },
+      data: { payoutId: 'payout-inr' },
+    });
+    expect(payoutProvider.payout).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 450, currency: 'INR' }),
+    );
+  });
 });

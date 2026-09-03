@@ -154,11 +154,11 @@ export class SellerCommerceService {
     return { items: rows, total, page, pageSize };
   }
 
-  /** Sums every earning that's eligible (its order has reached DELIVERED,
-   *  and it isn't already part of another payout), calls the payout
-   *  provider once for the batch total, and links every covered earning to
-   *  the resulting SellerPayout. Earnings are claimed before the provider
-   *  call so concurrent payout requests cannot pay the same batch twice. */
+  /** Sums eligible earnings in one currency (the first eligible currency),
+   *  calls the payout provider once for that batch, and links every covered
+   *  earning to the resulting SellerPayout. Earnings are claimed before the
+   *  provider call so concurrent payout requests cannot pay the same batch
+   *  twice. Other currencies remain eligible for a later payout. */
   async createPayout(actorId: string, sellerId: string) {
     const claim = await this.prisma.$transaction(async (tx) => {
       const eligible = await tx.sellerEarning.findMany({
@@ -175,7 +175,8 @@ export class SellerCommerceService {
         });
       }
       const currency = eligible[0].currency;
-      const amount = eligible.reduce((sum, e) => sum + Number(e.netAmount), 0);
+      const batch = eligible.filter((e) => e.currency === currency);
+      const amount = batch.reduce((sum, e) => sum + Number(e.netAmount), 0);
       const created = await tx.sellerPayout.create({
         data: {
           sellerId,
@@ -185,10 +186,10 @@ export class SellerCommerceService {
         },
       });
       const claimed = await tx.sellerEarning.updateMany({
-        where: { id: { in: eligible.map((e) => e.id) }, payoutId: null },
+        where: { id: { in: batch.map((e) => e.id) }, payoutId: null },
         data: { payoutId: created.id },
       });
-      if (claimed.count !== eligible.length) {
+      if (claimed.count !== batch.length) {
         throw new ConflictException({
           code: 'PAYOUT_ALREADY_IN_PROGRESS',
           message: 'Another payout already claimed these earnings.',
