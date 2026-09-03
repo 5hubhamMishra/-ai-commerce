@@ -67,6 +67,7 @@ export class SellerCatalogService {
 
   async update(userId: string, productId: string, dto: UpdateProductDto) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
+    await this.sellers.assertVerifiedSeller(sellerId);
     await this.assertOwnsProduct(sellerId, productId);
     return this.products.update(productId, dto, userId);
   }
