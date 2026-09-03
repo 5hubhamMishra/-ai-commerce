@@ -26,7 +26,6 @@ describe('ExchangesService refund reference', () => {
     const service = new ExchangesService(
       prisma as never,
       {} as never,
-      {} as never,
       { record: jest.fn() } as never,
     );
 
@@ -70,7 +69,6 @@ describe('ExchangesService refund reference', () => {
     const service = new ExchangesService(
       prisma as never,
       {} as never,
-      {} as never,
       audit as never,
     );
 
@@ -93,11 +91,7 @@ describe('ExchangesService refund reference', () => {
     expect(audit.record).not.toHaveBeenCalled();
   });
 
-  it('uses the confirmed payment reference for lower-priced exchanges', async () => {
-    const payment = {
-      providerRef: 'order_ref_1',
-      providerPaymentRef: 'pay_1',
-    };
+  it('records the pre-authorized refund for lower-priced exchanges', async () => {
     const tx = {
       exchange: {
         create: jest.fn().mockResolvedValue({
@@ -114,21 +108,12 @@ describe('ExchangesService refund reference', () => {
           createdAt: new Date(),
         }),
       },
-      payment: { findUniqueOrThrow: jest.fn().mockResolvedValue(payment) },
       refund: {
         create: jest.fn().mockResolvedValue({ status: RefundStatus.COMPLETED }),
       },
     };
-    const provider = {
-      refund: jest.fn().mockResolvedValue({
-        success: true,
-        providerRefundRef: 'refund-1',
-        raw: {},
-      }),
-    };
     const service = new ExchangesService(
       {} as never,
-      provider as never,
       { markExchanged: jest.fn() } as never,
       {} as never,
     );
@@ -144,16 +129,27 @@ describe('ExchangesService refund reference', () => {
         priceDifference: -100,
         paymentId: 'payment-1',
         currency: 'INR',
+        refundResult: {
+          success: true,
+          providerRefundRef: 'refund-1',
+          raw: {},
+        },
       },
       'admin-1',
     );
 
-    expect(provider.refund).toHaveBeenCalledWith({
-      providerRef: 'pay_1',
-      amount: 100,
-      currency: 'INR',
-      reason: 'Exchange price difference (lower-priced item)',
-      idempotencyKey: 'exchange-return-1',
+    expect(tx.refund.create).toHaveBeenCalledWith({
+      data: {
+        orderId: 'order-1',
+        paymentId: 'payment-1',
+        returnRequestId: 'return-1',
+        amount: 100,
+        currency: 'INR',
+        reason: 'Exchange price difference',
+        status: RefundStatus.COMPLETED,
+        providerRef: 'refund-1',
+        failureReason: undefined,
+      },
     });
   });
 });

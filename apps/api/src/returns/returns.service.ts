@@ -440,6 +440,9 @@ export class ReturnsService {
       newVariantId: string;
       priceDifference: number;
       paymentId: string | null;
+      refundResult: Awaited<
+        ReturnType<RefundsService['requestProviderRefund']>
+      > | null;
     } | null = null;
 
     if (existing.resolution === ReturnResolution.REFUND) {
@@ -498,12 +501,38 @@ export class ReturnsService {
                 await this.releaseCompletionClaim(returnId);
                 throw error;
               },
-            )
+          )
           : null;
+      let refundResult: Awaited<
+        ReturnType<RefundsService['requestProviderRefund']>
+      > | null = null;
+      if (priceDifference < 0 && payment) {
+        try {
+          refundResult = await this.refundsService.requestProviderRefund(
+            payment.providerPaymentRef ?? payment.providerRef!,
+            Math.abs(priceDifference),
+            payment.currency,
+            'Exchange price difference (lower-priced item)',
+            `exchange-${returnId}`,
+          );
+        } catch (error) {
+          await this.releaseCompletionClaim(returnId);
+          throw error;
+        }
+        if (!refundResult.success) {
+          await this.releaseCompletionClaim(returnId);
+          throw new ConflictException({
+            code: 'REFUND_FAILED',
+            message:
+              'The refund provider did not complete the refund. Try completing the return again.',
+          });
+        }
+      }
       exchangeContext = {
         newVariantId: newVariant.id,
         priceDifference,
         paymentId: payment?.id ?? null,
+        refundResult,
       };
     }
 
@@ -575,6 +604,7 @@ export class ReturnsService {
           priceDifference: exchangeContext!.priceDifference,
           paymentId: exchangeContext!.paymentId,
           currency: existing.order.currency,
+          refundResult: exchangeContext!.refundResult,
         },
         actorId,
       );

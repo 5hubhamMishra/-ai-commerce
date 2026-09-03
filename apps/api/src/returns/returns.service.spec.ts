@@ -159,6 +159,96 @@ describe('ReturnsService', () => {
     });
   });
 
+  it('keeps a lower-priced exchange retryable when its refund is declined', async () => {
+    const returnUpdateMany = jest
+      .fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    const requestProviderRefund = jest.fn().mockResolvedValue({
+      success: false,
+      providerRefundRef: '',
+      raw: {},
+      failureReason: 'Provider declined refund',
+    });
+    const prisma = {
+      returnRequest: { updateMany: returnUpdateMany },
+      productVariant: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'new-variant',
+          price: 50,
+        }),
+      },
+      $transaction: jest.fn(),
+    };
+    const service = new ReturnsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { requestProviderRefund } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const internals = service as unknown as {
+      getRow: jest.Mock;
+      findSucceededPayment: jest.Mock;
+    };
+    internals.getRow = jest.fn().mockResolvedValue({
+      id: 'return-1',
+      userId: 'user-1',
+      status: ReturnStatus.INSPECTING,
+      resolution: ReturnResolution.EXCHANGE,
+      desiredVariantId: 'new-variant',
+      order: { id: 'order-1', currency: 'INR' },
+      items: [
+        {
+          id: 'return-item-1',
+          quantity: 1,
+          orderItem: {
+            variantId: 'old-variant',
+            warehouseId: 'warehouse-1',
+            unitPrice: 100,
+          },
+        },
+      ],
+    });
+    internals.findSucceededPayment = jest.fn().mockResolvedValue({
+      id: 'payment-1',
+      providerPaymentRef: 'pay-1',
+      providerRef: 'order-ref-1',
+      currency: 'INR',
+    });
+
+    await expect(
+      service.complete('admin-1', 'return-1', {
+        items: [
+          {
+            returnRequestItemId: 'return-item-1',
+            condition: 'sealed',
+            isDamaged: false,
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'REFUND_FAILED' }),
+    });
+    expect(requestProviderRefund).toHaveBeenCalledWith(
+      'pay-1',
+      50,
+      'INR',
+      'Exchange price difference (lower-priced item)',
+      'exchange-return-1',
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(returnUpdateMany).toHaveBeenNthCalledWith(2, {
+      where: { id: 'return-1', status: ReturnStatus.PROCESSING },
+      data: { status: ReturnStatus.INSPECTING },
+    });
+  });
+
   it('does not restock when another completion wins the return claim', async () => {
     const restockReturnedItems = jest.fn();
     const markReturned = jest.fn();

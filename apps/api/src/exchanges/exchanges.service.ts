@@ -1,16 +1,8 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ExchangeStatus, Prisma, RefundStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { OrdersService } from '../orders/orders.service';
-import {
-  PAYMENT_PROVIDER,
-  type PaymentProvider,
-} from '../payments/providers/payment-provider.interface';
+import type { RefundResult } from '../payments/providers/payment-provider.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import type { DispatchExchangeDto } from './dto/dispatch-exchange.dto';
 
@@ -40,7 +32,6 @@ function assertTransition(from: ExchangeStatus, to: ExchangeStatus) {
 export class ExchangesService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
     private readonly ordersService: OrdersService,
     private readonly audit: AuditService,
   ) {}
@@ -48,8 +39,8 @@ export class ExchangesService {
   /**
    * Called by ReturnsService.complete() inside its own transaction. Settles the
    * price difference immediately where that's possible without a new checkout:
-   * a negative difference (money owed back to the customer) is refunded against
-   * the original payment right here; a positive difference (customer owes more)
+   * a negative difference (money owed back to the customer) is recorded from a
+   * refund authorized before this transaction; a positive difference (customer owes more)
    * starts the exchange in AWAITING_PAYMENT — collecting it is a manual
    * admin-confirmation step (`confirmPaymentReceived`) rather than a full second
    * payment-intent flow, a deliberate scope trim for what's a comparatively rare
@@ -66,6 +57,7 @@ export class ExchangesService {
       priceDifference: number;
       paymentId: string | null;
       currency: string;
+      refundResult?: RefundResult | null;
     },
     actorId: string,
   ) {
@@ -87,17 +79,8 @@ export class ExchangesService {
     });
 
     if (owesRefund && params.paymentId) {
-      const payment = await tx.payment.findUniqueOrThrow({
-        where: { id: params.paymentId },
-      });
-      const result = await this.provider.refund({
-        providerRef: payment.providerPaymentRef ?? payment.providerRef!,
-        amount: Math.abs(params.priceDifference),
-        currency: params.currency,
-        reason: 'Exchange price difference (lower-priced item)',
-        idempotencyKey: `exchange-${params.returnRequestId}`,
-      });
-      if (!result.success) {
+      const result = params.refundResult;
+      if (!result?.success) {
         throw new ConflictException({
           code: 'REFUND_FAILED',
           message:
