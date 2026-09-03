@@ -159,6 +159,86 @@ describe('ReturnsService', () => {
     });
   });
 
+  it('can retry a return left processing by a failed finalization', async () => {
+    const returnUpdateMany = jest
+      .fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    const prisma = {
+      returnRequest: { updateMany: returnUpdateMany },
+      $transaction: jest.fn(),
+    };
+    const service = new ReturnsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {
+        requestProviderRefund: jest.fn().mockResolvedValue({
+          success: false,
+          providerRefundRef: '',
+          raw: {},
+          failureReason: 'Provider declined refund',
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const internals = service as unknown as {
+      getRow: jest.Mock;
+      findSucceededPayment: jest.Mock;
+    };
+    internals.getRow = jest.fn().mockResolvedValue({
+      id: 'return-1',
+      userId: 'user-1',
+      status: ReturnStatus.PROCESSING,
+      resolution: ReturnResolution.REFUND,
+      order: { id: 'order-1', currency: 'INR' },
+      items: [
+        {
+          id: 'return-item-1',
+          quantity: 1,
+          orderItem: {
+            variantId: 'variant-1',
+            warehouseId: 'warehouse-1',
+            unitPrice: 100,
+          },
+        },
+      ],
+    });
+    internals.findSucceededPayment = jest.fn().mockResolvedValue({
+      id: 'payment-1',
+      providerPaymentRef: 'pay-1',
+      providerRef: 'order-ref-1',
+      currency: 'INR',
+    });
+
+    await expect(
+      service.complete('admin-1', 'return-1', {
+        items: [
+          {
+            returnRequestItemId: 'return-item-1',
+            condition: 'sealed',
+            isDamaged: false,
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'REFUND_FAILED' }),
+    });
+    expect(returnUpdateMany).toHaveBeenNthCalledWith(1, {
+      where: { id: 'return-1', status: ReturnStatus.PROCESSING },
+      data: { status: ReturnStatus.PROCESSING },
+    });
+    expect(returnUpdateMany).toHaveBeenNthCalledWith(2, {
+      where: { id: 'return-1', status: ReturnStatus.PROCESSING },
+      data: { status: ReturnStatus.INSPECTING },
+    });
+  });
+
   it('keeps a lower-priced exchange retryable when its refund is declined', async () => {
     const returnUpdateMany = jest
       .fn()

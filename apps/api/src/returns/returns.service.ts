@@ -404,11 +404,16 @@ export class ReturnsService {
    */
   async complete(actorId: string, returnId: string, dto: CompleteReturnDto) {
     const existing = await this.getRow(returnId);
-    assertReturnTransition(existing.status, ReturnStatus.PROCESSING);
+    const isRetry = existing.status === ReturnStatus.PROCESSING;
+    if (!isRetry)
+      assertReturnTransition(existing.status, ReturnStatus.PROCESSING);
     this.assertAllItemsInspected(existing.items, dto.items);
 
     const completionClaim = await this.prisma.returnRequest.updateMany({
-      where: { id: returnId, status: ReturnStatus.INSPECTING },
+      where: {
+        id: returnId,
+        status: isRetry ? ReturnStatus.PROCESSING : ReturnStatus.INSPECTING,
+      },
       data: { status: ReturnStatus.PROCESSING },
     });
     if (completionClaim.count === 0) {
