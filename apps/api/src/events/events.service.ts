@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CustomerProfileService } from './customer-profile.service';
 import type { TrackEventsDto } from './dto/track-events.dto';
 import { BehavioralQueueService } from './queue/behavioral-queue.service';
+
+const MAX_EVENT_FUTURE_SKEW_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class EventsService {
@@ -17,6 +19,19 @@ export class EventsService {
    *  OptionalJwtAuthGuard's real Passport validation), never trusted from
    *  the request body — see events.controller.ts. */
   async track(userId: string | undefined, dto: TrackEventsDto) {
+    if (
+      dto.events.some(
+        (event) =>
+          new Date(event.occurredAt).getTime() >
+          Date.now() + MAX_EVENT_FUTURE_SKEW_MS,
+      )
+    ) {
+      throw new BadRequestException({
+        code: 'EVENT_TIMESTAMP_IN_FUTURE',
+        message: 'Event timestamps cannot be more than five minutes ahead.',
+      });
+    }
+
     await this.upsertSessions(userId, dto.events);
 
     const personalizationEnabled = await this.isPersonalizationEnabled(userId);

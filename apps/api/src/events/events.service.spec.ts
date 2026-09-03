@@ -152,6 +152,30 @@ describe('EventsService aggregation status', () => {
     ).resolves.toEqual({ accepted: 1 });
   });
 
+  it('rejects timestamps too far in the future before writing event state', async () => {
+    const future = new Date(Date.now() + 6 * 60 * 1000).toISOString();
+
+    await expect(
+      service.track(undefined, {
+        events: [
+          {
+            eventId: '00000000-0000-4000-8000-000000000003',
+            eventType: 'PRODUCT_VIEWED',
+            anonymousId: 'anonymous-1',
+            sessionId: 'session-1',
+            source: 'WEB',
+            entityId: 'product-1',
+            occurredAt: future,
+          },
+        ],
+      } as never),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'EVENT_TIMESTAMP_IN_FUTURE' }),
+    });
+    expect(prisma.session.upsert).not.toHaveBeenCalled();
+    expect(prisma.behavioralEvent.createMany).not.toHaveBeenCalled();
+  });
+
   it('never reassigns an owned session during identity linking', async () => {
     await service.track('user-2', {
       events: [
