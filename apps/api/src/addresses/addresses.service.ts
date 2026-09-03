@@ -20,45 +20,53 @@ export class AddressesService {
   }
 
   async create(userId: string, dto: CreateAddressDto) {
-    return this.prisma.$transaction(async (tx) => {
-      if (dto.isDefault) {
-        await tx.address.updateMany({
-          where: { userId, isDefault: true },
-          data: { isDefault: false },
+    return this.prisma
+      .$transaction(async (tx) => {
+        if (dto.isDefault) {
+          await tx.address.updateMany({
+            where: { userId, isDefault: true },
+            data: { isDefault: false },
+          });
+        }
+        const existingCount = await tx.address.count({ where: { userId } });
+        return tx.address.create({
+          data: {
+            ...dto,
+            userId,
+            isDefault: dto.isDefault ?? existingCount === 0,
+          },
         });
-      }
-      const existingCount = await tx.address.count({ where: { userId } });
-      return tx.address.create({
-        data: {
-          ...dto,
-          userId,
-          isDefault: dto.isDefault ?? existingCount === 0,
-        },
+      })
+      .catch((error: unknown) => {
+        throw this.mapDefaultConflict(error);
       });
-    });
   }
 
   async update(userId: string, id: string, dto: UpdateAddressDto) {
     const existing = await this.assertOwnership(userId, id);
-    return this.prisma.$transaction(async (tx) => {
-      const claimed = await tx.address.updateMany({
-        where: { id, userId, updatedAt: existing.updatedAt },
-        data: dto,
+    return this.prisma
+      .$transaction(async (tx) => {
+        const claimed = await tx.address.updateMany({
+          where: { id, userId, updatedAt: existing.updatedAt },
+          data: dto,
+        });
+        if (claimed.count === 0) {
+          throw new ConflictException({
+            code: 'ADDRESS_CHANGED',
+            message: 'The address changed before this update could be applied.',
+          });
+        }
+        if (dto.isDefault) {
+          await tx.address.updateMany({
+            where: { userId, isDefault: true, NOT: { id } },
+            data: { isDefault: false },
+          });
+        }
+        return tx.address.findUniqueOrThrow({ where: { id } });
+      })
+      .catch((error: unknown) => {
+        throw this.mapDefaultConflict(error);
       });
-      if (claimed.count === 0) {
-        throw new ConflictException({
-          code: 'ADDRESS_CHANGED',
-          message: 'The address changed before this update could be applied.',
-        });
-      }
-      if (dto.isDefault) {
-        await tx.address.updateMany({
-          where: { userId, isDefault: true, NOT: { id } },
-          data: { isDefault: false },
-        });
-      }
-      return tx.address.findUniqueOrThrow({ where: { id } });
-    });
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -113,5 +121,18 @@ export class AddressesService {
       });
     }
     return address;
+  }
+
+  private mapDefaultConflict(error: unknown) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      return new ConflictException({
+        code: 'DEFAULT_ADDRESS_CHANGED',
+        message: 'Another default address change was applied first.',
+      });
+    }
+    return error;
   }
 }

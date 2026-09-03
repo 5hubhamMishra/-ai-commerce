@@ -93,6 +93,22 @@ describe('AddressesService', () => {
     });
   });
 
+  it('maps a concurrent default-address race to a conflict', async () => {
+    prisma.address.count.mockResolvedValue(0);
+    prisma.address.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      service.create('u1', { ...baseAddress, isDefault: true }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'DEFAULT_ADDRESS_CHANGED' }),
+    });
+  });
+
   it('refuses to update an address owned by a different user, without revealing it exists', async () => {
     prisma.address.findUnique.mockResolvedValue({
       id: 'addr1',
