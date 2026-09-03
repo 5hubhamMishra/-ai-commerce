@@ -437,6 +437,7 @@ enum OrderStatus {
 
 enum PaymentStatus {
   PENDING
+  PROCESSING
   SUCCEEDED
   FAILED
   REFUNDED

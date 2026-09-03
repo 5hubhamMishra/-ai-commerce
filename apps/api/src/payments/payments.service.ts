@@ -228,20 +228,52 @@ export class PaymentsService {
         message: 'Payment not found.',
       });
     }
+    if (payment.status === PaymentStatus.PROCESSING) {
+      throw new ConflictException({
+        code: 'PAYMENT_CONFIRMATION_IN_PROGRESS',
+        message: 'This payment confirmation is already in progress.',
+      });
+    }
     if (payment.status !== PaymentStatus.PENDING) {
       // Already resolved (e.g. a race with the webhook) — replay the outcome
       // rather than erroring, consistent with idempotent confirmation handling.
       return buildOutcome(payment);
     }
 
-    const confirmResult = await this.provider.confirmPayment({
-      providerRef: payment.providerRef!,
-      payload: {
-        simulateFailure: dto.simulateFailure,
-        razorpayPaymentId: dto.razorpayPaymentId,
-        razorpaySignature: dto.razorpaySignature,
-      },
+    const claimed = await this.prisma.payment.updateMany({
+      where: { id: paymentId, status: PaymentStatus.PENDING },
+      data: { status: PaymentStatus.PROCESSING },
     });
+    if (claimed.count === 0) {
+      const current = await this.prisma.payment.findUniqueOrThrow({
+        where: { id: paymentId },
+      });
+      if (current.status === PaymentStatus.PROCESSING) {
+        throw new ConflictException({
+          code: 'PAYMENT_CONFIRMATION_IN_PROGRESS',
+          message: 'This payment confirmation is already in progress.',
+        });
+      }
+      return buildOutcome(current);
+    }
+
+    let confirmResult: ConfirmPaymentResult;
+    try {
+      confirmResult = await this.provider.confirmPayment({
+        providerRef: payment.providerRef!,
+        payload: {
+          simulateFailure: dto.simulateFailure,
+          razorpayPaymentId: dto.razorpayPaymentId,
+          razorpaySignature: dto.razorpaySignature,
+        },
+      });
+    } catch (error) {
+      await this.prisma.payment.updateMany({
+        where: { id: paymentId, status: PaymentStatus.PROCESSING },
+        data: { status: PaymentStatus.PENDING },
+      });
+      throw error;
+    }
 
     const updated = await this.applyConfirmationResult(
       payment,
@@ -269,7 +301,10 @@ export class PaymentsService {
       // endlessly retry a payment we don't (or no longer) recognize.
       return { received: true };
     }
-    if (payment.status !== PaymentStatus.PENDING) {
+    if (
+      payment.status !== PaymentStatus.PENDING &&
+      payment.status !== PaymentStatus.PROCESSING
+    ) {
       // Already processed — replay protection for duplicate webhook delivery.
       return { received: true, alreadyProcessed: true };
     }
@@ -344,6 +379,7 @@ export class PaymentsService {
     }
     if (
       payment.status !== PaymentStatus.PENDING &&
+      payment.status !== PaymentStatus.PROCESSING &&
       !(isCaptured && payment.status === PaymentStatus.FAILED)
     ) {
       return { received: true, alreadyProcessed: true };
@@ -383,7 +419,13 @@ export class PaymentsService {
           const claimed = await tx.payment.updateMany({
             where: {
               id: payment.id,
-              status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+              status: {
+                in: [
+                  PaymentStatus.PENDING,
+                  PaymentStatus.PROCESSING,
+                  PaymentStatus.FAILED,
+                ],
+              },
             },
             data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef },
           });
@@ -417,7 +459,10 @@ export class PaymentsService {
     }
 
     const claimed = await this.prisma.payment.updateMany({
-      where: { id: payment.id, status: PaymentStatus.PENDING },
+      where: {
+        id: payment.id,
+        status: { in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING] },
+      },
       data: {
         status: PaymentStatus.FAILED,
         failureReason: confirmResult.failureReason,

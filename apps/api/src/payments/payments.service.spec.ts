@@ -99,6 +99,137 @@ describe('PaymentsService settlement race', () => {
     expect(run.mock.calls[2][4]).not.toBe(run.mock.calls[3][4]);
   });
 
+  it('does not call the provider when confirmation is already processing', async () => {
+    const confirmPayment = jest.fn();
+    const service = new PaymentsService(
+      {
+        payment: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'payment-1',
+            orderId: 'order-1',
+            status: PaymentStatus.PROCESSING,
+            providerRef: 'provider-1',
+            order: { userId: 'user-1' },
+          }),
+        },
+      } as never,
+      { confirmPayment } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      (
+        service as unknown as {
+          confirmPaymentInternal: (
+            userId: string,
+            paymentId: string,
+            dto: object,
+          ) => Promise<unknown>;
+        }
+      ).confirmPaymentInternal('user-1', 'payment-1', {}),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        code: 'PAYMENT_CONFIRMATION_IN_PROGRESS',
+      }),
+    });
+    expect(confirmPayment).not.toHaveBeenCalled();
+  });
+
+  it('does not call the provider when another confirmation wins the claim', async () => {
+    const confirmPayment = jest.fn();
+    const service = new PaymentsService(
+      {
+        payment: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'payment-1',
+            orderId: 'order-1',
+            status: PaymentStatus.PENDING,
+            providerRef: 'provider-1',
+            order: { userId: 'user-1' },
+          }),
+          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findUniqueOrThrow: jest.fn().mockResolvedValue({
+            id: 'payment-1',
+            orderId: 'order-1',
+            status: PaymentStatus.PROCESSING,
+          }),
+        },
+      } as never,
+      { confirmPayment } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      (
+        service as unknown as {
+          confirmPaymentInternal: (
+            userId: string,
+            paymentId: string,
+            dto: object,
+          ) => Promise<unknown>;
+        }
+      ).confirmPaymentInternal('user-1', 'payment-1', {}),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        code: 'PAYMENT_CONFIRMATION_IN_PROGRESS',
+      }),
+    });
+    expect(confirmPayment).not.toHaveBeenCalled();
+  });
+
+  it('releases the confirmation claim when the provider throws', async () => {
+    const providerError = new Error('provider unavailable');
+    const paymentUpdate = jest
+      .fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    const service = new PaymentsService(
+      {
+        payment: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'payment-1',
+            orderId: 'order-1',
+            status: PaymentStatus.PENDING,
+            providerRef: 'provider-1',
+            order: { userId: 'user-1' },
+          }),
+          updateMany: paymentUpdate,
+        },
+      } as never,
+      { confirmPayment: jest.fn().mockRejectedValue(providerError) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      (
+        service as unknown as {
+          confirmPaymentInternal: (
+            userId: string,
+            paymentId: string,
+            dto: object,
+          ) => Promise<unknown>;
+        }
+      ).confirmPaymentInternal('user-1', 'payment-1', {}),
+    ).rejects.toBe(providerError);
+    expect(paymentUpdate).toHaveBeenNthCalledWith(1, {
+      where: { id: 'payment-1', status: PaymentStatus.PENDING },
+      data: { status: PaymentStatus.PROCESSING },
+    });
+    expect(paymentUpdate).toHaveBeenNthCalledWith(2, {
+      where: { id: 'payment-1', status: PaymentStatus.PROCESSING },
+      data: { status: PaymentStatus.PENDING },
+    });
+  });
+
   it('rejects a malformed signed Razorpay payload as a bad request', async () => {
     const service = new PaymentsService(
       {} as never,
@@ -450,7 +581,13 @@ describe('PaymentsService settlement race', () => {
     expect(tx.payment.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'payment-1',
-        status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+        status: {
+          in: [
+            PaymentStatus.PENDING,
+            PaymentStatus.PROCESSING,
+            PaymentStatus.FAILED,
+          ],
+        },
       },
       data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef: undefined },
     });
@@ -504,7 +641,13 @@ describe('PaymentsService settlement race', () => {
     expect(tx.payment.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'payment-1',
-        status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] },
+        status: {
+          in: [
+            PaymentStatus.PENDING,
+            PaymentStatus.PROCESSING,
+            PaymentStatus.FAILED,
+          ],
+        },
       },
       data: { status: PaymentStatus.SUCCEEDED, providerPaymentRef: undefined },
     });
