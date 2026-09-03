@@ -502,7 +502,7 @@ export class ReturnsService {
                 await this.releaseCompletionClaim(returnId);
                 throw error;
               },
-          )
+            )
           : null;
       let refundResult: Awaited<
         ReturnType<RefundsService['requestProviderRefund']>
