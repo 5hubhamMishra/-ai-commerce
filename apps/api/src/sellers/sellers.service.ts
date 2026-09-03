@@ -20,7 +20,6 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ListProductsQueryDto } from '../products/dto/list-products-query.dto';
 import { ProductsService } from '../products/products.service';
-import { WarehousesService } from '../warehouses/warehouses.service';
 import type { ApplySellerDto } from './dto/apply-seller.dto';
 import type { ListSellersQueryDto } from './dto/list-sellers-query.dto';
 import type { RejectSellerDto } from './dto/reject-seller.dto';
@@ -45,7 +44,6 @@ export class SellersService {
     private readonly verificationProvider: SellerVerificationProvider,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
-    private readonly warehouses: WarehousesService,
     private readonly products: ProductsService,
   ) {}
 
@@ -443,25 +441,28 @@ export class SellersService {
    *  them via PATCH /sellers/me/warehouse before shipping anything for real —
    *  documented as a known gap in DATABASE.md, not silently left broken. */
   private async markVerified(sellerId: string, expectedStatus: SellerStatus) {
-    const claimed = await this.prisma.seller.updateMany({
-      where: { id: sellerId, status: expectedStatus },
-      data: { status: SellerStatus.VERIFIED, verifiedAt: new Date() },
-    });
-    if (claimed.count === 0) {
-      throw new ConflictException({
-        code: 'SELLER_STATUS_CHANGED',
-        message: 'The seller changed before verification could be applied.',
+    const { seller, warehouse } = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.seller.updateMany({
+        where: { id: sellerId, status: expectedStatus },
+        data: { status: SellerStatus.VERIFIED, verifiedAt: new Date() },
       });
-    }
-    const seller = await this.prisma.seller.findUniqueOrThrow({
-      where: { id: sellerId },
-    });
-    const existingWarehouse = await this.prisma.warehouse.findFirst({
-      where: { sellerId },
-    });
-    if (!existingWarehouse) {
-      await this.warehouses.create(
-        {
+      if (claimed.count === 0) {
+        throw new ConflictException({
+          code: 'SELLER_STATUS_CHANGED',
+          message: 'The seller changed before verification could be applied.',
+        });
+      }
+      const seller = await tx.seller.findUniqueOrThrow({
+        where: { id: sellerId },
+      });
+      const existingWarehouse = await tx.warehouse.findFirst({
+        where: { sellerId },
+      });
+      if (existingWarehouse) return { seller, warehouse: null };
+
+      const warehouse = await tx.warehouse.create({
+        data: {
+          sellerId,
           name: `${seller.businessName} Fulfillment`,
           code: `SELLER-${sellerId.slice(0, 8).toUpperCase()}`,
           line1: 'Not yet configured',
@@ -469,10 +470,20 @@ export class SellersService {
           state: 'Not yet configured',
           postalCode: '000000',
           country: 'IN',
+          isActive: true,
         },
-        seller.ownerUserId,
-        sellerId,
-      );
+      });
+      return { seller, warehouse };
+    });
+
+    if (warehouse) {
+      await this.audit.record({
+        actorId: seller.ownerUserId,
+        action: 'WAREHOUSE_CREATED',
+        entityType: 'warehouse',
+        entityId: warehouse.id,
+        metadata: { name: warehouse.name, code: warehouse.code },
+      });
     }
     return seller;
   }

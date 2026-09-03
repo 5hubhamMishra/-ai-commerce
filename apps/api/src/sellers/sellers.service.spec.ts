@@ -25,7 +25,6 @@ describe('SellersService', () => {
       {} as ConstructorParameters<typeof SellersService>[3],
       {} as ConstructorParameters<typeof SellersService>[4],
       {} as ConstructorParameters<typeof SellersService>[5],
-      {} as ConstructorParameters<typeof SellersService>[6],
     );
 
     await expect(
@@ -51,7 +50,6 @@ describe('SellersService', () => {
     };
     const service = new SellersService(
       prisma as never,
-      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -94,7 +92,6 @@ describe('SellersService', () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
     );
     (service as unknown as { getRow: jest.Mock }).getRow = jest
       .fn()
@@ -130,7 +127,6 @@ describe('SellersService', () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
     );
     (service as unknown as { getRow: jest.Mock }).getRow = jest
       .fn()
@@ -157,7 +153,6 @@ describe('SellersService', () => {
       {} as never,
       audit as never,
       notifications as never,
-      {} as never,
       {} as never,
     );
     (service as unknown as { getRow: jest.Mock }).getRow = jest
@@ -188,12 +183,17 @@ describe('SellersService', () => {
     const audit = { record: jest.fn() };
     const notifications = { create: jest.fn() };
     const service = new SellersService(
-      { seller: { updateMany: sellerUpdateMany } } as never,
+      {
+        $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+          callback({
+            seller: { updateMany: sellerUpdateMany },
+          }),
+        ),
+      } as never,
       {} as never,
       {} as never,
       audit as never,
       notifications as never,
-      {} as never,
       {} as never,
     );
     (service as unknown as { getRow: jest.Mock }).getRow = jest
@@ -211,11 +211,63 @@ describe('SellersService', () => {
     expect(audit.record).not.toHaveBeenCalled();
   });
 
+  it('provisions the first warehouse inside the verification transaction', async () => {
+    const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const seller = {
+      id: 'seller-1',
+      ownerUserId: 'owner-1',
+      businessName: 'Acme Store',
+      status: SellerStatus.VERIFIED,
+    };
+    const warehouseCreate = jest.fn().mockResolvedValue({
+      id: 'warehouse-1',
+      name: 'Acme Store Fulfillment',
+      code: 'SELLER-SELLER-1',
+    });
+    const audit = { record: jest.fn() };
+    const notifications = { create: jest.fn() };
+    const transaction = jest.fn((callback: (tx: unknown) => unknown) =>
+      callback({
+        seller: {
+          updateMany: sellerUpdateMany,
+          findUniqueOrThrow: jest.fn().mockResolvedValue(seller),
+        },
+        warehouse: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: warehouseCreate,
+        },
+      }),
+    );
+    const service = new SellersService(
+      { $transaction: transaction } as never,
+      {} as never,
+      {} as never,
+      audit as never,
+      notifications as never,
+      {} as never,
+    );
+    (service as unknown as { getRow: jest.Mock }).getRow = jest
+      .fn()
+      .mockResolvedValue({ id: 'seller-1', status: SellerStatus.REJECTED });
+
+    await service.verify('admin-1', 'seller-1');
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(warehouseCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ sellerId: 'seller-1' }),
+    });
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'WAREHOUSE_CREATED',
+        entityId: 'warehouse-1',
+      }),
+    );
+  });
+
   it('does not apply a provider rejection after moderation changes status', async () => {
     const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
     const service = new SellersService(
       { seller: { updateMany: sellerUpdateMany } } as never,
-      {} as never,
       {} as never,
       {} as never,
       {} as never,
