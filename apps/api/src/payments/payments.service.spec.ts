@@ -8,6 +8,10 @@ import { PaymentsService } from './payments.service';
 
 describe('PaymentsService settlement race', () => {
   it('returns the selected provider with a created payment intent', async () => {
+    const createIntent = jest.fn().mockResolvedValue({
+      providerRef: 'order-1',
+      clientSecret: undefined,
+    });
     const service = new PaymentsService(
       {
         payment: {
@@ -33,10 +37,7 @@ describe('PaymentsService settlement race', () => {
       } as never,
       {
         type: PaymentProviderType.RAZORPAY,
-        createIntent: jest.fn().mockResolvedValue({
-          providerRef: 'order-1',
-          clientSecret: undefined,
-        }),
+        createIntent,
       } as never,
       {
         assertOwnership: jest.fn().mockResolvedValue({
@@ -63,6 +64,12 @@ describe('PaymentsService settlement race', () => {
     await expect(
       createInternal.call(service, 'user-1', 'order-1', 'key-1'),
     ).resolves.toMatchObject({ provider: PaymentProviderType.RAZORPAY });
+    expect(createIntent).toHaveBeenCalledWith({
+      orderId: 'order-1',
+      amount: 100,
+      currency: 'INR',
+      idempotencyKey: 'order-1',
+    });
   });
 
   it('fingerprints payment create and confirm inputs when claiming keys', async () => {

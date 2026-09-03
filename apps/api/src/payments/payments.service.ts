@@ -131,7 +131,7 @@ export class PaymentsService {
           orderId,
           amount,
           currency: order.currency,
-          idempotencyKey: `payment-${orderId}`,
+          idempotencyKey: orderId,
         });
       } catch (error) {
         await this.prisma.payment.updateMany({
