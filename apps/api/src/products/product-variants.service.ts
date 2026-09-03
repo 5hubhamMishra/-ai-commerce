@@ -58,16 +58,7 @@ export class ProductVariantsService {
           },
         });
       } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2002'
-        ) {
-          throw new ConflictException({
-            code: 'SKU_ALREADY_EXISTS',
-            message: 'A variant with this SKU already exists.',
-          });
-        }
-        throw error;
+        throw this.mapVariantConflict(error);
       }
     });
 
@@ -104,7 +95,7 @@ export class ProductVariantsService {
             compareAtPrice: dto.compareAtPrice,
             currency: dto.currency,
             weightGrams: dto.weightGrams,
-            isDefault: dto.isDefault,
+            isDefault: dto.isDefault === true ? false : dto.isDefault,
             isActive: dto.isActive,
           },
         });
@@ -120,6 +111,10 @@ export class ProductVariantsService {
             where: { productId, isDefault: true, NOT: { id: variantId } },
             data: { isDefault: false },
           });
+          await tx.productVariant.update({
+            where: { id: variantId },
+            data: { isDefault: true },
+          });
         }
         if (dto.attributeValueIds) {
           await tx.variantAttributeValue.deleteMany({ where: { variantId } });
@@ -133,16 +128,7 @@ export class ProductVariantsService {
           }
         }
       } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2002'
-        ) {
-          throw new ConflictException({
-            code: 'SKU_ALREADY_EXISTS',
-            message: 'A variant with this SKU already exists.',
-          });
-        }
-        throw error;
+        throw this.mapVariantConflict(error);
       }
     });
 
@@ -217,5 +203,28 @@ export class ProductVariantsService {
         message: 'One or more attribute values do not exist.',
       });
     }
+  }
+
+  private mapVariantConflict(error: unknown) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      const target = error.meta?.target;
+      if (
+        (Array.isArray(target) && target.includes('product_id')) ||
+        error.message.includes('product_variants_one_default_per_product_idx')
+      ) {
+        return new ConflictException({
+          code: 'DEFAULT_VARIANT_CHANGED',
+          message: 'Another default variant change was applied first.',
+        });
+      }
+      return new ConflictException({
+        code: 'SKU_ALREADY_EXISTS',
+        message: 'A variant with this SKU already exists.',
+      });
+    }
+    return error;
   }
 }

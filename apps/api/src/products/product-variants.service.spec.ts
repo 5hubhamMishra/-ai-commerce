@@ -144,13 +144,39 @@ describe('ProductVariantsService', () => {
         compareAtPrice: undefined,
         currency: undefined,
         weightGrams: undefined,
-        isDefault: true,
+        isDefault: false,
         isActive: undefined,
       },
     });
     expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
       where: { productId: 'p1', isDefault: true, NOT: { id: 'v2' } },
       data: { isDefault: false },
+    });
+    expect(prisma.productVariant.update).toHaveBeenCalledWith({
+      where: { id: 'v2' },
+      data: { isDefault: true },
+    });
+  });
+
+  it('maps a concurrent default-variant race separately from an SKU conflict', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v2',
+      productId: 'p1',
+      sku: 'SKU-2',
+      updatedAt: new Date('2026-09-01T00:00:00.000Z'),
+    });
+    prisma.productVariant.updateMany.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+        meta: { target: ['product_id'] },
+      }),
+    );
+
+    await expect(
+      service.update('p1', 'v2', { isDefault: true }, 'actor1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'DEFAULT_VARIANT_CHANGED' }),
     });
   });
 
@@ -197,7 +223,7 @@ describe('ProductVariantsService', () => {
         compareAtPrice: undefined,
         currency: undefined,
         weightGrams: undefined,
-        isDefault: true,
+        isDefault: false,
         isActive: undefined,
       },
     });
