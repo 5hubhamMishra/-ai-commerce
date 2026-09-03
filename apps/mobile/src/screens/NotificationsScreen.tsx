@@ -15,6 +15,10 @@ const notificationDate = new Intl.DateTimeFormat('en-IN', {
   minute: '2-digit',
 });
 
+function invalidate(operation: { current: number }) {
+  operation.current++;
+}
+
 export default function NotificationsScreen({ navigation }: Props) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,10 @@ export default function NotificationsScreen({ navigation }: Props) {
   useEffect(() => {
     startTransition(() => void loadNotifications());
     const interval = setInterval(() => void loadNotifications(), 60_000);
-    return () => clearInterval(interval);
+    return () => {
+      invalidate(notificationOperation);
+      clearInterval(interval);
+    };
   }, [loadNotifications]);
 
   async function markRead(id: string) {
