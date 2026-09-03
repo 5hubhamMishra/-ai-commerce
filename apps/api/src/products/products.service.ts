@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProductStatus, type Product } from '@prisma/client';
+import {
+  Prisma,
+  ProductStatus,
+  SellerStatus,
+  type Product,
+} from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { CACHE_PREFIX } from '../common/cache/cache-keys';
 import { CacheService } from '../common/cache/cache.service';
@@ -292,7 +297,12 @@ export class ProductsService {
     return this.findByIdAdmin(product.id);
   }
 
-  async update(id: string, dto: UpdateProductDto, actorId: string) {
+  async update(
+    id: string,
+    dto: UpdateProductDto,
+    actorId: string,
+    sellerId?: string,
+  ) {
     const existing = await this.getRowById(id);
     if (dto.categoryId) await this.assertCategoryExists(dto.categoryId);
     if (dto.brandId) await this.assertBrandExists(dto.brandId);
@@ -301,7 +311,13 @@ export class ProductsService {
 
     try {
       const claimed = await this.prisma.product.updateMany({
-        where: { id, updatedAt: existing.updatedAt },
+        where: {
+          id,
+          updatedAt: existing.updatedAt,
+          ...(sellerId
+            ? { seller: { id: sellerId, status: SellerStatus.VERIFIED } }
+            : {}),
+        },
         data: {
           name: dto.name,
           slug,

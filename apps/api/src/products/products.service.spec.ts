@@ -174,6 +174,35 @@ describe('ProductsService', () => {
     expect(prisma.product.update).not.toHaveBeenCalled();
   });
 
+  it('requires the seller to remain verified when claiming an update', async () => {
+    const updatedAt = new Date('2026-09-01T00:00:00.000Z');
+    prisma.product.findUnique.mockResolvedValue({
+      id: 'product-1',
+      deletedAt: null,
+      updatedAt,
+    });
+    prisma.product.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.update(
+        'product-1',
+        { status: ProductStatus.ACTIVE },
+        'actor1',
+        'seller-1',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PRODUCT_CHANGED' }),
+    });
+    expect(prisma.product.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'product-1',
+        updatedAt,
+        seller: { id: 'seller-1', status: 'VERIFIED' },
+      },
+      data: expect.objectContaining({ status: ProductStatus.ACTIVE }),
+    });
+  });
+
   it('rejects a stale product deletion', async () => {
     const updatedAt = new Date('2026-09-01T00:00:00.000Z');
     prisma.product.findUnique.mockResolvedValue({

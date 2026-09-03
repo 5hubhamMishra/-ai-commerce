@@ -69,7 +69,7 @@ export class SellerCatalogService {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.sellers.assertVerifiedSeller(sellerId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.products.update(productId, dto, userId);
+    return this.products.update(productId, dto, userId, sellerId);
   }
 
   async remove(userId: string, productId: string) {
