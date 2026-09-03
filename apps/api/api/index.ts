@@ -34,6 +34,36 @@ const { createApp } = require('../dist/src/create-app.js') as {
 const expressApp = express();
 let bootstrapPromise: Promise<void> | null = null;
 
+function forwardRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      res.removeListener('finish', onComplete);
+      res.removeListener('close', onComplete);
+      res.removeListener('error', onError);
+    };
+    const onComplete = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    res.once('finish', onComplete);
+    res.once('close', onComplete);
+    res.once('error', onError);
+    try {
+      expressApp(req, res);
+    } catch (error) {
+      onError(error as Error);
+    }
+  });
+}
+
 async function ensureBootstrapped(): Promise<void> {
   const app = await createApp(new ExpressAdapter(expressApp));
   await app.init();
@@ -53,5 +83,5 @@ export default async function handler(
     bootstrapPromise = null;
     throw err;
   }
-  expressApp(req, res);
+  await forwardRequest(req, res);
 }
