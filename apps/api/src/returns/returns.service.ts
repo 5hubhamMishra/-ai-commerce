@@ -36,6 +36,7 @@ const NON_TERMINAL_RETURN_STATUSES: ReturnStatus[] = [
   ReturnStatus.PICKUP_SCHEDULED,
   ReturnStatus.PICKED_UP,
   ReturnStatus.INSPECTING,
+  ReturnStatus.PROCESSING,
 ];
 
 const returnDetailInclude = {

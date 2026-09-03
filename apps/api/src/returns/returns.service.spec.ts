@@ -413,4 +413,49 @@ describe('ReturnsService', () => {
     });
     expect(create).toHaveBeenCalled();
   });
+
+  it('blocks a new return while an earlier completion is processing', async () => {
+    const create = jest.fn();
+    const prisma = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'order1',
+          userId: 'user1',
+          status: OrderStatus.DELIVERED,
+          items: [],
+        }),
+      },
+      returnRequest: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'return-1',
+          status: ReturnStatus.PROCESSING,
+        }),
+        create,
+      },
+    };
+    const service = new ReturnsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.create({ id: 'user1' } as never, {
+        orderId: 'order1',
+        reason: ReturnReason.OTHER,
+        resolution: ReturnResolution.REFUND,
+        items: [],
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RETURN_ALREADY_IN_PROGRESS' }),
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
 });
