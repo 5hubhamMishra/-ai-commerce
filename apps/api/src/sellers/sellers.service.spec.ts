@@ -118,11 +118,12 @@ describe('SellersService', () => {
   it('rejects reinstatement when another moderation update wins', async () => {
     const sellerUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
     const prisma = {
-      seller: { updateMany: sellerUpdateMany },
+      $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+        callback({ seller: { updateMany: sellerUpdateMany } }),
+      ),
     };
     const service = new SellersService(
       prisma as never,
-      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -139,7 +140,11 @@ describe('SellersService', () => {
     });
     expect(sellerUpdateMany).toHaveBeenCalledWith({
       where: { id: 'seller-1', status: SellerStatus.SUSPENDED },
-      data: { status: SellerStatus.VERIFIED, suspendReason: null },
+      data: {
+        status: SellerStatus.VERIFIED,
+        verifiedAt: expect.any(Date),
+        suspendReason: null,
+      },
     });
   });
 

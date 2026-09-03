@@ -333,19 +333,7 @@ export class SellersService {
         message: 'Only a suspended seller can be reinstated.',
       });
     }
-    const claimed = await this.prisma.seller.updateMany({
-      where: { id, status: SellerStatus.SUSPENDED },
-      data: { status: SellerStatus.VERIFIED, suspendReason: null },
-    });
-    if (claimed.count === 0) {
-      throw new ConflictException({
-        code: 'SELLER_STATUS_CHANGED',
-        message: 'The seller changed before reinstatement could be applied.',
-      });
-    }
-    const updated = await this.prisma.seller.findUniqueOrThrow({
-      where: { id },
-    });
+    const updated = await this.markVerified(id, SellerStatus.SUSPENDED, true);
     await this.audit.record({
       actorId,
       action: 'SELLER_REINSTATED',
@@ -440,11 +428,19 @@ export class SellersService {
    *  actual fulfillment address at application time); a seller can correct
    *  them via PATCH /sellers/me/warehouse before shipping anything for real —
    *  documented as a known gap in DATABASE.md, not silently left broken. */
-  private async markVerified(sellerId: string, expectedStatus: SellerStatus) {
+  private async markVerified(
+    sellerId: string,
+    expectedStatus: SellerStatus,
+    clearSuspendReason = false,
+  ) {
     const { seller, warehouse } = await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.seller.updateMany({
         where: { id: sellerId, status: expectedStatus },
-        data: { status: SellerStatus.VERIFIED, verifiedAt: new Date() },
+        data: {
+          status: SellerStatus.VERIFIED,
+          verifiedAt: new Date(),
+          ...(clearSuspendReason ? { suspendReason: null } : {}),
+        },
       });
       if (claimed.count === 0) {
         throw new ConflictException({
