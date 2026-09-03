@@ -398,8 +398,22 @@ export class OrdersService {
         });
       }
       if (existing.status === OrderStatus.PENDING_PAYMENT) {
+        const processingPayment = await tx.payment.findFirst({
+          where: { orderId, status: PaymentStatus.PROCESSING },
+          select: { id: true },
+        });
+        if (processingPayment) {
+          throw new ConflictException({
+            code: 'PAYMENT_CONFIRMATION_IN_PROGRESS',
+            message:
+              'This order cannot be cancelled while payment confirmation is in progress.',
+          });
+        }
         await tx.payment.updateMany({
-          where: { orderId, status: PaymentStatus.PENDING },
+          where: {
+            orderId,
+            status: { in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING] },
+          },
           data: { status: PaymentStatus.CANCELLED },
         });
         await this.inventory.releaseReserved(tx, lines);

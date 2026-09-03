@@ -221,7 +221,11 @@ describe('PaymentsService settlement race', () => {
       ).confirmPaymentInternal('user-1', 'payment-1', {}),
     ).rejects.toBe(providerError);
     expect(paymentUpdate).toHaveBeenNthCalledWith(1, {
-      where: { id: 'payment-1', status: PaymentStatus.PENDING },
+      where: {
+        id: 'payment-1',
+        status: PaymentStatus.PENDING,
+        order: { status: OrderStatus.PENDING_PAYMENT },
+      },
       data: { status: PaymentStatus.PROCESSING },
     });
     expect(paymentUpdate).toHaveBeenNthCalledWith(2, {

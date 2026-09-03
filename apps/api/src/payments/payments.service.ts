@@ -241,7 +241,11 @@ export class PaymentsService {
     }
 
     const claimed = await this.prisma.payment.updateMany({
-      where: { id: paymentId, status: PaymentStatus.PENDING },
+      where: {
+        id: paymentId,
+        status: PaymentStatus.PENDING,
+        order: { status: OrderStatus.PENDING_PAYMENT },
+      },
       data: { status: PaymentStatus.PROCESSING },
     });
     if (claimed.count === 0) {

@@ -172,7 +172,10 @@ describe('OrdersService state claims', () => {
         }),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
-      payment: { updateMany: paymentUpdateMany },
+      payment: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        updateMany: paymentUpdateMany,
+      },
       orderStateHistory: { create: jest.fn() },
     };
     const service = new OrdersService(
@@ -223,10 +226,58 @@ describe('OrdersService state claims', () => {
     });
 
     expect(paymentUpdateMany).toHaveBeenCalledWith({
-      where: { orderId: 'order-1', status: PaymentStatus.PENDING },
+      where: {
+        orderId: 'order-1',
+        status: { in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING] },
+      },
       data: { status: PaymentStatus.CANCELLED },
     });
     expect(releaseReserved).toHaveBeenCalled();
+  });
+
+  it('rejects cancellation while payment confirmation is processing', async () => {
+    const releaseReserved = jest.fn();
+    const paymentUpdateMany = jest.fn();
+    const tx = {
+      order: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'order-1',
+          userId: 'user-1',
+          status: OrderStatus.PENDING_PAYMENT,
+          items: [],
+        }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      payment: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'payment-1' }),
+        updateMany: paymentUpdateMany,
+      },
+    };
+    const service = new OrdersService(
+      {
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
+        ),
+      } as never,
+      { releaseReserved } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.cancel({ id: 'user-1', roles: [] } as never, 'order-1', {
+        reason: 'Changed my mind',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        code: 'PAYMENT_CONFIRMATION_IN_PROGRESS',
+      }),
+    });
+    expect(paymentUpdateMany).not.toHaveBeenCalled();
+    expect(releaseReserved).not.toHaveBeenCalled();
   });
 
   it('does not ship inventory when another request wins a fulfillment claim', async () => {
