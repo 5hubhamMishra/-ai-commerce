@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ProductStatus } from '@prisma/client';
 import { SellerCatalogService } from './seller-catalog.service';
 
 describe('SellerCatalogService inventory', () => {
@@ -46,7 +47,7 @@ describe('SellerCatalogService inventory', () => {
 
     await expect(
       service.update('seller-user-1', 'product-1', {
-        status: 'ACTIVE' as never,
+        status: ProductStatus.ACTIVE,
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(productUpdate).not.toHaveBeenCalled();
