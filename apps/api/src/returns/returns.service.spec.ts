@@ -83,7 +83,14 @@ describe('ReturnsService', () => {
   });
 
   it('keeps a return retryable when the refund provider declines it', async () => {
-    const prisma = { $transaction: jest.fn() };
+    const returnUpdateMany = jest
+      .fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    const prisma = {
+      returnRequest: { updateMany: returnUpdateMany },
+      $transaction: jest.fn(),
+    };
     const service = new ReturnsService(
       prisma as never,
       {} as never,
@@ -146,6 +153,10 @@ describe('ReturnsService', () => {
       response: expect.objectContaining({ code: 'REFUND_FAILED' }),
     });
     expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(returnUpdateMany).toHaveBeenNthCalledWith(2, {
+      where: { id: 'return-1', status: ReturnStatus.PROCESSING },
+      data: { status: ReturnStatus.INSPECTING },
+    });
   });
 
   it('does not restock when another completion wins the return claim', async () => {
@@ -153,6 +164,7 @@ describe('ReturnsService', () => {
     const markReturned = jest.fn();
     const returnUpdateMany = jest.fn().mockResolvedValue({ count: 0 });
     const prisma = {
+      returnRequest: { updateMany: returnUpdateMany },
       $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
         callback({
           returnRequest: { updateMany: returnUpdateMany },

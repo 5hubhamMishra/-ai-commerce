@@ -14,6 +14,7 @@ describe('return-state-machine', () => {
       ReturnStatus.PICKUP_SCHEDULED,
       ReturnStatus.PICKED_UP,
       ReturnStatus.INSPECTING,
+      ReturnStatus.PROCESSING,
       ReturnStatus.COMPLETED,
     ];
     for (let i = 0; i < path.length - 1; i++) {

@@ -13,7 +13,8 @@ const TRANSITIONS: Record<ReturnStatus, ReturnStatus[]> = {
   PICKUP_SCHEDULED: [ReturnStatus.PICKED_UP],
   PICKED_UP: [ReturnStatus.INSPECTING],
   // Inspection can fail (item doesn't qualify after all) — reject rather than complete.
-  INSPECTING: [ReturnStatus.COMPLETED, ReturnStatus.REJECTED],
+  INSPECTING: [ReturnStatus.PROCESSING, ReturnStatus.REJECTED],
+  PROCESSING: [ReturnStatus.COMPLETED, ReturnStatus.INSPECTING],
   REJECTED: [],
   CANCELLED: [],
   COMPLETED: [],

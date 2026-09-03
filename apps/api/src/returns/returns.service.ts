@@ -403,8 +403,19 @@ export class ReturnsService {
    */
   async complete(actorId: string, returnId: string, dto: CompleteReturnDto) {
     const existing = await this.getRow(returnId);
-    assertReturnTransition(existing.status, ReturnStatus.COMPLETED);
+    assertReturnTransition(existing.status, ReturnStatus.PROCESSING);
     this.assertAllItemsInspected(existing.items, dto.items);
+
+    const completionClaim = await this.prisma.returnRequest.updateMany({
+      where: { id: returnId, status: ReturnStatus.INSPECTING },
+      data: { status: ReturnStatus.PROCESSING },
+    });
+    if (completionClaim.count === 0) {
+      throw new ConflictException({
+        code: 'RETURN_STATUS_CHANGED',
+        message: 'The return changed before completion could be started.',
+      });
+    }
 
     const inspectedById = new Map(
       dto.items.map((i) => [i.returnRequestItemId, i]),
@@ -436,15 +447,27 @@ export class ReturnsService {
         (sum, item) => sum + Number(item.orderItem.unitPrice) * item.quantity,
         0,
       );
-      const payment = await this.findSucceededPayment(existing.orderId);
-      const result = await this.refundsService.requestProviderRefund(
-        payment.providerPaymentRef ?? payment.providerRef!,
-        amount,
-        payment.currency,
-        'Return completed',
-        `return-${returnId}`,
+      const payment = await this.findSucceededPayment(existing.orderId).catch(
+        async (error) => {
+          await this.releaseCompletionClaim(returnId);
+          throw error;
+        },
       );
+      let result: Awaited<ReturnType<RefundsService['requestProviderRefund']>>;
+      try {
+        result = await this.refundsService.requestProviderRefund(
+          payment.providerPaymentRef ?? payment.providerRef!,
+          amount,
+          payment.currency,
+          'Return completed',
+          `return-${returnId}`,
+        );
+      } catch (error) {
+        await this.releaseCompletionClaim(returnId);
+        throw error;
+      }
       if (!result.success) {
+        await this.releaseCompletionClaim(returnId);
         throw new ConflictException({
           code: 'REFUND_FAILED',
           message:
@@ -458,16 +481,24 @@ export class ReturnsService {
         result,
       };
     } else if (existing.resolution === ReturnResolution.EXCHANGE) {
-      const newVariant = await this.prisma.productVariant.findUniqueOrThrow({
-        where: { id: existing.desiredVariantId! },
-      });
+      const newVariant = await this.prisma.productVariant
+        .findUniqueOrThrow({ where: { id: existing.desiredVariantId! } })
+        .catch(async (error) => {
+          await this.releaseCompletionClaim(returnId);
+          throw error;
+        });
       const item = existing.items[0];
       const priceDifference =
         (Number(newVariant.price) - Number(item.orderItem.unitPrice)) *
         item.quantity;
       const payment =
         priceDifference !== 0
-          ? await this.findSucceededPayment(existing.orderId)
+          ? await this.findSucceededPayment(existing.orderId).catch(
+              async (error) => {
+                await this.releaseCompletionClaim(returnId);
+                throw error;
+              },
+            )
           : null;
       exchangeContext = {
         newVariantId: newVariant.id,
@@ -478,7 +509,7 @@ export class ReturnsService {
 
     const outcome = await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.returnRequest.updateMany({
-        where: { id: returnId, status: ReturnStatus.INSPECTING },
+        where: { id: returnId, status: ReturnStatus.PROCESSING },
         data: { status: ReturnStatus.COMPLETED },
       });
       if (claimed.count === 0) {
@@ -571,6 +602,13 @@ export class ReturnsService {
     );
 
     return this.getAdminDetail(returnId);
+  }
+
+  private async releaseCompletionClaim(returnId: string) {
+    await this.prisma.returnRequest.updateMany({
+      where: { id: returnId, status: ReturnStatus.PROCESSING },
+      data: { status: ReturnStatus.INSPECTING },
+    });
   }
 
   // ---- Reads --------------------------------------------------------------
