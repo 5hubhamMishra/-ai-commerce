@@ -47,6 +47,9 @@ export class RazorpayPaymentAdapter implements PaymentProvider {
   }
 
   async createIntent(input: CreateIntentInput): Promise<CreateIntentResult> {
+    if (input.idempotencyKey.length > 40) {
+      throw new Error('Razorpay receipt must be 40 characters or fewer.');
+    }
     const order = await this.getClient().orders.create({
       // Razorpay amounts are always in the smallest currency subunit (paise for INR).
       amount: Math.round(input.amount * 100),

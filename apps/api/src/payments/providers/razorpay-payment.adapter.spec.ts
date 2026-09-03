@@ -81,6 +81,20 @@ describe('RazorpayPaymentAdapter', () => {
       ).rejects.toThrow('RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET must be set');
     });
 
+    it('rejects receipt keys longer than Razorpay allows', async () => {
+      const adapter = new RazorpayPaymentAdapter(fullConfig());
+
+      await expect(
+        adapter.createIntent({
+          orderId: 'ord-1',
+          amount: 499,
+          currency: 'INR',
+          idempotencyKey: 'x'.repeat(41),
+        }),
+      ).rejects.toThrow('Razorpay receipt must be 40 characters or fewer');
+      expect(mockOrdersCreate).not.toHaveBeenCalled();
+    });
+
     it('propagates Razorpay SDK/network failures without creating a fake provider reference', async () => {
       mockOrdersCreate.mockRejectedValue(new Error('Razorpay unavailable'));
       const adapter = new RazorpayPaymentAdapter(fullConfig());
