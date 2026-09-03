@@ -497,17 +497,18 @@ export const useStore = create<StoreState>()(
         const currentQuantity = get().serverCart?.items.find(
           (i) => i.id === itemId,
         )?.quantity;
-        const delta =
+        const requestedDelta =
           currentQuantity === undefined ? null : quantity - currentQuantity;
         await enqueueCartMutation(async () => {
           if (session !== authOperation || get().user?.id !== userId) return;
           const current = get().serverCart?.items.find((i) => i.id === itemId);
           if (!current) return;
+          const nextQuantity =
+            requestedDelta !== null && Math.abs(requestedDelta) === 1
+              ? current.quantity + requestedDelta
+              : quantity;
           cartFetchOperation++;
-          const cart = await cartApi.updateItem(
-            itemId,
-            delta === null ? quantity : current.quantity + delta,
-          );
+          const cart = await cartApi.updateItem(itemId, nextQuantity);
           if (session !== authOperation || get().user?.id !== userId) return;
           set({ serverCart: cart });
         });
