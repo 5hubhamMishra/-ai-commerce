@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export const SEARCH_SORT_OPTIONS = [
   'relevance',
@@ -13,14 +21,17 @@ export type SearchSort = (typeof SEARCH_SORT_OPTIONS)[number];
 export class SearchQueryDto {
   @IsOptional()
   @IsString()
+  @MaxLength(200)
   q?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   category?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   brand?: string;
 
   @IsOptional()
@@ -57,5 +68,6 @@ export class SearchQueryDto {
    *  RecommendationsController fix for the exact same class of bug). */
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   anonymousId?: string;
 }
