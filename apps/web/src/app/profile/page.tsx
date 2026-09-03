@@ -79,7 +79,8 @@ export default function ProfilePage() {
       a.href = url;
       a.download = "veloura-my-data.json";
       a.click();
-      URL.revokeObjectURL(url);
+      // Let the browser start the download before releasing its object URL.
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
       setExportStatus("idle");
     } catch {
       if (useStore.getState().user?.id === requestUserId) setExportStatus("error");
