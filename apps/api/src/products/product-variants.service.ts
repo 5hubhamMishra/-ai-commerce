@@ -147,7 +147,7 @@ export class ProductVariantsService {
     const variant = await this.getOwned(productId, variantId);
     const claimed = await this.prisma.productVariant.updateMany({
       where: { id: variantId, updatedAt: variant.updatedAt },
-      data: { deletedAt: new Date(), isActive: false },
+      data: { deletedAt: new Date(), isActive: false, isDefault: false },
     });
     if (claimed.count === 0) {
       throw new ConflictException({

@@ -195,7 +195,11 @@ describe('ProductVariantsService', () => {
     });
     expect(prisma.productVariant.updateMany).toHaveBeenCalledWith({
       where: { id: 'v1', updatedAt },
-      data: { deletedAt: expect.any(Date), isActive: false },
+      data: {
+        deletedAt: expect.any(Date),
+        isActive: false,
+        isDefault: false,
+      },
     });
     expect(prisma.productVariant.update).not.toHaveBeenCalled();
   });
