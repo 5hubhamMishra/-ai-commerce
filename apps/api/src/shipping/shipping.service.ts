@@ -31,9 +31,25 @@ export class ShippingService {
       });
     }
 
+    const shippingAddress = {
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+    };
+    if (!(await this.provider.validateAddress(shippingAddress))) {
+      throw new BadRequestException({
+        code: 'ADDRESS_UNDELIVERABLE',
+        message: 'This address is not currently deliverable.',
+      });
+    }
+
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
-      include: { items: { include: { variant: true } } },
+      include: {
+        items: { include: { variant: { include: { product: true } } } },
+      },
     });
     const items = cart?.items ?? [];
     if (items.length === 0) {
@@ -45,6 +61,29 @@ export class ShippingService {
       });
     }
 
+    if (
+      items.some(
+        ({ variant }) =>
+          variant.deletedAt ||
+          !variant.isActive ||
+          variant.product.deletedAt ||
+          variant.product.status !== 'ACTIVE',
+      )
+    ) {
+      throw new BadRequestException({
+        code: 'VARIANT_NOT_PURCHASABLE',
+        message: 'One or more cart items are no longer available for purchase.',
+      });
+    }
+
+    const currency = items[0].variant.currency;
+    if (items.some((item) => item.variant.currency !== currency)) {
+      throw new BadRequestException({
+        code: 'MIXED_CURRENCY_CART',
+        message: 'All items in an order must use the same currency.',
+      });
+    }
+
     const subtotal = items.reduce(
       (sum, item) => sum + Number(item.variant.price) * item.quantity,
       0,
@@ -53,16 +92,8 @@ export class ShippingService {
       (sum, item) => sum + (item.variant.weightGrams ?? 0) * item.quantity,
       0,
     );
-    const currency = items[0]?.variant.currency ?? 'INR';
-
     return this.provider.quote({
-      address: {
-        line1: address.line1,
-        city: address.city,
-        state: address.state,
-        postalCode: address.postalCode,
-        country: address.country,
-      },
+      address: shippingAddress,
       subtotal,
       currency,
       totalWeightGrams,
