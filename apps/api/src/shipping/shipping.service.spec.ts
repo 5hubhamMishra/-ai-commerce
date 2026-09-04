@@ -21,7 +21,7 @@ describe('ShippingService', () => {
         address: { findUnique: jest.fn().mockResolvedValue(address) },
         cart: { findUnique: jest.fn().mockResolvedValue({ items: cartItems }) },
       } as never,
-      { quote, validateAddress } as never,
+      { quote, validateAddress },
     );
     return { service, quote, validateAddress };
   }
