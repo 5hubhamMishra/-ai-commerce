@@ -75,4 +75,24 @@ describe('ShippingService', () => {
     });
     expect(quote).not.toHaveBeenCalled();
   });
+
+  it('rejects a provider quote with the wrong currency', async () => {
+    const { service, quote } = createService([item()]);
+    quote.mockResolvedValue([
+      {
+        method: 'STANDARD',
+        label: 'Standard delivery',
+        fee: 149,
+        currency: 'USD',
+        estimatedDaysMin: 5,
+        estimatedDaysMax: 7,
+      },
+    ]);
+
+    await expect(
+      service.quoteForCart('user-1', 'address-1'),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVALID_SHIPPING_QUOTE' }),
+    });
+  });
 });

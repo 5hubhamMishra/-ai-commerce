@@ -92,11 +92,25 @@ export class ShippingService {
       (sum, item) => sum + (item.variant.weightGrams ?? 0) * item.quantity,
       0,
     );
-    return this.provider.quote({
+    const quotes = await this.provider.quote({
       address: shippingAddress,
       subtotal,
       currency,
       totalWeightGrams,
     });
+    if (
+      quotes.some(
+        (quote) =>
+          quote.currency !== currency ||
+          !Number.isFinite(quote.fee) ||
+          quote.fee < 0,
+      )
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_SHIPPING_QUOTE',
+        message: 'The shipping provider returned an invalid quote.',
+      });
+    }
+    return quotes;
   }
 }
