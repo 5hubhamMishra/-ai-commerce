@@ -27,6 +27,8 @@ const cartItemInclude = {
   },
 } satisfies Prisma.CartItemInclude;
 
+const MAX_CART_ITEM_QUANTITY = 999;
+
 type CartItemRow = Prisma.CartItemGetPayload<{
   include: typeof cartItemInclude;
 }>;
@@ -49,15 +51,34 @@ export class CartService {
     const variant = await this.assertVariantPurchasable(dto.variantId);
     const cart = await this.getOrCreateCart(userId);
 
-    await this.prisma.cartItem.upsert({
+    const existing = await this.prisma.cartItem.findUnique({
       where: { cartId_variantId: { cartId: cart.id, variantId: variant.id } },
-      create: {
-        cartId: cart.id,
-        variantId: variant.id,
-        quantity: dto.quantity,
-      },
-      update: { quantity: { increment: dto.quantity } },
+      select: { quantity: true },
     });
+    if (existing && existing.quantity + dto.quantity > MAX_CART_ITEM_QUANTITY) {
+      throw this.quantityLimit();
+    }
+
+    try {
+      await this.prisma.cartItem.upsert({
+        where: { cartId_variantId: { cartId: cart.id, variantId: variant.id } },
+        create: {
+          cartId: cart.id,
+          variantId: variant.id,
+          quantity: dto.quantity,
+        },
+        update: { quantity: { increment: dto.quantity } },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2004' &&
+        String(error.meta?.constraint).includes('cart_items_quantity_max_check')
+      ) {
+        throw this.quantityLimit();
+      }
+      throw error;
+    }
     return this.getCart(userId);
   }
 
@@ -125,6 +146,13 @@ export class CartService {
     return new ConflictException({
       code: 'CART_ITEM_CHANGED',
       message: 'The cart item changed before this update could be applied.',
+    });
+  }
+
+  private quantityLimit() {
+    return new BadRequestException({
+      code: 'CART_QUANTITY_LIMIT',
+      message: `A cart line cannot contain more than ${MAX_CART_ITEM_QUANTITY} units.`,
     });
   }
 

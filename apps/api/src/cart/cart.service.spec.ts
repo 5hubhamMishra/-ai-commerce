@@ -19,6 +19,7 @@ describe('CartService', () => {
       cart: { upsert: jest.fn().mockResolvedValue({ id: 'cart1' }) },
       cartItem: {
         upsert: jest.fn().mockResolvedValue({}),
+        findUnique: jest.fn().mockResolvedValue(null),
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
@@ -31,6 +32,33 @@ describe('CartService', () => {
       create: { cartId: 'cart1', variantId: 'v1', quantity: 2 },
       update: { quantity: { increment: 2 } },
     });
+  });
+
+  it('rejects an add that would exceed the cart line limit', async () => {
+    const upsert = jest.fn();
+    const prisma = {
+      productVariant: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'v1',
+          deletedAt: null,
+          isActive: true,
+          product: { deletedAt: null, status: ProductStatus.ACTIVE },
+        }),
+      },
+      cart: { upsert: jest.fn().mockResolvedValue({ id: 'cart1' }) },
+      cartItem: {
+        findUnique: jest.fn().mockResolvedValue({ quantity: 998 }),
+        upsert,
+      },
+    };
+    const service = new CartService(prisma as never);
+
+    await expect(
+      service.addItem('u1', { variantId: 'v1', quantity: 2 }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'CART_QUANTITY_LIMIT' }),
+    });
+    expect(upsert).not.toHaveBeenCalled();
   });
 
   it('rejects a stale cart quantity update', async () => {
