@@ -14,6 +14,8 @@ export interface RazorpayWebhookEnvelope {
         id: string;
         order_id: string;
         status: string;
+        amount?: number;
+        currency?: string;
       };
     };
   };

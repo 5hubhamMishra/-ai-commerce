@@ -301,6 +301,49 @@ describe('PaymentsService settlement race', () => {
     expect(findFirst).not.toHaveBeenCalled();
   });
 
+  it('rejects a captured Razorpay payment with a mismatched amount', async () => {
+    const findFirst = jest.fn().mockResolvedValue({
+      id: 'payment-1',
+      amount: 100,
+      currency: 'INR',
+      status: PaymentStatus.PENDING,
+    });
+    const service = new PaymentsService(
+      { payment: { findFirst } } as never,
+      { verifyWebhookSignature: jest.fn().mockReturnValue(true) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    const applyConfirmationResult = jest.fn();
+    (
+      service as unknown as { applyConfirmationResult: jest.Mock }
+    ).applyConfirmationResult = applyConfirmationResult;
+
+    await expect(
+      service.handleRazorpayWebhook(
+        JSON.stringify({
+          event: 'payment.captured',
+          payload: {
+            payment: {
+              entity: {
+                id: 'pay_1',
+                order_id: 'order_1',
+                amount: 9900,
+                currency: 'INR',
+              },
+            },
+          },
+        }),
+        'valid-signature',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PAYMENT_AMOUNT_MISMATCH' }),
+    });
+    expect(applyConfirmationResult).not.toHaveBeenCalled();
+  });
+
   it('maps a concurrent pending-payment race to a conflict', async () => {
     const paymentCreate = jest.fn().mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {

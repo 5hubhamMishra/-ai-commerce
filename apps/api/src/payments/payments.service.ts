@@ -382,6 +382,16 @@ export class PaymentsService {
       return { received: true };
     }
     if (
+      isCaptured &&
+      (paymentEntity.amount !== Math.round(Number(payment.amount) * 100) ||
+        paymentEntity.currency !== payment.currency)
+    ) {
+      throw new BadRequestException({
+        code: 'PAYMENT_AMOUNT_MISMATCH',
+        message: 'The captured payment amount does not match the order.',
+      });
+    }
+    if (
       payment.status !== PaymentStatus.PENDING &&
       payment.status !== PaymentStatus.PROCESSING &&
       !(isCaptured && payment.status === PaymentStatus.FAILED)
