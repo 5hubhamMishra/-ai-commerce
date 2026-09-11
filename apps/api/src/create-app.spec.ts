@@ -1,5 +1,8 @@
 import { configureTrustProxy } from './create-app';
 
+// Testing proxy configuration must not bootstrap runtime environment validation.
+jest.mock('./app.module', () => ({ AppModule: class {} }));
+
 describe('configureTrustProxy', () => {
   it('trusts exactly one proxy hop on Vercel', () => {
     const set = jest.fn();
