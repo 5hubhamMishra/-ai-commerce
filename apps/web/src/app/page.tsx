@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Category } from "@ai-commerce/types";
-import { catalogApi } from "@ai-commerce/api-client";
+import { catalogApi, recommendationsApi } from "@ai-commerce/api-client";
 import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
 import { fromProductListItem } from "@/lib/catalog-mappers";
 import CatalogProductGrid from "@/components/catalog/CatalogProductGrid";
@@ -33,8 +33,35 @@ async function loadHomeCatalog() {
   }
 }
 
+async function loadPublicRecommendations() {
+  try {
+    const [first, popular, trending] = await Promise.all([
+      catalogApi.listProducts({ pageSize: 100 }),
+      recommendationsApi.list({ limit: 10 }),
+      recommendationsApi.trending({ limit: 10 }),
+    ]);
+    // ponytail: resolve IDs from the public catalog; use batch-by-ID if catalog size grows.
+    const remaining = await Promise.all(Array.from(
+      { length: Math.max(0, Math.ceil(first.total / first.pageSize) - 1) },
+      (_, i) => catalogApi.listProducts({ page: i + 2, pageSize: 100 }),
+    ));
+    const products = new Map([first, ...remaining].flatMap((page) =>
+      page.items.map((product) => [product.id, fromProductListItem(product)] as const),
+    ));
+    const resolve = (scores: typeof popular) => scores.flatMap(({ productId }) => {
+      const product = products.get(productId);
+      return product ? [product] : [];
+    });
+    return { popular: resolve(popular), trending: resolve(trending) };
+  } catch {
+    return { popular: [], trending: [] };
+  }
+}
+
 export default async function Home() {
-  const { categories, featuredCards } = await loadHomeCatalog();
+  const [{ categories, featuredCards }, initialRecommendations] = await Promise.all([
+    loadHomeCatalog(), loadPublicRecommendations(),
+  ]);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": ["WebSite", "OnlineStore"],
@@ -82,7 +109,7 @@ export default async function Home() {
         <CatalogProductGrid products={featuredCards} />
       </Section>
 
-      <HomeDynamicSections fallbackProducts={featuredCards} />
+      <HomeDynamicSections fallbackProducts={featuredCards} initialRecommendations={initialRecommendations} />
 
       <section
         id="categories"

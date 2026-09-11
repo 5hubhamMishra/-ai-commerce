@@ -13,8 +13,10 @@ import { SkeletonBlock } from "@/components/Skeleton";
 
 export default function HomeDynamicSections({
   fallbackProducts,
+  initialRecommendations,
 }: {
   fallbackProducts: CatalogCardProduct[];
+  initialRecommendations: { popular: CatalogCardProduct[]; trending: CatalogCardProduct[] };
 }) {
   const hydrated = useStore((s) => s.hydrated);
   const events = useStore((s) => s.events);
@@ -96,6 +98,8 @@ export default function HomeDynamicSections({
             }
             reasons={reasons}
           />
+        ) : initialRecommendations.popular.length > 0 ? (
+          <CatalogProductGrid products={initialRecommendations.popular} />
         ) : (
           <SkeletonBlock className="h-64 w-full" />
         )}
@@ -108,6 +112,8 @@ export default function HomeDynamicSections({
               trendingCards.length > 0 ? trendingCards : featuredFallback
             }
           />
+        ) : initialRecommendations.trending.length > 0 ? (
+          <CatalogProductGrid products={initialRecommendations.trending} />
         ) : (
           <SkeletonBlock className="h-64 w-full" />
         )}

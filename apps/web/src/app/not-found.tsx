@@ -6,6 +6,9 @@ const links = [
   { label: "Categories", href: "/#categories" },
   { label: "Search", href: "/search" },
   { label: "Account", href: "/login" },
+  { label: "Sitemap", href: "/sitemap.xml" },
+  { label: "Agent guidance", href: "/llms.txt" },
+  { label: "Developer resources", href: "/developers" },
 ];
 
 export default function NotFound() {

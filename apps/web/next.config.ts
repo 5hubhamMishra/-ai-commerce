@@ -52,6 +52,12 @@ const nextConfig: NextConfig = {
   // workspace packages (symlinked, shipped as raw TS with no build step of their own) — this
   // opts them back in so `next dev`/`next build` actually compile them.
   transpilePackages: ["@ai-commerce/types", "@ai-commerce/api-client"],
+  // The MCP route reads public/llms.txt via fs at request time; process.cwd()-built paths
+  // aren't statically traceable, so without this the file can be missing from the deployed
+  // Vercel function even though it works locally.
+  outputFileTracingIncludes: {
+    "/.well-known/mcp": ["public/llms.txt"],
+  },
 };
 
 export default nextConfig;

@@ -6,6 +6,10 @@ production-shaped commerce foundation — catalog, cart, checkout, orders, payme
 
 This repository was built incrementally, phase by phase.
 
+## Current progress
+
+In the local workspace, read [the remediation progress save file](docs/coordination/REMEDIATION_PROGRESS.md) when resuming work, and update it after each project work session with actual changes, checks, blockers, and next steps. The [targeted remediation master prompt](docs/reference/Veloura%20AI-Commerce%20Targeted%20Remediation%20Master%20Prompt.pdf) is saved alongside it at the owner's request. These files are excluded from Git; the links are available in the local workspace only.
+
 ## Structure
 
 ```
