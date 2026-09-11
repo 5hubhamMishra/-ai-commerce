@@ -39,10 +39,14 @@ it("renders public recommendations from all catalog pages before hydration", asy
   expect(api.list).toHaveBeenCalledWith({ limit: 10 });
 });
 
-it("keeps the homepage available when recommendation loading fails", async () => {
-  api.list.mockRejectedValue(new Error("Unavailable"));
+it.each([
+  ["list", "First page recommendation", "Second page recommendation"],
+  ["trending", "Second page recommendation", "First page recommendation"],
+] as const)("keeps the other recommendations server-visible when %s fails", async (failed, visible, missing) => {
+  api[failed].mockRejectedValue(new Error("Unavailable"));
   const html = renderToStaticMarkup(await Home());
   expect(html).toContain("Discover products with less guesswork");
   expect(html).toContain("Veloura");
-  expect(html).not.toContain("Second page recommendation");
+  expect(html).toContain(visible);
+  expect(html).not.toContain(missing);
 });

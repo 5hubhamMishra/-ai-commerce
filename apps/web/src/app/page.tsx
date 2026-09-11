@@ -37,8 +37,8 @@ async function loadPublicRecommendations() {
   try {
     const [first, popular, trending] = await Promise.all([
       catalogApi.listProducts({ pageSize: 100 }),
-      recommendationsApi.list({ limit: 10 }),
-      recommendationsApi.trending({ limit: 10 }),
+      recommendationsApi.list({ limit: 10 }).catch(() => []),
+      recommendationsApi.trending({ limit: 10 }).catch(() => []),
     ]);
     // ponytail: resolve IDs from the public catalog; use batch-by-ID if catalog size grows.
     const remaining = await Promise.all(Array.from(
