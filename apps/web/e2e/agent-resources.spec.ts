@@ -31,6 +31,7 @@ test("public discovery resources and genuine 404 recovery", async ({ request }) 
     ["/llms.txt", "text/plain", "## When to use Veloura"],
     ["/developers", "text/html", "Veloura developer resources"],
     ["/.well-known/mcp", "application/json", "streamable-http"],
+    ["/.well-known/mcp/server-card.json", "application/json", "serverUrl"],
   ]) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);

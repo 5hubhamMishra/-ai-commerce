@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { GET, POST } from "./route";
+import { GET as getServerCard } from "./server-card.json/route";
 import { SITE_URL } from "@/lib/site-url";
 
 const endpoint = `${SITE_URL}/.well-known/mcp`;
@@ -11,7 +12,12 @@ const headers = { "content-type": "application/json", accept: "application/json,
 describe("Veloura public MCP", () => {
   it("supports an SDK handshake, resource discovery and reading the real guidance", async () => {
     const client = new Client({ name: "remediation-check", version: "1.0.0" });
-    const transport = new StreamableHTTPClientTransport(new URL(endpoint), {
+    const response = getServerCard();
+    expect(response.headers.get("content-type")).toContain("application/json");
+    const card = await response.json();
+    expect(card).toMatchObject({ name: "Veloura", serverUrl: endpoint,
+      transport: "streamable-http", capabilities: { resources: true, tools: false }, tools: [] });
+    const transport = new StreamableHTTPClientTransport(new URL(card.url), {
       fetch: async (url, init) => {
         const request = new Request(url, init);
         return request.method === "POST" ? POST(request) : GET(request);

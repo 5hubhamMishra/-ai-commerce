@@ -23,8 +23,9 @@ Start with /shop or /search, use /sitemap.xml to discover product and category U
 - Privacy: /privacy
 - Sitemap: /sitemap.xml
 - Robots: /robots.txt
-- Developer resources: /developers
-- MCP discovery: /.well-known/mcp
+- [Veloura developer resources](https://web-lyart-three-94.vercel.app/developers): Public resource formats and MCP connection instructions.
+- [Veloura MCP endpoint](https://web-lyart-three-94.vercel.app/.well-known/mcp): Read-only site guidance over Streamable HTTP.
+- [Veloura MCP server card](https://web-lyart-three-94.vercel.app/.well-known/mcp/server-card.json): Connection URL and supported capabilities.
 
 ## Developer resources
 
