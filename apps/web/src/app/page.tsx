@@ -140,6 +140,7 @@ export default async function Home() {
                   src={`/products/${c.slug}.svg`}
                   alt={c.name}
                   fill
+                  unoptimized
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />
@@ -224,6 +225,7 @@ function Hero({ categories }: { categories: Category[] }) {
                   src={`/products/${c.slug}.svg`}
                   alt={c.name}
                   fill
+                  unoptimized
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />

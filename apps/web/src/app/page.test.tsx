@@ -2,6 +2,8 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, expect, it, vi } from "vitest";
+import { ImageConfigContext } from "next/dist/shared/lib/image-config-context.shared-runtime";
+import { imageConfigDefault } from "next/dist/shared/lib/image-config";
 
 const api = vi.hoisted(() => ({
   listProducts: vi.fn(), listCategories: vi.fn(), list: vi.fn(), trending: vi.fn(),
@@ -37,6 +39,17 @@ it("renders public recommendations from all catalog pages before hydration", asy
   expect(html).toContain("Second page recommendation");
   expect(api.listProducts).toHaveBeenCalledWith({ page: 2, pageSize: 100 });
   expect(api.list).toHaveBeenCalledWith({ limit: 10 });
+});
+
+it("serves category SVGs directly without redundant size variants", async () => {
+  api.listCategories.mockResolvedValue([{ name: "Headphones", slug: "headphones" }]);
+  const html = renderToStaticMarkup(
+    <ImageConfigContext.Provider value={{ ...imageConfigDefault, dangerouslyAllowSVG: true }}>
+      {await Home()}
+    </ImageConfigContext.Provider>,
+  );
+  expect(html.match(/src="\/products\/headphones\.svg"/g)).toHaveLength(2);
+  expect(html.includes("srcSet=")).toBe(false);
 });
 
 it.each([
