@@ -15,8 +15,9 @@ export const revalidate = 300;
 async function loadHomeCatalog() {
   try {
     const [categories, featured] = await Promise.all([
-      catalogApi.listCategories(),
-      catalogApi.listProducts({ featured: true, pageSize: 10 }),
+      catalogApi.listCategories().catch(() => demoCategories),
+      catalogApi.listProducts({ featured: true, pageSize: 10 })
+        .catch(() => listDemoProducts({ featured: true, pageSize: 10 })),
     ]);
     return {
       categories,

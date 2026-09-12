@@ -50,3 +50,23 @@ it.each([
   expect(html).toContain(visible);
   expect(html).not.toContain(missing);
 });
+
+it.each(["categories", "featured"] as const)("keeps successful catalog content server-visible when %s fails", async (failed) => {
+  if (failed === "categories") {
+    api.listCategories.mockRejectedValue(new Error("Unavailable"));
+  } else {
+    api.listCategories.mockResolvedValue([{ name: "Live category", slug: "live-category" }]);
+  }
+  const listProducts = api.listProducts.getMockImplementation()!;
+  api.listProducts.mockImplementation(async (query) => {
+    if (!query.featured) return listProducts(query);
+    if (failed === "featured") throw new Error("Unavailable");
+    return { items: [{ id: "featured", name: "Live featured product", slug: "live-featured",
+      brand: null, primaryImageUrl: null, minPrice: 100, maxPrice: 100, inStock: true }],
+      total: 1, pageSize: 10 };
+  });
+  const html = renderToStaticMarkup(await Home());
+  expect(html.includes(failed === "categories" ? "Live featured product" : "Live category")).toBe(true);
+  expect(html).toContain("First page recommendation");
+  expect(html).toContain("Second page recommendation");
+});
