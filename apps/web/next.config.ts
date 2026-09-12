@@ -16,6 +16,16 @@ if (
 }
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return {
+      // Only unmatched URLs with an explicit Markdown request use this 404 body.
+      fallback: [{
+        source: "/:path*",
+        has: [{ type: "header", key: "accept", value: "text/markdown" }],
+        destination: "/404.md",
+      }],
+    };
+  },
   async headers() {
     return [
       {

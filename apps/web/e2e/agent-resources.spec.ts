@@ -40,6 +40,27 @@ test("public discovery resources and genuine 404 recovery", async ({ request }) 
   }
 });
 
+test("unmatched URLs offer Markdown 404 recovery without intercepting existing routes", async ({ request }) => {
+  const path = "/missing-remediation-page/nested";
+  const markdown = await request.get(path, { headers: { Accept: "text/markdown" } });
+  expect(markdown.status()).toBe(404);
+  expect(markdown.headers()["content-type"]).toContain("text/markdown");
+  expect(markdown.headers().vary).toContain("Accept");
+  expect(markdown.headers()["cache-control"]).toContain("no-store");
+  expect(await markdown.text()).toContain("[Sitemap](https://web-lyart-three-94.vercel.app/sitemap.xml)");
+  for (const accept of ["text/html", "text/markdown;q=0", "*/*"]) {
+    const html = await request.get(path, { headers: { Accept: accept } });
+    expect(html.status()).toBe(404);
+    expect(html.headers()["content-type"]).toContain("text/html");
+    expect(await html.text()).toContain("This Veloura page was not found");
+  }
+  for (const path of ["/", "/developers", "/llms.txt", "/.well-known/mcp/server-card.json"]) {
+    const response = await request.get(path, { headers: { Accept: "text/markdown" } });
+    expect(response.status()).toBe(200);
+    expect(await response.text()).not.toContain("# Veloura: page not found");
+  }
+});
+
 test("MCP rejects invalid requests without exposing capabilities", async ({ request }) => {
   const endpoint = "/.well-known/mcp";
   const headers = { "Content-Type": "application/json", Accept: "application/json, text/event-stream" };
