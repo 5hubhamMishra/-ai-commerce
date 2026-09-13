@@ -84,16 +84,12 @@ export default function CatalogProductCard({
     <div
       data-testid="catalog-product-card"
       data-available={product.available ? "true" : "false"}
-      className="catalog-product-card rounded-2xl overflow-hidden bg-white flex flex-col relative group"
+      className="catalog-product-card group"
     >
       <button
         onClick={handleWishlist}
         disabled={pending || authStatus === "idle" || authStatus === "checking"}
-        className="absolute right-3 top-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200"
-        style={{
-          border: "1px solid var(--clr-border)",
-          boxShadow: "var(--shadow-xs)",
-        }}
+        className="catalog-wishlist"
         aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
       >
         <svg
@@ -115,55 +111,55 @@ export default function CatalogProductCard({
 
       <Link
         href={`/products/${product.slug}`}
-        className="flex-1 flex flex-col"
+        className="catalog-card-link"
         onClick={() => {
           trackRealEvent("PRODUCT_CLICKED", product.id);
           if (reason) trackRealEvent("RECOMMENDATION_CLICKED", product.id);
         }}
       >
-        <div className="relative aspect-square overflow-hidden bg-stone-50">
+        <div className="catalog-card-media">
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
               unoptimized={/^\/products\/[\w-]+\.svg$/.test(product.imageUrl)}
               alt={product.name}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="catalog-card-image"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-xs text-[var(--clr-text-disabled)]">
+            <div className="catalog-card-empty">
               No image
             </div>
           )}
           {!product.available && (
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-20">
-              <span className="px-4 py-1.5 rounded-full bg-stone-900 text-white text-xs font-bold tracking-widest uppercase shadow-sm">
+            <div className="catalog-card-unavailable">
+              <span className="catalog-card-stock">
                 Out of Stock
               </span>
             </div>
           )}
         </div>
 
-        <div className="p-3 pb-3 flex flex-col flex-1">
+        <div className="catalog-card-body">
           {product.brandName && (
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--clr-text-disabled)]">
+            <p className="catalog-card-brand">
               {product.brandName}
             </p>
           )}
-          <h3 className="mt-0.5 text-sm font-medium leading-snug line-clamp-2 text-[var(--clr-text-primary)]">
+          <h3 className="catalog-card-title">
             {product.name}
           </h3>
           {priceLabel && (
-            <div className="mt-1.5 flex items-baseline gap-1.5">
-              <span className="text-sm font-bold">{priceLabel}</span>
+            <div className="catalog-card-price">
+              <span className="catalog-card-price-label">{priceLabel}</span>
             </div>
           )}
         </div>
       </Link>
 
       {reason && (
-        <div className="px-3 pb-3">
-          <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-[var(--clr-accent-subtle)]">
+        <div className="catalog-card-reason">
+          <div className="catalog-card-reason-badge">
             <svg
               viewBox="0 0 24 24"
               width="10"
@@ -173,7 +169,7 @@ export default function CatalogProductCard({
             >
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            <span className="text-[10px] font-medium line-clamp-1 text-[var(--clr-accent-text)]">
+            <span className="catalog-card-reason-text">
               {reason}
             </span>
           </div>

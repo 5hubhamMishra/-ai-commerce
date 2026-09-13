@@ -129,3 +129,24 @@ test("developer guidance fits a mobile viewport", async ({ page }, testInfo) => 
   await page.screenshot({ path: testInfo.outputPath("developers-mobile.png"), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test("catalog cards preserve product and guest wishlist navigation after hydration", async ({ page, baseURL }) => {
+  await page.goto("/");
+  const card = page.getByTestId("catalog-product-card").first();
+  // Empty catalogs are valid; populated local/public release checks exercise this path.
+  if (!await card.count()) {
+    await expect(page.getByRole("heading", { name: "No products found", exact: true })).toBeVisible();
+    return;
+  }
+  const link = card.locator('a[href^="/products/"]');
+  const href = await link.getAttribute("href");
+  expect(href).toBeTruthy();
+  await link.click();
+  await expect(page).toHaveURL(`${baseURL}${href}`);
+  await page.goto("/");
+  const wishlistHref = await card.locator('a[href^="/products/"]').getAttribute("href");
+  const wishlist = card.getByRole("button", { name: "Add to wishlist", exact: true });
+  await expect(wishlist).toBeEnabled();
+  await wishlist.click();
+  await expect(page).toHaveURL(`${baseURL}/login?redirect=${encodeURIComponent(wishlistHref!)}`);
+});

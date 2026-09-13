@@ -31,3 +31,18 @@ it.each([
   expect(container.firstElementChild?.classList.contains("catalog-product-card")).toBe(true);
   expect(container.firstElementChild?.hasAttribute("style")).toBe(false);
 });
+
+it("keeps unavailable product details and recommendation guidance in server HTML", () => {
+  const html = renderToStaticMarkup(<CatalogProductCard product={{
+    id: "headphones", slug: "headphones", name: "Headphones", brandName: "Audio brand",
+    imageUrl: null, minPrice: 100, maxPrice: 200, available: false,
+  }} reason="Based on your browsing" />);
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  expect(container.querySelector('[data-available="false"]')).not.toBeNull();
+  expect(container.querySelector('a')?.getAttribute("href")).toBe("/products/headphones");
+  for (const text of ["Headphones", "Audio brand", "No image", "Out of Stock", "From", "Based on your browsing"]) {
+    expect(container.textContent).toContain(text);
+  }
+  expect(container.querySelector('button')?.hasAttribute("aria-label")).toBe(true);
+});

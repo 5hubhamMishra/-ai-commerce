@@ -68,6 +68,9 @@ it("serves category SVGs directly without redundant size variants", async () => 
   );
   expect(html.match(/src="\/products\/headphones\.svg"/g)).toHaveLength(2);
   expect(html.includes("srcSet=")).toBe(false);
+  expect(html.match(/class="home-category-image"/g)).toHaveLength(2);
+  expect(html.match(/loading="lazy" decoding="async"/g)).toHaveLength(2);
+  expect(html).not.toContain('data-nimg="fill"');
 });
 
 it.each([

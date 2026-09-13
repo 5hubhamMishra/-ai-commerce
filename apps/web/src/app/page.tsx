@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-img-element -- Local category SVGs need no raster optimization. */
 import Link from "next/link";
-import Image from "next/image";
 import type { Category } from "@ai-commerce/types";
 import { catalogApi, recommendationsApi } from "@ai-commerce/api-client";
 import { demoCategories, listDemoProducts } from "@/lib/demo-catalog";
@@ -134,18 +134,17 @@ export default async function Home() {
               <Link
                 key={c.slug}
                 href={`/category/${c.slug}`}
-                className="group relative h-40 cursor-pointer overflow-hidden rounded-2xl"
-                style={{ background: "var(--clr-surface)" }}
+                className="home-category group"
               >
-                <Image
+                <img
                   src={`/products/${c.slug}.svg`}
                   alt={c.name}
-                  fill
-                  unoptimized
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                  decoding="async"
+                  className="home-category-image"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />
-                <div className="absolute bottom-0 inset-x-0 p-3 text-sm font-semibold text-white">
+                <div className="home-category-shade" />
+                <div className="home-category-label">
                   {c.name}
                 </div>
               </Link>
@@ -214,7 +213,7 @@ function Hero({ categories }: { categories: Category[] }) {
               <Link
                 key={c.slug}
                 href={`/category/${c.slug}`}
-                className={`relative h-36 cursor-pointer overflow-hidden rounded-2xl ring-[var(--clr-accent)] transition-all duration-200 hover:ring-2 ${
+                className={`home-hero-category ${
                   i === 1 || i === 4
                     ? "mt-5"
                     : i === 2 || i === 5
@@ -222,15 +221,15 @@ function Hero({ categories }: { categories: Category[] }) {
                       : ""
                 }`}
               >
-                <Image
+                <img
                   src={`/products/${c.slug}.svg`}
                   alt={c.name}
-                  fill
-                  unoptimized
-                  className="object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  className="home-category-image"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />
-                <div className="absolute bottom-2 left-2.5 text-xs font-semibold text-white">
+                <div className="home-category-shade" />
+                <div className="home-hero-category-label">
                   {c.name}
                 </div>
               </Link>
