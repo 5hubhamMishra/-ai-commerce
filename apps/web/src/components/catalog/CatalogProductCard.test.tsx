@@ -4,6 +4,7 @@ import { expect, it, vi } from "vitest";
 import { ImageConfigContext } from "next/dist/shared/lib/image-config-context.shared-runtime";
 import { imageConfigDefault } from "next/dist/shared/lib/image-config";
 import CatalogProductCard from "./CatalogProductCard";
+import { getImageProps } from "next/image";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/lib/store", () => ({ useStore: () => "unauthenticated" }));
@@ -11,6 +12,7 @@ vi.mock("@/lib/store", () => ({ useStore: () => "unauthenticated" }));
 it.each([
   ["/products/headphones.svg", false],
   ["/products/headphones.png", true],
+  ["/products/items/headphones-1.jpg", true],
   ["https://www.apple.com/headphones.svg", true],
 ])("preserves the appropriate image delivery for %s", (imageUrl, optimized) => {
   const html = renderToStaticMarkup(
@@ -30,6 +32,16 @@ it.each([
   container.innerHTML = html;
   expect(container.firstElementChild?.classList.contains("catalog-product-card")).toBe(true);
   expect(container.firstElementChild?.hasAttribute("style")).toBe(false);
+  const renderedImage = container.querySelector("img")!;
+  if (imageUrl === "/products/items/headphones-1.jpg") {
+    const expand = (url: string) => url.replace(/\/i\/(\d+)\/([a-z0-9-]+)\.jpg/g,
+      (_, width, name) => `/_next/image?url=%2Fproducts%2Fitems%2F${name}.jpg&w=${width}&q=75`);
+    const { props } = getImageProps({ src: imageUrl, alt: "Headphones", fill: true });
+    expect(expand(renderedImage.getAttribute("srcset")!)).toBe(props.srcSet);
+    expect(expand(renderedImage.getAttribute("src")!)).toBe(props.src);
+  } else {
+    expect(renderedImage.getAttribute("src")).not.toMatch(/^\/i\//);
+  }
 });
 
 it("keeps unavailable product details and recommendation guidance in server HTML", () => {

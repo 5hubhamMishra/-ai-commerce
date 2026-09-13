@@ -150,3 +150,26 @@ test("catalog cards preserve product and guest wishlist navigation after hydrati
   await wishlist.click();
   await expect(page).toHaveURL(`${baseURL}/login?redirect=${encodeURIComponent(wishlistHref!)}`);
 });
+
+test("short local image URLs preserve optimizer bytes and validation", async ({ request }) => {
+  for (const width of [640, 750, 828, 1080, 1200, 1920, 2048, 3840]) {
+    const paths = [
+      `/i/${width}/headphones-1.jpg`,
+      `/_next/image?url=%2Fproducts%2Fitems%2Fheadphones-1.jpg&w=${width}&q=75`,
+    ];
+    const [short, original] = await Promise.all(paths.map(path => request.get(path, {
+      headers: { Accept: "image/webp" },
+    })));
+    expect(short.status()).toBe(200);
+    expect(original.status()).toBe(200);
+    expect(short.headers()["content-type"]).toBe(original.headers()["content-type"]);
+    expect(await short.body()).toEqual(await original.body());
+  }
+  const normal = await request.get("/i/640/headphones-1.jpg");
+  const overridden = await request.get("/i/640/headphones-1.jpg?url=/favicon.svg&w=1&q=99");
+  expect(overridden.status()).toBe(200);
+  expect(await overridden.body()).toEqual(await normal.body());
+  expect((await request.get("/i/9999/headphones-1.jpg")).status()).toBe(400);
+  expect((await request.get("/i/640/missing-remediation-image.jpg")).status()).toBe(400);
+  expect((await request.get("/i/640/nested/headphones-1.jpg")).status()).toBe(404);
+});

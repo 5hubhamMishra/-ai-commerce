@@ -41,6 +41,7 @@ export default function CatalogProductCard({
   const trackRealEvent = useStore((s) => s.trackRealEvent);
   const [heartAnimating, setHeartAnimating] = useState(false);
   const [pending, setPending] = useState(false);
+  const localImage = product.imageUrl?.match(/^\/products\/items\/([a-z0-9-]+)\.jpg$/)?.[1];
 
   const handleWishlist = useCallback(
     async (e: React.MouseEvent) => {
@@ -121,6 +122,7 @@ export default function CatalogProductCard({
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
+              loader={localImage ? ({ width }) => `/i/${width}/${localImage}.jpg` : undefined}
               unoptimized={/^\/products\/[\w-]+\.svg$/.test(product.imageUrl)}
               alt={product.name}
               fill

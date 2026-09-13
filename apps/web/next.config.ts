@@ -18,6 +18,10 @@ if (
 const nextConfig: NextConfig = {
   async rewrites() {
     return {
+      beforeFiles: [{
+        source: "/i/:width(\\d+)/:name([a-z0-9-]+).jpg",
+        destination: "/_next/image?url=/products/items/:name.jpg&w=:width&q=75",
+      }],
       // Only unmatched URLs with an explicit Markdown request use this 404 body.
       fallback: [{
         source: "/:path*",
