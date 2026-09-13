@@ -138,6 +138,7 @@ export default function CatalogProductCard({
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
+              unoptimized={/^\/products\/[\w-]+\.svg$/.test(product.imageUrl)}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
