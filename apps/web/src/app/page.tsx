@@ -44,7 +44,8 @@ async function loadPublicRecommendations() {
     // ponytail: resolve IDs from the public catalog; use batch-by-ID if catalog size grows.
     const remaining = await Promise.all(Array.from(
       { length: Math.max(0, Math.ceil(first.total / first.pageSize) - 1) },
-      (_, i) => catalogApi.listProducts({ page: i + 2, pageSize: 100 }),
+      (_, i) => catalogApi.listProducts({ page: i + 2, pageSize: 100 })
+        .catch(() => ({ items: [] })),
     ));
     const products = new Map([first, ...remaining].flatMap((page) =>
       page.items.map((product) => [product.id, fromProductListItem(product)] as const),

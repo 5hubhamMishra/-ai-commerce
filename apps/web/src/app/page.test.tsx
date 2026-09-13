@@ -41,6 +41,24 @@ it("renders public recommendations from all catalog pages before hydration", asy
   expect(api.list).toHaveBeenCalledWith({ limit: 10 });
 });
 
+it("retains recommendations from successful catalog pages when another page fails", async () => {
+  const listProducts = api.listProducts.getMockImplementation()!;
+  api.listProducts.mockImplementation(async (query) => {
+    if (query.page === 2) throw new Error("Unavailable catalog page");
+    const result = await listProducts(query);
+    return {
+      ...result, total: 201,
+      items: query.page === 3 ? [{ ...result.items[0], id: "third", name: "Third page recommendation" }] : result.items,
+    };
+  });
+  api.list.mockResolvedValue([{ productId: "second" }, { productId: "third" }]);
+  const html = renderToStaticMarkup(await Home());
+  expect(html).toContain("First page recommendation");
+  expect(html).toContain("Third page recommendation");
+  expect(html).not.toContain("Second page recommendation");
+  expect(api.listProducts).toHaveBeenCalledWith({ page: 3, pageSize: 100 });
+});
+
 it("serves category SVGs directly without redundant size variants", async () => {
   api.listCategories.mockResolvedValue([{ name: "Headphones", slug: "headphones" }]);
   const html = renderToStaticMarkup(
