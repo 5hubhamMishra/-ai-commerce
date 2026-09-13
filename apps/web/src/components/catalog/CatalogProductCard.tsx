@@ -84,20 +84,7 @@ export default function CatalogProductCard({
     <div
       data-testid="catalog-product-card"
       data-available={product.available ? "true" : "false"}
-      className="rounded-2xl overflow-hidden bg-white flex flex-col relative group"
-      style={{
-        boxShadow: "var(--shadow-card)",
-        transition: "box-shadow 200ms ease, transform 200ms ease",
-        transform: "translateY(0)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-lift)";
-        e.currentTarget.style.transform = "translateY(-4px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-card)";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
+      className="catalog-product-card rounded-2xl overflow-hidden bg-white flex flex-col relative group"
     >
       <button
         onClick={handleWishlist}

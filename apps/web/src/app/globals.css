@@ -306,6 +306,16 @@ body {
    ============================================================ */
 
 /* Card base */
+.catalog-product-card {
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+  transform: translateY(0);
+}
+.catalog-product-card:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-4px);
+}
+
 .card {
   background: var(--clr-surface);
   border-radius: var(--radius-xl);

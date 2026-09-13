@@ -26,4 +26,8 @@ it.each([
   );
   expect(html.includes("srcSet=")).toBe(optimized);
   if (!optimized) expect(html).toContain(`src="${imageUrl}"`);
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  expect(container.firstElementChild?.classList.contains("catalog-product-card")).toBe(true);
+  expect(container.firstElementChild?.hasAttribute("style")).toBe(false);
 });

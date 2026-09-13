@@ -99,6 +99,18 @@ test("homepage remains useful without JavaScript and has one truthful Organizati
     await expect(page.getByTestId("catalog-product-card").first().or(
       page.getByRole("heading", { name: "No products found", exact: true }),
     )).toBeVisible();
+    const card = page.getByTestId("catalog-product-card").first();
+    if (await card.count()) {
+      await page.mouse.move(0, 0);
+      await expect(card).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+      const restingShadow = await card.evaluate((element) => getComputedStyle(element).boxShadow);
+      await card.hover();
+      await expect(card).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, -4)");
+      await expect(card).not.toHaveCSS("box-shadow", restingShadow);
+      await page.mouse.move(0, 0);
+      await expect(card).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+      await expect(card).toHaveCSS("box-shadow", restingShadow);
+    }
     const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
     const organizations = schemas.map((text) => JSON.parse(text)).filter((value) => value["@type"] === "Organization");
     expect(organizations).toHaveLength(1);
