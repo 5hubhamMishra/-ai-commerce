@@ -101,6 +101,21 @@ test("homepage remains useful without JavaScript and has one truthful Organizati
     )).toBeVisible();
     const card = page.getByTestId("catalog-product-card").first();
     if (await card.count()) {
+      await expect(page.locator("#catalog-heart")).toHaveCount(1);
+      const heart = card.locator(".catalog-heart");
+      await expect(heart.locator("use")).toHaveAttribute("href", "#catalog-heart");
+      await expect(heart).toHaveAttribute("aria-hidden", "true");
+      await expect(heart).toHaveCSS("fill", "none");
+      await expect(heart).toHaveCSS("width", "18px");
+      await expect(heart).toHaveCSS("stroke-width", "2px");
+      await heart.evaluate(element => {
+        element.classList.add("selected", "popping");
+      });
+      await expect(heart).toHaveCSS("fill", "rgb(180, 83, 9)");
+      await expect(heart).toHaveCSS("stroke", "rgb(180, 83, 9)");
+      await expect(heart).toHaveCSS("animation-name", "heartPop");
+      await expect(heart).toHaveCSS("animation-duration", "0.38s");
+      await heart.evaluate(element => element.classList.remove("selected", "popping"));
       await page.mouse.move(0, 0);
       await expect(card).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
       const restingShadow = await card.evaluate((element) => getComputedStyle(element).boxShadow);

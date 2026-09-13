@@ -7,7 +7,28 @@ import CatalogProductCard from "./CatalogProductCard";
 import { getImageProps } from "next/image";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/lib/store", () => ({ useStore: () => "unauthenticated" }));
+const wishlist = vi.hoisted(() => ({ items: [] as { productId: string }[] }));
+vi.mock("@/lib/store", () => ({
+  useStore: (select: (state: unknown) => unknown) => select({
+    authStatus: "unauthenticated", serverWishlist: wishlist,
+  }),
+}));
+
+it.each([false, true])("preserves the wishlist icon and accessible action when selected=%s", (selected) => {
+  wishlist.items = selected ? [{ productId: "headphones" }] : [];
+  try {
+    const container = document.createElement("div");
+    container.innerHTML = renderToStaticMarkup(<CatalogProductCard product={{
+      id: "headphones", slug: "headphones", name: "Headphones", brandName: null,
+      imageUrl: null, minPrice: 100, maxPrice: 100, available: true,
+    }} />);
+    expect(container.querySelector("button")?.getAttribute("aria-label"))
+      .toBe(selected ? "Remove from wishlist" : "Add to wishlist");
+    expect(container.querySelector("svg")?.classList.contains("selected")).toBe(selected);
+    expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector("use")?.getAttribute("href")).toBe("#catalog-heart");
+  } finally { wishlist.items = []; }
+});
 
 it.each([
   ["/products/headphones.svg", false],

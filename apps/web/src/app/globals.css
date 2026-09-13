@@ -342,6 +342,9 @@ body {
   border: 1px solid var(--clr-border);
   box-shadow: var(--shadow-xs);
 }
+.catalog-heart { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.catalog-heart.selected { fill: var(--clr-accent); stroke: var(--clr-accent); }
+.catalog-heart.popping { animation: heartPop 0.38s ease forwards; }
 .catalog-card-link { @apply flex-1 flex flex-col; }
 .catalog-card-media { @apply relative aspect-square overflow-hidden bg-stone-50; }
 .catalog-card-image { @apply object-cover transition-transform duration-500 group-hover:scale-105; }
