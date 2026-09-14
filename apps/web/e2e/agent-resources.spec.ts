@@ -101,6 +101,10 @@ test("homepage remains useful without JavaScript and has one truthful Organizati
     )).toBeVisible();
     const card = page.getByTestId("catalog-product-card").first();
     if (await card.count()) {
+      await expect(card.locator("h3")).toHaveCSS("font-size", "14px");
+      await expect(card.locator("h3")).toHaveCSS("-webkit-line-clamp", "2");
+      await expect(card.locator(".catalog-card-body > div > span")).toHaveCSS("font-weight", "700");
+      await expect(card.locator("img")).toHaveCSS("object-fit", "cover");
       await expect(page.locator("#catalog-heart")).toHaveCount(1);
       const heart = card.locator(".catalog-heart");
       await expect(heart.locator("use")).toHaveAttribute("href", "#catalog-heart");

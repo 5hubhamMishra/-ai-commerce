@@ -104,7 +104,6 @@ export default function CatalogProductCard({
 
       <Link
         href={`/products/${product.slug}`}
-        className="catalog-card-link"
         onClick={() => {
           trackRealEvent("PRODUCT_CLICKED", product.id);
           if (reason) trackRealEvent("RECOMMENDATION_CLICKED", product.id);
@@ -118,7 +117,6 @@ export default function CatalogProductCard({
               unoptimized={/^\/products\/[\w-]+\.svg$/.test(product.imageUrl)}
               alt={product.name}
               fill
-              className="catalog-card-image"
             />
           ) : (
             <div className="catalog-card-empty">
@@ -136,16 +134,16 @@ export default function CatalogProductCard({
 
         <div className="catalog-card-body">
           {product.brandName && (
-            <p className="catalog-card-brand">
+            <p>
               {product.brandName}
             </p>
           )}
-          <h3 className="catalog-card-title">
+          <h3>
             {product.name}
           </h3>
           {priceLabel && (
-            <div className="catalog-card-price">
-              <span className="catalog-card-price-label">{priceLabel}</span>
+            <div>
+              <span>{priceLabel}</span>
             </div>
           )}
         </div>

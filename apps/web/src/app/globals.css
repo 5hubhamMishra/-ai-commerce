@@ -345,17 +345,17 @@ body {
 .catalog-heart { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
 .catalog-heart.selected { fill: var(--clr-accent); stroke: var(--clr-accent); }
 .catalog-heart.popping { animation: heartPop 0.38s ease forwards; }
-.catalog-card-link { @apply flex-1 flex flex-col; }
+.catalog-product-card > a { @apply flex-1 flex flex-col; }
 .catalog-card-media { @apply relative aspect-square overflow-hidden bg-stone-50; }
-.catalog-card-image { @apply object-cover transition-transform duration-500 group-hover:scale-105; }
+.catalog-card-media > img { @apply object-cover transition-transform duration-500 group-hover:scale-105; }
 .catalog-card-empty { @apply absolute inset-0 flex items-center justify-center text-xs text-[var(--clr-text-disabled)]; }
 .catalog-card-unavailable { @apply absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-20; }
 .catalog-card-stock { @apply px-4 py-1.5 rounded-full bg-stone-900 text-white text-xs font-bold tracking-widest uppercase shadow-sm; }
 .catalog-card-body { @apply p-3 pb-3 flex flex-col flex-1; }
-.catalog-card-brand { @apply text-[10px] font-semibold uppercase tracking-widest text-[var(--clr-text-disabled)]; }
-.catalog-card-title { @apply mt-0.5 text-sm font-medium leading-snug line-clamp-2 text-[var(--clr-text-primary)]; }
-.catalog-card-price { @apply mt-1.5 flex items-baseline gap-1.5; }
-.catalog-card-price-label { @apply text-sm font-bold; }
+.catalog-card-body > p { @apply text-[10px] font-semibold uppercase tracking-widest text-[var(--clr-text-disabled)]; }
+.catalog-card-body > h3 { @apply mt-0.5 text-sm font-medium leading-snug line-clamp-2 text-[var(--clr-text-primary)]; }
+.catalog-card-body > div { @apply mt-1.5 flex items-baseline gap-1.5; }
+.catalog-card-body > div > span { @apply text-sm font-bold; }
 .catalog-card-reason { @apply px-3 pb-3; }
 .catalog-card-reason-badge { @apply flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-[var(--clr-accent-subtle)]; }
 .catalog-card-reason-text { @apply text-[10px] font-medium line-clamp-1 text-[var(--clr-accent-text)]; }
