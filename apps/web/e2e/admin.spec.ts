@@ -40,12 +40,13 @@ test.describe("admin dashboard", () => {
     ).toBeVisible();
     await expect(page.getByText("SUPER_ADMIN")).toBeVisible();
 
-    // Real data, not the old static-catalog placeholders — the segmentation section always
-    // renders a real profile count once loaded (this DB has real profiles from prior activity).
+    // A fresh seeded database has no behavioral profiles; both loaded states are valid.
     await expect(
       page.getByRole("heading", { name: "Customer Segmentation" }),
     ).toBeVisible();
-    await expect(page.getByText(/\d+ profiles/)).toBeVisible({
+    await expect(page.getByText(/^\d+ profiles$/).or(
+      page.getByText("No customer profiles yet.", { exact: true }),
+    )).toBeVisible({
       timeout: 10000,
     });
 
@@ -66,6 +67,8 @@ test.describe("admin dashboard", () => {
     await page.goto("/admin");
     const ordersTable = page.locator("table").filter({ hasText: "Order" });
     const firstRow = ordersTable.locator("tbody tr").first();
+    await expect(firstRow.or(page.getByText("No orders yet.", { exact: true })))
+      .toBeVisible({ timeout: 10000 });
     if ((await firstRow.count()) === 0) {
       await expect(page.getByText("No orders yet.")).toBeVisible();
       return;
