@@ -17,15 +17,17 @@ import { SellerRatingsController } from './seller-ratings.controller';
 import { SellerRatingsService } from './seller-ratings.service';
 import { SellersController } from './sellers.controller';
 import { SellersService } from './sellers.service';
+import { SellerUploadsController } from './seller-uploads.controller';
 
 @Module({
   imports: [ProductsModule, InventoryModule, WarehousesModule],
   controllers: [
-    SellersController,
+    SellerUploadsController,
     SellerCatalogController,
     SellerCommerceController,
     SellerCommerceAdminController,
     SellerRatingsController,
+    SellersController,
   ],
   providers: [
     DevelopmentVerificationAdapter,

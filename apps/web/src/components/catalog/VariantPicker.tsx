@@ -44,6 +44,7 @@ export default function VariantPicker({
   }, [activeVariants, selection]);
 
   const resolvedVariant = useMemo(() => {
+    if (activeVariants.length === 1) return activeVariants[0];
     if (Object.keys(effectiveSelection).length === 0) return null;
     return (
       activeVariants.find(

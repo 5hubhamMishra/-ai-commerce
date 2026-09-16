@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as apiClient from "@ai-commerce/api-client";
 import { SESSION_HINT_KEY, useStore } from "@/lib/store";
 import SessionProvider from "./SessionProvider";
+import * as sellerSession from '@/lib/seller-session';
 
 describe("SessionProvider", () => {
   afterEach(() => {
@@ -21,6 +22,20 @@ describe("SessionProvider", () => {
     );
 
     expect(refresh).not.toHaveBeenCalled();
+    root.unmount();
+  });
+
+  it('synchronizes seller login, token renewal and logout with the server cookie', async () => {
+    const sync = vi.spyOn(sellerSession, 'syncSellerSession').mockResolvedValue();
+    const root = createRoot(document.createElement('div'));
+    await act(async () => root.render(<SessionProvider />));
+    sync.mockClear();
+    await act(async () => useStore.setState({ user: { id: 'seller', roles: ['SELLER'], name: 'Shop Owner', email: 'seller@example.com', isActive: true, createdAt: '' }, accessToken: 'first', authStatus: 'authenticated' }));
+    expect(sync).toHaveBeenLastCalledWith('first');
+    await act(async () => useStore.setState({ accessToken: 'renewed' }));
+    expect(sync).toHaveBeenLastCalledWith('renewed');
+    await act(async () => useStore.getState().clearSession());
+    expect(sync).toHaveBeenLastCalledWith(null);
     root.unmount();
   });
 

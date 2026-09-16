@@ -17,3 +17,4 @@ export * from './reviews';
 export * from './activity';
 export * from './analytics';
 export * from './users';
+export * from './sellers';

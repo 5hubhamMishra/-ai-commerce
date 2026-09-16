@@ -60,12 +60,14 @@ export class SellerCatalogService {
   }
 
   async create(userId: string, dto: CreateProductDto) {
+    this.assertSellerFields(dto);
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.sellers.assertVerifiedSeller(sellerId);
     return this.products.create(dto, userId, sellerId);
   }
 
   async update(userId: string, productId: string, dto: UpdateProductDto) {
+    this.assertSellerFields(dto);
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.sellers.assertVerifiedSeller(sellerId);
     await this.assertOwnsProduct(sellerId, productId);
@@ -108,7 +110,7 @@ export class SellerCatalogService {
   async addImage(userId: string, productId: string, dto: CreateImageDto) {
     const sellerId = await this.sellers.resolveSellerIdForUser(userId);
     await this.assertOwnsProduct(sellerId, productId);
-    return this.images.create(productId, dto, userId);
+    return this.images.create(productId, dto, userId, 8);
   }
 
   async updateImage(
@@ -231,6 +233,7 @@ export class SellerCatalogService {
     if (
       !variant ||
       variant.deletedAt ||
+      variant.product.deletedAt ||
       variant.product.sellerId !== sellerId
     ) {
       throw new NotFoundException({
@@ -238,6 +241,72 @@ export class SellerCatalogService {
         message: 'Variant not found.',
       });
     }
+  }
+
+  private assertSellerFields(dto: UpdateProductDto) {
+    if (dto.isFeatured !== undefined) {
+      throw new BadRequestException(
+        'Only administrators can feature products.',
+      );
+    }
+  }
+
+  async overview(userId: string) {
+    const sellerId = await this.sellers.resolveSellerIdForUser(userId);
+    const products = await this.prisma.product.findMany({
+      where: { sellerId, deletedAt: null },
+      select: {
+        status: true,
+        variants: {
+          where: { deletedAt: null, isActive: true },
+          select: {
+            inventory: {
+              select: {
+                quantityOnHand: true,
+                quantityReserved: true,
+                quantityCommitted: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    const stock = products.map((p) =>
+      p.variants.reduce(
+        (sum, v) =>
+          sum +
+          v.inventory.reduce(
+            (n, i) =>
+              n +
+              Math.max(
+                0,
+                i.quantityOnHand - i.quantityReserved - i.quantityCommitted,
+              ),
+            0,
+          ),
+        0,
+      ),
+    );
+    const orderScope = { items: { some: { sellerId } } };
+    const [orderCount, recentOrders] = await Promise.all([
+      this.prisma.order.count({ where: orderScope }),
+      this.prisma.order.findMany({
+        where: orderScope,
+        select: { id: true, status: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+    ]);
+    return {
+      total: products.length,
+      published: products.filter((p) => p.status === 'ACTIVE').length,
+      drafts: products.filter((p) => p.status === 'DRAFT').length,
+      archived: products.filter((p) => p.status === 'ARCHIVED').length,
+      lowStock: stock.filter((n) => n > 0 && n <= 5).length,
+      outOfStock: stock.filter((n) => n === 0).length,
+      orderCount,
+      recentOrders,
+    };
   }
 
   private async getOwnWarehouse(sellerId: string) {

@@ -76,14 +76,15 @@ async function rawRequest<T>(path: string, options: RequestOptions): Promise<T> 
   const apiUrl = (clientConfig.apiBaseUrl ?? DEFAULT_API_URL).replace(/\/+$/, '');
 
   const res = await fetch(`${apiUrl}${path}`, {
+    cache: 'no-store',
     method: options.method ?? 'GET',
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body: options.body instanceof FormData ? options.body : options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
 
   if (res.status === 204) return undefined as T;

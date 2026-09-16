@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AuditService } from '../audit/audit.service';
 import { CatalogEventsService } from '../common/events/catalog-events.service';
@@ -52,6 +52,24 @@ describe('InventoryService', () => {
     await expect(
       service.set('missing-variant', 'w1', { quantityOnHand: 10 }, 'actor1'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('does not reduce stock below units already promised to orders', async () => {
+    prisma.productVariant.findUnique.mockResolvedValue({
+      id: 'v1',
+      productId: 'p1',
+    });
+    prisma.warehouse.findUnique.mockResolvedValue({ id: 'w1' });
+    prisma.inventory.findUnique.mockResolvedValue({
+      id: 'i1',
+      quantityOnHand: 10,
+      quantityReserved: 3,
+      quantityCommitted: 2,
+    });
+    await expect(
+      service.set('v1', 'w1', { quantityOnHand: 4 }, 'seller'),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.inventory.updateMany).not.toHaveBeenCalled();
   });
 
   it('throws not-found when the warehouse does not exist', async () => {

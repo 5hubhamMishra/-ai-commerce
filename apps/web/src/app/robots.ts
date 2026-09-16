@@ -20,6 +20,8 @@ export default function robots(): MetadataRoute.Robots {
         "/wishlist",
         "/login",
         "/register",
+        "/seller",
+        "/sell",
       ],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,

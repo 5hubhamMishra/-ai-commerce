@@ -1,0 +1,163 @@
+import { test, expect, type Page } from '@playwright/test';
+import path from 'node:path';
+import AxeBuilder from '@axe-core/playwright';
+import { registerAndSignIn } from './helpers';
+
+async function signOut(page: Page) {
+  await page.getByRole('banner').getByRole('button', { name: /Browser|Marketplace/ }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+}
+
+async function signIn(page: Page, email: string, seller: boolean) {
+  await page.goto('/login');
+  await page.getByRole('radio', { name: seller ? 'Shop Owner' : 'Customer', exact: true }).check();
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password', { exact: true }).fill('Playwright123!');
+  await page.getByRole('button', { name: seller ? 'Sign in to Seller Center' : 'Sign in to Veloura', exact: true }).click();
+}
+
+test('seller onboarding, image upload, publication, customer purchase and archival', async ({ page }, testInfo) => {
+  test.setTimeout(180_000);
+  page.setDefaultTimeout(15_000);
+  async function checkLayout(name: string) {
+    for (const width of [390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({ path: testInfo.outputPath(`${name}-${width}.png`), fullPage: true });
+    }
+    const accessibility = await new AxeBuilder({ page }).include('main').analyze();
+    expect(accessibility.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
+  }
+  const suffix = `${Date.now()}-${testInfo.workerIndex}`;
+  const email = `seller-browser-${suffix}@example.com`;
+  const shopName = `Browser Shop ${suffix}`;
+  const productName = `Seller headphones ${suffix}`;
+  await page.goto('/seller/products/new');
+  await expect(page).toHaveURL(/\/login\?mode=seller/);
+  await checkLayout('shared-login');
+  await page.goto('/register?mode=seller');
+  await expect(page.getByRole('radio', { name: 'Shop Owner', exact: true })).toBeChecked();
+  await page.getByLabel('Full name').fill('Browser Seller');
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password', { exact: true }).fill('Playwright123!');
+  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await expect(page).toHaveURL('/sell');
+  await page.getByLabel('Shop name', { exact: true }).fill(shopName);
+  await page.getByLabel('Shop description').fill('Independent electronics shop.');
+  await page.getByRole('button', { name: 'Create shop', exact: true }).click();
+  await expect(page).toHaveURL('/seller');
+  await expect(page.getByRole('heading', { name: 'Shop overview' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Seller navigation' }).getByRole('link', { name: 'Overview', exact: true })).toHaveAttribute('aria-current', 'page');
+  await checkLayout('seller-overview');
+  await signOut(page);
+  await expect.poll(async () => (await page.context().cookies()).some((cookie) => cookie.name === 'veloura-seller-session')).toBe(false);
+  await signIn(page, email, true);
+  await expect(page).toHaveURL('/seller');
+  await page.getByRole('navigation', { name: 'Seller navigation' }).getByRole('link', { name: 'Add Product', exact: true }).click();
+  await page.getByLabel('Product name', { exact: true }).fill(productName);
+  await page.getByLabel('Description', { exact: true }).fill('Comfortable headphones with balanced sound.');
+  await page.getByRole('combobox', { name: /^Category/ }).selectOption({ label: 'Headphones' });
+  await page.getByLabel('SKU', { exact: true }).fill(`SELLER-${suffix}`);
+  await page.getByLabel('Selling price (INR)', { exact: true }).fill('799');
+  await page.getByLabel('Original price (optional)', { exact: true }).fill('999');
+  await page.getByLabel('Stock on hand', { exact: true }).fill('12');
+  await page.getByLabel('Upload images').setInputFiles(path.resolve(__dirname, '../public/products/items/accessories-1.jpg'));
+  await expect(page.getByAltText('Selected image: accessories-1.jpg')).toBeVisible();
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page).toHaveURL(/\/seller\/products\/[^/]+\/edit$/);
+  const editUrl = page.url();
+  await expect(page.getByRole('navigation', { name: 'Seller navigation' }).getByRole('link', { name: 'My Products', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: 'Primary image', exact: true })).toBeVisible();
+  await expect(page.getByAltText(productName)).toBeVisible();
+  await page.getByRole('button', { name: 'Save and publish', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Product published.' })).toBeVisible();
+  await page.getByLabel('Selling price (INR)', { exact: true }).fill('749');
+  await page.getByLabel('Original price (optional)', { exact: true }).fill('');
+  await page.getByLabel('Stock on hand', { exact: true }).fill('9');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Product saved.' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Stock on hand', { exact: true })).toHaveValue('9');
+  await expect(page.getByLabel('Original price (optional)', { exact: true })).toHaveValue('');
+
+  await checkLayout('seller-editor');
+  await page.getByRole('navigation', { name: 'Seller navigation' }).getByRole('link', { name: 'My Products', exact: true }).click();
+  const card = page.getByRole('article').filter({ hasText: productName });
+  await expect(card).toBeVisible();
+  await checkLayout('seller-products');
+  await card.getByRole('link', { name: 'View product', exact: true }).click();
+  const productUrl = page.url();
+  await expect(page.getByRole('heading', { name: productName, exact: true })).toBeVisible();
+  await page.getByRole('link', { name: shopName, exact: true }).click();
+  await expect(page.getByRole('heading', { name: shopName, exact: true })).toBeVisible();
+  await expect(page.getByTestId('catalog-product-card').filter({ hasText: productName })).toBeVisible();
+  const shopUrl = page.url();
+  await page.goto('/seller/profile');
+  await page.getByLabel('Shop description').fill('Updated independent electronics shop.');
+  await page.getByRole('button', { name: 'Save shop profile', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Shop profile saved.' })).toBeVisible();
+  await page.goto(shopUrl);
+  await expect(page.getByText('Updated independent electronics shop.', { exact: true })).toBeVisible();
+  await signOut(page);
+
+  const customer = await registerAndSignIn(page, 'Marketplace Customer');
+  await page.goto('/shop');
+  await expect(page.getByTestId('catalog-product-card').filter({ hasText: productName })).toBeVisible();
+  await page.goto(`/search?q=${encodeURIComponent(productName)}`);
+  const searchCard = page.getByTestId('catalog-product-card').filter({ hasText: productName });
+  await expect(searchCard).toBeVisible();
+  await searchCard.locator('a').first().click();
+  await expect(page.getByRole('heading', { name: productName, exact: true })).toBeVisible();
+  const addedToCart = page.waitForResponse((r) => r.url().endsWith('/cart/items') && r.request().method() === 'POST' && r.status() === 201);
+  await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
+  await addedToCart;
+  await page.goto('/cart');
+  await expect(page.getByText(productName, { exact: true })).toBeVisible();
+  await page.goto('/checkout');
+  await expect(page.getByRole('heading', { name: 'Checkout', exact: true })).toBeVisible();
+  await expect(page.getByText(productName, { exact: false })).toBeVisible();
+  await page.getByPlaceholder('House no, building, street').fill('221B Baker Street');
+  await page.getByPlaceholder('City').fill('Mumbai');
+  await page.getByPlaceholder('State').fill('Maharashtra');
+  await page.getByPlaceholder('PIN code').fill('400001');
+  await page.getByRole('button', { name: 'Save address', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Place order/ })).toBeEnabled();
+  await page.getByRole('button', { name: /Place order/ }).click();
+  await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}/);
+  await expect(page.getByText(/Order confirmed/i).first()).toBeVisible();
+  await expect(page.getByText(productName, { exact: false })).toBeVisible();
+  const orderUrl = page.url();
+  const orderId = new URL(orderUrl).pathname.split('/').pop()!;
+  await page.goto('/seller/products');
+  await expect(page).toHaveURL(/\/login/);
+  await signIn(page, customer.email, true);
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('This account is registered as a customer.');
+  await expect(page.getByRole('link', { name: 'Continue shopping', exact: true })).toBeVisible();
+  await signOut(page);
+
+  await signIn(page, email, true);
+  await expect(page).toHaveURL('/seller');
+  await expect(page.getByText('1 order containing your products', { exact: true })).toBeVisible();
+  await expect(page.getByText(`Order ${orderId}`, { exact: true })).toBeVisible();
+  await checkLayout('seller-overview-with-order');
+  await page.getByRole('navigation', { name: 'Seller navigation' }).getByRole('link', { name: 'Orders', exact: true }).click();
+  const orderItem = page.getByRole('article').filter({ hasText: orderId });
+  await expect(orderItem.getByRole('heading', { name: productName, exact: true })).toBeVisible();
+  await checkLayout('seller-orders');
+  await page.goto('/seller/products');
+  await card.getByRole('button', { name: 'Unpublish', exact: true }).click();
+  await expect(card.getByRole('button', { name: 'Publish', exact: true })).toBeVisible();
+  page.once('dialog', (dialog) => dialog.accept());
+  await card.getByRole('button', { name: 'Archive', exact: true }).click();
+  await expect(card.getByText('Archived', { exact: true })).toBeVisible();
+  await page.goto(editUrl);
+  await expect(page.getByLabel('Product name', { exact: true })).toHaveValue(productName);
+  await page.goto(productUrl);
+  await expect(page.getByRole('heading', { name: productName, exact: true })).toHaveCount(0);
+  await signOut(page);
+  await signIn(page, customer.email, false);
+  await expect(page).toHaveURL('/');
+  await page.goto(orderUrl);
+  await expect(page.getByText(productName, { exact: false })).toBeVisible();
+});

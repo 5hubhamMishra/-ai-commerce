@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import * as apiClient from "@ai-commerce/api-client";
 import { getAuthOperation, SESSION_HINT_KEY, useStore } from "@/lib/store";
+import { isSeller, syncSellerSession } from "@/lib/seller-session";
 
 /**
  * The access token is deliberately never persisted to localStorage (see store.ts's
@@ -17,6 +18,15 @@ import { getAuthOperation, SESSION_HINT_KEY, useStore } from "@/lib/store";
  * token theft and revoke the whole session, logging the user straight back out.
  */
 export default function SessionProvider() {
+  useEffect(() => useStore.subscribe((state, previous) => {
+    if (state.accessToken === previous.accessToken && state.user === previous.user && state.authStatus === previous.authStatus) return;
+    if (state.authStatus === 'authenticated' && isSeller(state.user) && state.accessToken) {
+      void syncSellerSession(state.accessToken).catch(() => {});
+    } else if (state.authStatus === 'unauthenticated' || (state.authStatus === 'authenticated' && !isSeller(state.user))) {
+      void syncSellerSession(null).catch(() => {});
+    }
+  }), []);
+
   useEffect(() => {
     let cancelled = false;
 

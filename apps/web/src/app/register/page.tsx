@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { safeRedirectPath } from "@/lib/safeRedirect";
+import AccountTypeSelector from "@/components/AccountTypeSelector";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -12,6 +13,7 @@ function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
   const register = useStore((s) => s.register);
+  const [seller, setSeller] = useState(params.get('mode') === 'seller');
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,7 @@ function RegisterForm() {
     setSubmitting(true);
     try {
       await register(email, password, name);
-      router.push(safeRedirectPath(params.get("redirect")));
+      router.push(seller ? '/sell' : safeRedirectPath(params.get("redirect")));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -65,6 +67,7 @@ function RegisterForm() {
           }}
         >
           <form onSubmit={onSubmit} className="space-y-5">
+            <AccountTypeSelector seller={seller} onChange={setSeller} />
             <div>
               <label
                 htmlFor="reg-name"
@@ -145,7 +148,7 @@ function RegisterForm() {
         <p className="mt-5 text-center text-sm" style={{ color: "var(--clr-text-secondary)" }}>
           Already have an account?{" "}
           <Link
-            href="/login"
+            href={seller ? '/login?mode=seller' : '/login'}
             className="font-semibold transition-colors"
             style={{ color: "var(--clr-accent)" }}
           >

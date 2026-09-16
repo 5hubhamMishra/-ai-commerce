@@ -199,7 +199,7 @@ export class SearchService {
     };
 
     const [keywordCandidates, semanticCandidates] = await Promise.all([
-      this.keywordCandidates(tokens),
+      this.keywordCandidates(tokens, effective.category, effective.brand),
       this.embeddings.findSimilarToText(
         textForMatching,
         SEMANTIC_CANDIDATE_LIMIT,
@@ -285,24 +285,33 @@ export class SearchService {
 
   private async keywordCandidates(
     tokens: string[],
+    category?: string,
+    brand?: string,
   ): Promise<{ id: string; relevance: number }[]> {
-    if (tokens.length === 0) return [];
+    if (tokens.length === 0 && !category && !brand) return [];
 
     const tokenExprs = tokens.map(
       (t) =>
         Prisma.sql`CASE WHEN p.name ILIKE ${`%${t}%`} THEN 2 WHEN p.description ILIKE ${`%${t}%`} THEN 1 ELSE 0 END`,
     );
-    const relevanceSum = Prisma.join(tokenExprs, ' + ');
+    const relevanceSum = tokenExprs.length
+      ? Prisma.join(tokenExprs, ' + ')
+      : Prisma.sql`0`;
     const matchConditions = tokens.map(
       (t) =>
         Prisma.sql`(p.name ILIKE ${`%${t}%`} OR p.description ILIKE ${`%${t}%`})`,
     );
+    // Recognized metadata must still find products when semantic search is unavailable.
+    if (category) matchConditions.push(Prisma.sql`c.slug = ${category}`);
+    if (brand) matchConditions.push(Prisma.sql`b.slug = ${brand}`);
 
     return this.prisma.$queryRaw<{ id: string; relevance: number }[]>(
       Prisma.sql`
         SELECT p.id, MAX(${relevanceSum})::int AS relevance
         FROM products p
         JOIN product_variants v ON v.product_id = p.id
+        LEFT JOIN categories c ON c.id = p.category_id
+        LEFT JOIN brands b ON b.id = p.brand_id
         WHERE p.deleted_at IS NULL AND p.status = 'ACTIVE'
           AND v.deleted_at IS NULL AND v.is_active = true
           AND (${Prisma.join(matchConditions, ' OR ')})

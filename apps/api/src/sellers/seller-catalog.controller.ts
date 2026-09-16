@@ -35,6 +35,11 @@ import { SellerCatalogService } from './seller-catalog.service';
 export class SellerCatalogController {
   constructor(private readonly catalog: SellerCatalogService) {}
 
+  @Get('overview')
+  overview(@CurrentUser() user: AuthenticatedUser) {
+    return this.catalog.overview(user.id);
+  }
+
   // ---- Products -------------------------------------------------------------
 
   @Get('products')

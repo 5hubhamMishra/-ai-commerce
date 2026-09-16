@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { EmbeddingsService } from '../src/embeddings/embeddings.service';
 
 type SearchItem = {
   id: string;
@@ -332,5 +333,26 @@ describe('AI Semantic Search (e2e)', () => {
     await request(app.getHttpServer())
       .get('/api/v1/search/admin/analytics')
       .expect(401);
+  });
+
+  it('finds category products without matching text or semantic results', async () => {
+    const id = await createProduct({
+      name: `Quiet Studio ${run}`,
+      description: 'Comfortable sound for everyday listening.',
+      price: 1999,
+    });
+    const semantic = jest
+      .spyOn(app.get(EmbeddingsService), 'findSimilarToText')
+      .mockResolvedValue([]);
+    try {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/search')
+        .query({ q: 'headphones', brand: brandSlug, maxPrice: 2000 })
+        .expect(200);
+      expect(res.body.total).toBe(1);
+      expect(res.body.items[0].id).toBe(id);
+    } finally {
+      semantic.mockRestore();
+    }
   });
 });

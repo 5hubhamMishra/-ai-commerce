@@ -4,31 +4,40 @@ import {
   IsArray,
   IsBoolean,
   IsInt,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
   IsUUID,
   MaxLength,
+  Matches,
+  Max,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateVariantDto {
   @IsString()
   @MinLength(1)
   @MaxLength(64)
+  @Matches(/\S/, { message: 'sku must contain visible text' })
   sku!: string;
 
   @Type(() => Number)
   @IsPositive()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Max(9999999999.99)
   price!: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsPositive()
-  compareAtPrice?: number;
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Max(9999999999.99)
+  compareAtPrice?: number | null;
 
-  @IsOptional()
+  @ValidateIf((_, value: unknown) => value !== undefined)
   @IsString()
   @MaxLength(3)
   currency?: string;
@@ -39,11 +48,11 @@ export class CreateVariantDto {
   @Min(0)
   weightGrams?: number;
 
-  @IsOptional()
+  @ValidateIf((_, value: unknown) => value !== undefined)
   @IsBoolean()
   isDefault?: boolean;
 
-  @IsOptional()
+  @ValidateIf((_, value: unknown) => value !== undefined)
   @IsBoolean()
   isActive?: boolean;
 

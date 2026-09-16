@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [{
+        source: "/media/products/:id.webp",
+        destination: `${(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1').replace(/\/$/, '')}/media/products/:id.webp`,
+      }, {
         source: "/i/:width(\\d+)/:name([a-z0-9-]+).jpg",
         destination: "/_next/image?url=/products/items/:name.jpg&w=:width&q=75",
       }],

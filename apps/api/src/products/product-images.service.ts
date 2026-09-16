@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -20,13 +21,28 @@ export class ProductImagesService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(productId: string, dto: CreateImageDto, actorId: string) {
+  async create(
+    productId: string,
+    dto: CreateImageDto,
+    actorId: string,
+    maxImages?: number,
+  ) {
     await this.products.getRowById(productId);
     if (dto.variantId)
       await this.assertVariantBelongsToProduct(productId, dto.variantId);
 
     const image = await this.prisma
       .$transaction(async (tx) => {
+        if (maxImages !== undefined) {
+          await tx.$queryRaw`SELECT id FROM products WHERE id = ${productId} FOR UPDATE`;
+          if (
+            (await tx.productImage.count({ where: { productId } })) >= maxImages
+          ) {
+            throw new BadRequestException(
+              `A product can have up to ${maxImages} images.`,
+            );
+          }
+        }
         if (dto.isPrimary) {
           await tx.productImage.updateMany({
             where: { productId, isPrimary: true },

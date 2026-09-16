@@ -5,11 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { safeRedirectPath } from "@/lib/safeRedirect";
+import AccountTypeSelector from "@/components/AccountTypeSelector";
+import { isSeller, syncSellerSession } from "@/lib/seller-session";
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const login = useStore((s) => s.login);
+  const [seller, setSeller] = useState(params.get('mode') === 'seller');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +24,16 @@ function LoginForm() {
     setSubmitting(true);
     try {
       await login(email, password);
+      const { user, accessToken } = useStore.getState();
+      if (isSeller(user) && accessToken) {
+        await syncSellerSession(accessToken);
+        router.push('/seller');
+        return;
+      }
+      if (seller && !user?.roles.some((r) => r === 'ADMIN' || r === 'SUPER_ADMIN')) {
+        setError('This account is registered as a customer. Continue shopping or open a shop.');
+        return;
+      }
       router.push(safeRedirectPath(params.get("redirect")));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -58,6 +71,7 @@ function LoginForm() {
           }}
         >
           <form onSubmit={onSubmit} className="space-y-5">
+            <AccountTypeSelector seller={seller} onChange={setSeller} />
             <div>
               <label
                 htmlFor="login-email"
@@ -101,6 +115,7 @@ function LoginForm() {
             {error && (
               <p role="alert" className="text-sm" style={{ color: "var(--clr-error, #dc2626)" }}>
                 {error}
+                {error.startsWith('This account') && <span className="mt-2 flex gap-4"><Link href="/">Continue shopping</Link><Link href="/sell">Open a shop</Link></span>}
               </p>
             )}
 
@@ -110,7 +125,7 @@ function LoginForm() {
               className="w-full btn btn-accent py-3 text-sm disabled:opacity-60"
               style={{ marginTop: "0.5rem" }}
             >
-              {submitting ? "Signing in…" : "Sign in to Veloura"}
+              {submitting ? "Signing in…" : seller ? "Sign in to Seller Center" : "Sign in to Veloura"}
             </button>
           </form>
         </div>
@@ -118,7 +133,7 @@ function LoginForm() {
         <p className="mt-5 text-center text-sm" style={{ color: "var(--clr-text-secondary)" }}>
           New here?{" "}
           <Link
-            href="/register"
+            href={seller ? '/register?mode=seller' : '/register'}
             className="font-semibold transition-colors"
             style={{ color: "var(--clr-accent)" }}
           >

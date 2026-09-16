@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
+import sharp from 'sharp';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -412,6 +413,262 @@ describe('Marketplace (e2e)', () => {
 
   // ---- Checkout with a marketplace item: commission + earnings ------------------
 
+  it('enforces roles, field validation and ownership across seller mutations', async () => {
+    const path = `/api/v1/sellers/me/products/${sellerAProductId}`;
+    await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/products')
+      .expect(401);
+    await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/products')
+      .set('Authorization', `Bearer ${customerToken}`)
+      .expect(403);
+    const own = await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/products')
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .expect(200);
+    expect((own.body.items as { id: string }[]).map((item) => item.id)).toEqual(
+      [sellerAProductId],
+    );
+    const other = await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/products')
+      .set('Authorization', `Bearer ${sellerBToken}`)
+      .expect(200);
+    expect(other.body.items).toHaveLength(0);
+    await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/overview')
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/api/v1/sellers/me/products')
+      .set('Authorization', `Bearer ${customerToken}`)
+      .send({ name: 'Unauthorized', description: 'Product', categoryId })
+      .expect(403);
+    await request(app.getHttpServer())
+      .delete(path)
+      .set('Authorization', `Bearer ${sellerBToken}`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/products/not-a-product')
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .expect(404);
+    for (const body of [
+      { sellerId: 'another-seller' },
+      { role: 'ADMIN' },
+      { isFeatured: true },
+      { name: '   ' },
+      { name: null },
+      { status: null },
+      { slug: null },
+    ]) {
+      await request(app.getHttpServer())
+        .patch(path)
+        .set('Authorization', `Bearer ${sellerAToken}`)
+        .send(body)
+        .expect(400);
+    }
+    for (const price of [-1, 1e15, 0.001, null]) {
+      await request(app.getHttpServer())
+        .patch(`${path}/variants/${sellerAVariantId}`)
+        .set('Authorization', `Bearer ${sellerAToken}`)
+        .send({ price })
+        .expect(400);
+    }
+    for (const body of [
+      { currency: null },
+      { isDefault: null },
+      { isActive: null },
+    ]) {
+      await request(app.getHttpServer())
+        .patch(`${path}/variants/${sellerAVariantId}`)
+        .set('Authorization', `Bearer ${sellerAToken}`)
+        .send(body)
+        .expect(400);
+    }
+    for (const quantityOnHand of [-1, 1.5, 2147483648, null]) {
+      await request(app.getHttpServer())
+        .put(`/api/v1/sellers/me/inventory/variants/${sellerAVariantId}`)
+        .set('Authorization', `Bearer ${sellerAToken}`)
+        .send({ quantityOnHand })
+        .expect(400);
+    }
+    for (const field of [
+      'quantityDamaged',
+      'quantityIncoming',
+      'reorderPoint',
+    ]) {
+      for (const value of [null, 2147483648]) {
+        await request(app.getHttpServer())
+          .put(`/api/v1/sellers/me/inventory/variants/${sellerAVariantId}`)
+          .set('Authorization', `Bearer ${sellerAToken}`)
+          .send({ [field]: value })
+          .expect(400);
+      }
+    }
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ email: sellerAEmail, password: 'password123', role: 'ADMIN' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        email: `escalation-${run}@example.com`,
+        password: 'password123',
+        name: 'Escalation',
+        role: 'SELLER',
+      })
+      .expect(400);
+    const login = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ email: sellerAEmail, password: 'password123' })
+      .expect(200);
+    expect(login.body.user.roles).toContain('SELLER');
+    expect(login.body.user.roles).not.toContain('ADMIN');
+  });
+
+  it('uploads safe images, protects drafts, enforces the image cap and supports primary/removal actions', async () => {
+    const path = `/api/v1/sellers/me/products/${sellerAProductId}`;
+    const png = await sharp({
+      create: { width: 8, height: 8, channels: 3, background: '#c08040' },
+    })
+      .png()
+      .toBuffer();
+    await request(app.getHttpServer())
+      .post(`${path}/upload`)
+      .set('Authorization', `Bearer ${customerToken}`)
+      .attach('image', png, 'test.png')
+      .expect(403);
+    await request(app.getHttpServer())
+      .post(`${path}/upload`)
+      .set('Authorization', `Bearer ${sellerBToken}`)
+      .attach('image', png, 'test.png')
+      .expect(404);
+    await request(app.getHttpServer())
+      .post(`${path}/upload`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .attach('image', Buffer.from('not an image'), 'test.png')
+      .expect(400);
+    await request(app.getHttpServer())
+      .post(`${path}/upload`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .attach('image', Buffer.alloc(2 * 1024 * 1024 + 1), 'test.png')
+      .expect(413);
+    await request(app.getHttpServer())
+      .patch(path)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .send({ status: 'DRAFT' })
+      .expect(200);
+    const uploaded = await request(app.getHttpServer())
+      .post(`${path}/upload`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .attach('image', png, 'test.png')
+      .expect(201);
+    const first = uploaded.body.images[0];
+    await request(app.getHttpServer()).get(`/api/v1${first.url}`).expect(404);
+    const preview = await request(app.getHttpServer())
+      .get(`${path}/images/${first.id}/preview`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .expect(200);
+    expect(preview.body.dataUrl).toMatch(/^data:image\/webp;base64,/);
+    await request(app.getHttpServer())
+      .get(`${path}/images/${first.id}/preview`)
+      .set('Authorization', `Bearer ${sellerBToken}`)
+      .expect(404);
+    let lastId = first.id;
+    for (let i = 1; i < 8; i++) {
+      const result = await request(app.getHttpServer())
+        .post(`${path}/upload`)
+        .set('Authorization', `Bearer ${sellerAToken}`)
+        .attach('image', png, 'test.png')
+        .expect(201);
+      lastId = result.body.images[i].id;
+    }
+    await request(app.getHttpServer())
+      .post(`${path}/upload`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .attach('image', png, 'test.png')
+      .expect(400);
+    await request(app.getHttpServer())
+      .post(`${path}/images`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .send({ url: '/products/items/test.jpg' })
+      .expect(400);
+    const primary = await request(app.getHttpServer())
+      .patch(`${path}/images/${lastId}`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .send({ isPrimary: true })
+      .expect(200);
+    expect(
+      (primary.body.images as { id: string; isPrimary: boolean }[])
+        .filter((image: { isPrimary: boolean }) => image.isPrimary)
+        .map((image: { id: string }) => image.id),
+    ).toEqual([lastId]);
+    await request(app.getHttpServer())
+      .delete(`${path}/images/${lastId}`)
+      .set('Authorization', `Bearer ${sellerBToken}`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .delete(`${path}/images/${lastId}`)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .expect(200);
+    expect(
+      await prisma.productImageUpload.findUnique({
+        where: { imageId: lastId },
+      }),
+    ).toBeNull();
+    await request(app.getHttpServer())
+      .patch(path)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .send({ status: 'ACTIVE' })
+      .expect(200);
+    await request(app.getHttpServer())
+      .get(`/api/v1${first.url}`)
+      .expect(200)
+      .expect('Content-Type', /image\/webp/);
+  });
+
+  it('excludes drafts and archives from purchase and returns real seller overview counts', async () => {
+    const path = `/api/v1/sellers/me/products/${sellerAProductId}`;
+    for (const status of ['DRAFT', 'ARCHIVED']) {
+      const product = await request(app.getHttpServer())
+        .patch(path)
+        .set('Authorization', `Bearer ${sellerAToken}`)
+        .send({ status })
+        .expect(200);
+      // Catalog invalidation listeners run asynchronously after the write.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await request(app.getHttpServer())
+        .get(`/api/v1/products/${product.body.slug}`)
+        .expect(404);
+      const listing = await request(app.getHttpServer())
+        .get(`/api/v1/sellers/${sellerASlug}/products`)
+        .expect(200);
+      expect(listing.body.items).toHaveLength(0);
+      await request(app.getHttpServer())
+        .post('/api/v1/cart/items')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ variantId: sellerAVariantId, quantity: 1 })
+        .expect(400);
+    }
+    await request(app.getHttpServer())
+      .patch(path)
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .send({ status: 'ACTIVE' })
+      .expect(200);
+    const overview = await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/overview')
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .expect(200);
+    expect(overview.body).toEqual({
+      total: 1,
+      published: 1,
+      drafts: 0,
+      archived: 0,
+      lowStock: 0,
+      outOfStock: 0,
+      orderCount: 0,
+      recentOrders: [],
+    });
+  });
+
   let marketplaceOrderId: string;
 
   it('checkout snapshots sellerId onto the order item and creates a PENDING seller earning', async () => {
@@ -480,6 +737,24 @@ describe('Marketplace (e2e)', () => {
       .set('Authorization', `Bearer ${sellerBToken}`)
       .expect(200);
     expect(sellerBDetail.body.items).toHaveLength(0);
+    const ownOverview = await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/overview')
+      .set('Authorization', `Bearer ${sellerAToken}`)
+      .expect(200);
+    expect(ownOverview.body.orderCount).toBe(1);
+    expect(ownOverview.body.recentOrders).toEqual([
+      {
+        id: marketplaceOrderId,
+        status: 'CONFIRMED',
+        createdAt: expect.any(String),
+      },
+    ]);
+    const otherOverview = await request(app.getHttpServer())
+      .get('/api/v1/sellers/me/overview')
+      .set('Authorization', `Bearer ${sellerBToken}`)
+      .expect(200);
+    expect(otherOverview.body.orderCount).toBe(0);
+    expect(otherOverview.body.recentOrders).toEqual([]);
   });
 
   it('earning becomes AVAILABLE (derived, not stored) once the order reaches DELIVERED', async () => {

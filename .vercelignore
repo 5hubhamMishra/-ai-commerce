@@ -1,0 +1,13 @@
+docs/
+tmp/
+**/test-results/
+**/playwright-report/
+**/blob-report/
+**/coverage/
+**/coverage-e2e/
+**/.env*
+**/AGENTS.md
+**/CLAUDE.md
+**/.agents/
+**/.codex/
+**/*.log

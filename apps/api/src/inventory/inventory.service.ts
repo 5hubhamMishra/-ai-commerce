@@ -67,6 +67,16 @@ export class InventoryService {
       where: { variantId_warehouseId: { variantId, warehouseId } },
     });
 
+    if (
+      (dto.quantityOnHand ?? existing?.quantityOnHand ?? 0) <
+      (dto.quantityReserved ?? existing?.quantityReserved ?? 0) +
+        (dto.quantityCommitted ?? existing?.quantityCommitted ?? 0)
+    ) {
+      throw new ConflictException(
+        'Stock cannot be less than reserved and committed units.',
+      );
+    }
+
     let inventory: Awaited<
       ReturnType<typeof this.prisma.inventory.findUniqueOrThrow>
     >;

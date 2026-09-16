@@ -221,6 +221,7 @@ export default function ProductDetailClient({
           >
             {product.name}
           </h1>
+          {product.seller && <p className="mt-3 text-sm">Sold by <Link className="font-semibold text-[var(--clr-accent)]" href={`/shops/${product.seller.slug}`}>{product.seller.businessName}</Link></p>}
 
           <div className="mt-4 h-px bg-[var(--clr-border)]" />
 

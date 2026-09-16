@@ -76,6 +76,7 @@ function AccountMenuLinks({ user, onNavigate }: { user: PublicUser; onNavigate: 
       <Link role="menuitem" href="/profile" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
         My Profile
       </Link>
+      {user.roles.some((r) => r === 'SELLER' || r === 'SELLER_STAFF') && <Link role="menuitem" href="/sell" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)]">Seller Center</Link>}
       <Link role="menuitem" href="/wishlist" onClick={onNavigate} className="block px-4 py-2 text-sm text-[var(--clr-text-secondary)] hover:bg-[var(--clr-surface-2)] hover:text-[var(--clr-text-primary)] transition-colors">
         Wishlist
       </Link>
