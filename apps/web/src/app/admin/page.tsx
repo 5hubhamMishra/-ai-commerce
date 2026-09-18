@@ -163,6 +163,9 @@ export default function AdminPage() {
       </div>
 
       <Section title="Business Insights">
+        <p className="mb-4 text-xs" style={{ color: "var(--clr-text-secondary)" }}>
+          Rule-based signals from recorded orders, inventory, search, recommendations, and ShopAI activity.
+        </p>
         {dashboardError ? (
           <ErrorNote message={dashboardError} />
         ) : !dashboard ? (
