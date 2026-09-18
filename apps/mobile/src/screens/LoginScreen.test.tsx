@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import LoginScreen from './LoginScreen';
-import { ApiError } from '@ai-commerce/api-client';
+import { ApiError, authApi } from '@ai-commerce/api-client';
 import { useStore } from '../store/useStore';
 
 jest.mock('../store/useStore', () => ({
@@ -23,6 +23,7 @@ describe('LoginScreen', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('logs in with the entered credentials', async () => {
@@ -70,5 +71,25 @@ describe('LoginScreen', () => {
     await waitFor(() => {
       expect(register).toHaveBeenCalledWith('ada@example.com', 'password123', 'Ada Lovelace');
     });
+  });
+
+  it('requests a local reset token and submits the replacement password', async () => {
+    const requestReset = jest.spyOn(authApi, 'requestPasswordReset').mockResolvedValue({
+      message: 'Recovery requested.',
+      resetToken: 'a'.repeat(64),
+    });
+    const resetPassword = jest.spyOn(authApi, 'resetPassword').mockResolvedValue({ message: 'Password updated.' });
+
+    const { getByLabelText } = await render(<LoginScreen />);
+    await fireEvent.press(getByLabelText('Forgot password'));
+    await fireEvent.changeText(getByLabelText('Email address'), 'a@example.com');
+    await fireEvent.press(getByLabelText('Request recovery link'));
+
+    await waitFor(() => expect(requestReset).toHaveBeenCalledWith('a@example.com'));
+    await fireEvent.changeText(getByLabelText('New password'), 'password123');
+    await fireEvent.changeText(getByLabelText('Confirm password'), 'password123');
+    await fireEvent.press(getByLabelText('Update password'));
+
+    await waitFor(() => expect(resetPassword).toHaveBeenCalledWith('a'.repeat(64), 'password123'));
   });
 });
