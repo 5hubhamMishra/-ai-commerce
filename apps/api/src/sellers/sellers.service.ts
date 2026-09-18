@@ -56,6 +56,20 @@ export class SellersService {
       where: { ownerUserId: userId },
     });
     if (existing) {
+      if (
+        process.env.SELLER_VERIFICATION_MODE?.trim() === 'demo' &&
+        existing.status === SellerStatus.PENDING_VERIFICATION
+      ) {
+        const updated = await this.markVerified(existing.id, existing.status);
+        await this.audit.record({
+          actorId: userId,
+          action: 'SELLER_VERIFIED',
+          entityType: 'seller',
+          entityId: existing.id,
+          metadata: { mode: 'demo' },
+        });
+        return this.toOwnDetail(updated);
+      }
       throw new ConflictException({
         code: 'SELLER_ACCOUNT_EXISTS',
         message: 'You already operate a seller account.',
