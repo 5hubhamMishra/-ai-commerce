@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -27,6 +29,10 @@ type RegisteredUser = Prisma.UserGetPayload<{
     roles: { select: { role: true } };
   };
 }>;
+
+const PASSWORD_RESET_TTL_MINUTES = 30;
+const PASSWORD_RESET_MESSAGE =
+  'If an account exists for that email, recovery instructions will be available shortly.';
 
 @Injectable()
 export class AuthService {
@@ -205,6 +211,113 @@ export class AuthService {
     });
   }
 
+  async requestPasswordReset(emailInput: string) {
+    if (isProductionLike()) {
+      throw new ServiceUnavailableException({
+        code: 'PASSWORD_RESET_PROVIDER_UNAVAILABLE',
+        message:
+          'Password recovery requires an activated email delivery provider.',
+      });
+    }
+
+    const email = emailInput.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, isActive: true, deletedAt: true },
+    });
+
+    if (!user || !user.isActive || user.deletedAt) {
+      return { message: PASSWORD_RESET_MESSAGE };
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const now = new Date();
+    await this.prisma.$transaction([
+      this.prisma.passwordResetToken.deleteMany({
+        where: { userId: user.id, usedAt: null },
+      }),
+      this.prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          tokenHash: this.hashToken(token),
+          expiresAt: new Date(
+            now.getTime() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000,
+          ),
+        },
+      }),
+    ]);
+    await this.audit.record({
+      actorId: user.id,
+      action: 'PASSWORD_RESET_REQUESTED',
+      entityType: 'user',
+      entityId: user.id,
+    });
+
+    // No email provider is configured in the zero-cost deployment. Returning a token is
+    // safe only for local/test workflows; production is rejected above until delivery exists.
+    return { message: PASSWORD_RESET_MESSAGE, resetToken: token };
+  }
+
+  async resetPassword(token: string, password: string) {
+    const now = new Date();
+    const invalid = () =>
+      new BadRequestException({
+        code: 'INVALID_PASSWORD_RESET_TOKEN',
+        message: 'This password reset link is invalid or has expired.',
+      });
+    const tokenRecord = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash: this.hashToken(token) },
+      select: { id: true, userId: true, usedAt: true, expiresAt: true },
+    });
+    if (!tokenRecord || tokenRecord.usedAt || tokenRecord.expiresAt <= now) {
+      throw invalid();
+    }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const result = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.passwordResetToken.updateMany({
+        where: {
+          id: tokenRecord.id,
+          usedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: { usedAt: now },
+      });
+      if (claimed.count !== 1) throw invalid();
+
+      const user = await tx.user.findFirst({
+        where: {
+          id: tokenRecord.userId,
+          isActive: true,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      if (!user) throw invalid();
+
+      await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      });
+      await tx.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      await tx.passwordResetToken.deleteMany({
+        where: { userId: user.id, id: { not: tokenRecord.id } },
+      });
+      return user;
+    });
+
+    await this.audit.record({
+      actorId: result.id,
+      action: 'PASSWORD_RESET_COMPLETED',
+      entityType: 'user',
+      entityId: result.id,
+    });
+    return { message: 'Password reset successfully. Please sign in again.' };
+  }
+
   private async rejectRefreshReuse(
     userId: string,
     refreshTokenId: string,
@@ -268,4 +381,11 @@ export class AuthService {
       roles: user.roles.map((r) => r.role),
     };
   }
+}
+
+function isProductionLike() {
+  return (
+    process.env.NODE_ENV?.trim() === 'production' ||
+    process.env.VERCEL_ENV?.trim() === 'production'
+  );
 }
