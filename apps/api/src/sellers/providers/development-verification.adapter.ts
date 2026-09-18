@@ -15,7 +15,7 @@ import type {
 @Injectable()
 export class DevelopmentVerificationAdapter implements SellerVerificationProvider {
   verify(input: VerifyInput): Promise<VerifyResult> {
-    if (isProductionLike()) {
+    if (isProductionLike() && process.env.SELLER_VERIFICATION_MODE?.trim() !== 'demo') {
       return Promise.reject(
         new ServiceUnavailableException({
           code: 'SELLER_VERIFICATION_UNAVAILABLE',
