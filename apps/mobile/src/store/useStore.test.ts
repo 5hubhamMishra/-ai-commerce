@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react-native';
 import type { PublicUser } from '@ai-commerce/types';
-import { ApiError, addressesApi, authApi, cartApi, ordersApi, paymentsApi, refreshAccessToken, shopaiApi, wishlistApi } from '@ai-commerce/api-client';
+import { ApiError, addressesApi, authApi, cartApi, eventsApi, ordersApi, paymentsApi, refreshAccessToken, shopaiApi, wishlistApi } from '@ai-commerce/api-client';
 import { session } from '../api/session';
 import { setAccessToken } from '../api/apiClient';
 import { useStore } from './useStore';
@@ -12,6 +12,7 @@ jest.mock('@ai-commerce/api-client', () => {
     refreshAccessToken: jest.fn(),
     authApi: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), me: jest.fn() },
     cartApi: { getCart: jest.fn(), addItem: jest.fn(), updateItem: jest.fn(), removeItem: jest.fn() },
+    eventsApi: { track: jest.fn() },
     wishlistApi: { list: jest.fn(), add: jest.fn(), remove: jest.fn() },
     addressesApi: { list: jest.fn(), create: jest.fn() },
     ordersApi: { create: jest.fn(), get: jest.fn() },
@@ -43,6 +44,7 @@ const initialState = useStore.getState();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  (eventsApi.track as jest.Mock).mockResolvedValue({ accepted: 1 });
   useStore.setState(
     {
       ...initialState,
@@ -221,6 +223,22 @@ describe('auth actions', () => {
 });
 
 describe('cart actions', () => {
+  it('posts mobile behavioral events with a device/session identity', () => {
+    useStore.setState({ user: publicUser, authStatus: 'authenticated' });
+
+    useStore.getState().trackEvent('PRODUCT_VIEWED', 'product-1');
+
+    expect(eventsApi.track).toHaveBeenCalledWith([
+      expect.objectContaining({
+        eventType: 'PRODUCT_VIEWED',
+        entityId: 'product-1',
+        source: 'MOBILE',
+        anonymousId: expect.any(String),
+        sessionId: expect.any(String),
+      }),
+    ]);
+  });
+
   it('fetchCart loads the server cart', async () => {
     (cartApi.getCart as jest.Mock).mockResolvedValue(emptyCart);
 

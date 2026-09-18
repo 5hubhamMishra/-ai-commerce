@@ -11,6 +11,7 @@ type Props = {
 export default function ProductCard({ product, onPress }: Props) {
   const inWishlist = useStore((s) => s.wishlist?.items.some((i) => i.productId === product.id) ?? false);
   const toggleWishlistItem = useStore((s) => s.toggleWishlistItem);
+  const trackEvent = useStore((s) => s.trackEvent);
 
   const priceLabel =
     product.minPrice == null
@@ -22,7 +23,15 @@ export default function ProductCard({ product, onPress }: Props) {
   const imageUri = resolveImageUrl(product.primaryImageUrl);
 
   return (
-    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button" accessibilityLabel={product.name}>
+    <Pressable
+      style={styles.card}
+      onPress={() => {
+        trackEvent?.('PRODUCT_CLICKED', product.id);
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={product.name}
+    >
       <View style={styles.imageWrap}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />

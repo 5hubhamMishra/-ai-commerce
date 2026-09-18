@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type {
   Address,
+  BehavioralEventType,
   CartResponse,
   CreateAddressInput,
   ExportDataResponse,
@@ -14,6 +15,7 @@ import {
   addressesApi,
   authApi,
   cartApi,
+  eventsApi,
   ordersApi,
   paymentsApi,
   shopaiApi,
@@ -25,6 +27,8 @@ import { session } from "../api/session";
 import { configureMobileApiClient, setAccessToken } from "../api/apiClient";
 
 let authOperation = 0;
+const mobileAnonymousId = crypto.randomUUID();
+const mobileSessionId = crypto.randomUUID();
 
 export type AuthStatus =
   "idle" | "checking" | "authenticated" | "unauthenticated";
@@ -42,6 +46,12 @@ type StoreState = {
   clearSession: () => void;
   exportMyData: () => Promise<ExportDataResponse>;
   deleteAccount: (password: string) => Promise<void>;
+  /** Sends a best-effort behavioral event for authenticated mobile sessions. */
+  trackEvent: (
+    eventType: BehavioralEventType,
+    entityId?: string,
+    metadata?: Record<string, unknown>,
+  ) => void;
   /** Silently exchanges a stored refresh token for a fresh session on app launch — today's
    *  App.tsx only checked *presence* of an access token and never refreshed an expired one,
    *  so restoring a session on cold start (rather than just gating on a stale token) is a
@@ -66,9 +76,8 @@ type StoreState = {
   createAddress: (input: CreateAddressInput) => Promise<Address>;
 
   /** Mirrors apps/web's placeServerOrder (create -> payment create -> payment confirm ->
-   *  refetch final order), minus the analytics calls web fires around it — mobile has no
-   *  event-tracking infrastructure and this phase doesn't introduce one. Used for the
-   *  simulated dev-adapter path only; the real-payment path uses finalizeOrder below,
+   *  refetch final order), including the mobile behavioral event. Used for the simulated
+   *  dev-adapter path only; the real-payment path uses finalizeOrder below,
    *  since a Razorpay confirmation needs a widget interaction in between order/payment
    *  creation and confirm that a single store action can't drive itself. */
   placeOrder: (
@@ -90,10 +99,7 @@ type StoreState = {
   ) => Promise<OrderDetail>;
 
   shopaiConversationId: string | null;
-  /** Mirrors apps/web's sendShopAIMessage, minus the guest/anonymousId path — every screen that
-   *  can reach this action is already behind RootNavigator's authenticated gate, so there is no
-   *  logged-out caller on mobile to give an anonymous id to — and minus the analytics call web
-   *  fires around it, for the same reason as placeOrder above. */
+  /** Mirrors apps/web's sendShopAIMessage; mobile records the authenticated query event. */
   sendShopAIMessage: (text: string) => Promise<ShopAIMessage>;
 };
 
@@ -164,6 +170,24 @@ export const useStore = create<StoreState>((set, get) => ({
     if (operation === authOperation) get().clearSession();
   },
 
+  trackEvent: (eventType, entityId, metadata) => {
+    if (!get().user) return;
+    void eventsApi
+      .track([
+        {
+          eventId: crypto.randomUUID(),
+          eventType,
+          anonymousId: mobileAnonymousId,
+          sessionId: mobileSessionId,
+          source: 'MOBILE',
+          entityId,
+          metadata,
+          occurredAt: new Date().toISOString(),
+        },
+      ])
+      .catch(() => undefined);
+  },
+
   restoreSession: async () => {
     const operation = ++authOperation;
     set({ authStatus: "checking" });
@@ -210,6 +234,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const cart = await cartApi.addItem(variantId, quantity);
     if (operation !== authOperation) throw new Error("Session changed.");
     set({ cart });
+    get().trackEvent('PRODUCT_ADDED_TO_CART', undefined, { variantId, quantity });
   },
 
   updateCartItem: async (itemId, quantity) => {
@@ -221,9 +246,11 @@ export const useStore = create<StoreState>((set, get) => ({
 
   removeCartItem: async (itemId) => {
     const operation = authOperation;
+    const productId = get().cart?.items.find((item) => item.id === itemId)?.productId;
     const cart = await cartApi.removeItem(itemId);
     if (operation !== authOperation) throw new Error("Session changed.");
     set({ cart });
+    get().trackEvent('PRODUCT_REMOVED_FROM_CART', productId, { itemId });
   },
 
   wishlist: null,
@@ -251,6 +278,10 @@ export const useStore = create<StoreState>((set, get) => ({
       : await wishlistApi.add(productId);
     if (operation !== authOperation) throw new Error("Session changed.");
     set({ wishlist });
+    get().trackEvent(
+      isWishlisted ? 'PRODUCT_REMOVED_FROM_WISHLIST' : 'PRODUCT_WISHLISTED',
+      productId,
+    );
   },
 
   addresses: null,
@@ -307,6 +338,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const finalOrder = await ordersApi.get(created.id);
     if (operation !== authOperation) throw new Error("Session changed.");
     void get().fetchCart(); // apps/api already clears the cart server-side as part of order creation
+    get().trackEvent('ORDER_COMPLETED', finalOrder.id, { total: finalOrder.total });
     return finalOrder;
   },
 
@@ -325,6 +357,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const finalOrder = await ordersApi.get(orderId);
     if (operation !== authOperation) throw new Error("Session changed.");
     void get().fetchCart();
+    get().trackEvent('ORDER_COMPLETED', finalOrder.id, { total: finalOrder.total });
     return finalOrder;
   },
 
@@ -332,6 +365,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
   sendShopAIMessage: async (text) => {
     const operation = authOperation;
+    get().trackEvent('AI_ASSISTANT_QUERY', undefined, { query: text });
     const send = (conversationId?: string) =>
       shopaiApi.sendMessage({ message: text, conversationId });
     try {

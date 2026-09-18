@@ -29,6 +29,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const addCartItem = useStore((s) => s.addCartItem);
+  const trackEvent = useStore((s) => s.trackEvent);
   const inWishlist = useStore(
     (s) => s.wishlist?.items.some((i) => i.productId === product?.id) ?? false,
   );
@@ -57,6 +58,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
       .then((res) => {
         if (cancelled) return;
         setProduct(res);
+        trackEvent?.('PRODUCT_VIEWED', res.id);
         setSelectedVariant(null);
         setActiveImage(0);
         setQty(1);
@@ -70,7 +72,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, trackEvent]);
 
   const specGroups = useMemo(() => {
     if (!product) return [] as [string, ProductSpecification[]][];
