@@ -13,6 +13,12 @@ export type AuthResult = AuthTokenResult & {
   user: Pick<PublicUser, 'id' | 'email' | 'name' | 'roles'>;
 };
 
+export type PasswordResetRequestResult = {
+  message: string;
+  /** Returned only by local/test API environments without an email provider. */
+  resetToken?: string;
+};
+
 export const authApi = {
   register: (input: { email: string; password: string; name: string }) =>
     request<AuthResult>('/auth/register', {
@@ -47,4 +53,18 @@ export const authApi = {
     }),
 
   me: () => request<PublicUser>('/users/me'),
+
+  requestPasswordReset: (email: string) =>
+    request<PasswordResetRequestResult>('/auth/password-reset/request', {
+      method: 'POST',
+      body: { email },
+      skipAuthRetry: true,
+    }),
+
+  resetPassword: (token: string, password: string) =>
+    request<{ message: string }>('/auth/password-reset/confirm', {
+      method: 'POST',
+      body: { token, password },
+      skipAuthRetry: true,
+    }),
 };

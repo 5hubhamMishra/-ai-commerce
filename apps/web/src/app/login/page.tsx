@@ -112,6 +112,12 @@ function LoginForm() {
               />
             </div>
 
+            <div className="-mt-2 text-right">
+              <Link href="/forgot-password" className="text-sm font-semibold" style={{ color: "var(--clr-accent)" }}>
+                Forgot your password?
+              </Link>
+            </div>
+
             {error && (
               <p role="alert" className="text-sm" style={{ color: "var(--clr-error, #dc2626)" }}>
                 {error}
