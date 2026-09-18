@@ -76,6 +76,8 @@ function httpStatusToCode(status: HttpStatus): string {
       return 'NOT_FOUND';
     case HttpStatus.CONFLICT:
       return 'CONFLICT';
+    case HttpStatus.UNPROCESSABLE_ENTITY:
+      return 'UNPROCESSABLE_ENTITY';
     case HttpStatus.TOO_MANY_REQUESTS:
       return 'RATE_LIMITED';
     default:

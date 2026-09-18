@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import type {
   PayoutInput,
   PayoutResult,
@@ -11,6 +11,14 @@ import type {
 @Injectable()
 export class DevelopmentPayoutAdapter implements SellerPayoutProvider {
   payout(input: PayoutInput): Promise<PayoutResult> {
+    if (isProductionLike()) {
+      return Promise.reject(
+        new ServiceUnavailableException({
+          code: 'PAYOUT_PROVIDER_UNAVAILABLE',
+          message: 'Seller payouts require an activated external provider.',
+        }),
+      );
+    }
     return Promise.resolve({
       success: true,
       providerRef: `dev_payout_${randomUUID()}`,
@@ -22,4 +30,11 @@ export class DevelopmentPayoutAdapter implements SellerPayoutProvider {
       },
     });
   }
+}
+
+function isProductionLike() {
+  return (
+    process.env.NODE_ENV?.trim() === 'production' ||
+    process.env.VERCEL_ENV?.trim() === 'production'
+  );
 }

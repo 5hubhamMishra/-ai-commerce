@@ -22,6 +22,7 @@ export default function DevelopersPage() {
       <nav aria-label="Public developer resources" className="mt-8 flex flex-wrap gap-3">
         <a href="/llms.txt" className="btn">Agent guidance (text)</a>
         <a href="/sitemap.xml" className="btn">Sitemap (XML)</a>
+        <a href="/openapi.json" className="btn">OpenAPI (JSON)</a>
         <a href="/robots.txt" className="btn">Crawler guidance (text)</a>
         <Link href="/shop" className="btn">Public catalog</Link>
       </nav>
