@@ -1,6 +1,9 @@
 import type { ApiError as ApiErrorBody } from '@ai-commerce/types';
 
-const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+const DEFAULT_API_URL =
+  typeof window === 'undefined'
+    ? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1'
+    : '/api/v1';
 
 export class ApiError extends Error {
   code: string;
